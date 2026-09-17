@@ -36,6 +36,13 @@ It offers two types of experiences. The first is a **Sequential Experience**, wh
 
 The second is an **Open Hunt Experience**, where users can explore freely, with more focus on competition, especially when playing in groups. Each **NFC Card** is hidden in a different location. Finding one card reveals a clue that leads users to another card, while some cards can contain traps that make users lose points. And that will level up the competition.
 
+### Reasons for Selection
+
+**1. WOW factor:** Looking beyond typical software engineering technologies, the team explored the **Near Field Communication (NFC)** cards a short-range wireless technology usually limited to business cards, product tags, payments, and keycards. Inspired by a social media post about a creative NFC use case (someone turning their home into a mini scavenger hunt using fact-tagged NFC chips), the team saw an opportunity to build an underused technology into a capstone project.
+
+**2. Innovation and alignment with Vision 2030:** NFC-driven physical activity aligns with Saudi Vision 2030's focus on movement and initiatives like the Sports Boulevard, and with tourism, where historic sites could be brought to life through activity based experiences.
+
+**3. Technical appropriateness:** The concept directly applies the capstone's core areas **authentication, databases, and full-stack development** while pushing the team to learn a new frontend framework and design a flexible database schema for experience customization, both seen as valuable learning opportunities.
 
 ### Authors
 * **Eman Hamdan** - [iEmanHamdan](https://github.com/iEmanHamdan)
