@@ -11,7 +11,11 @@
   1. [Summary](#summary)
   2. [Reasons for Selection](#reasons-for-selection)
 - [LEAP26 Validation & Feedback Summary](#leap26-validation--feedback-summary)
-     1. [Key Findings](#key-findings)
+  1. [Key Findings](#key-findings)
+- [Challenges & Opportunities](#challenges--opportunities)
+  1. [Challenges](#challenges)
+  2. [Opportunities](#opportunities)
+- [Conclusion](#conclusion)
 - [Authors](#authors)
 
 ## Team Formation Overview
@@ -59,7 +63,7 @@ The second is an **Open Hunt Experience**, where users can explore freely, with 
 
 ## LEAP26 Validation & Feedback Summary
 
-Following our in-person validation at LEAP26 through conversations with entrepreneurs, investors, and event managers, including the **Kingdom of Games** team. we gathered vital qualitative insights. While most feedback was verbal, survey results from 10 respondents (9 players, 1 investor) collected from Sep 2–Sep 11 
+Following our in-person validation at LEAP26 through conversations with entrepreneurs, investors, and event managers, including the **Kingdom of Gaming** team. we gathered vital qualitative insights. While most feedback was verbal, survey results from 10 respondents (9 players, 1 investor) collected from Sep 2–Sep 11 
 
 ### Key Findings
 
@@ -80,10 +84,36 @@ flowchart TD
 | **Usage Model** | Concerns about engagement fading led to a suggestion for one high-traffic venue with redeemable rewards. |
 | **Business Potential** | One respondent identified marketing campaign and retention use cases. |
 | **Investor Response** | The investor viewed the concept positively for the Saudi market but flagged customer acquisition and experience clarity risks. |
-| **Kingdom of Games** | Their team responded positively. A proof of concept will be shared at a later stage. | 
+| **Kingdom of Gaming** | Their team responded positively. A proof of concept will be shared at a later stage. | 
 
-Overall, the validation through direct feedback and suggestions was a significant factor in the team's decision to pursue with **Raccon** over alternative concepts. 
+Overall, the validation through direct feedback and suggestions was a significant factor in the team's decision to pursue with **Raccon** over alternative concepts.
 
+## Challenges & Opportunities
+
+The Raccon platform presents risks and possibilities that may be viewed as challenges, opportunities, or both. The following evaluation explores the selected concept’s feasibility and suitability, outlining potential challenges, proposed approaches, and opportunities for growth.
+
+### Challenges
+
+| **Challenge**                   | **Description**                                                                                                                         | **Proposed Approach**                                                                                                                                                                                                                      |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Sequencing NFC Cards**        | A **Sequential Experience** requires NFC Cards to guide players through an ordered path. How can the platform support this technically? | Initial research suggests a database design in which each card’s record stores its associated content and a reference to the next card in the sequence. The rules for enforcing player progression will be defined during detailed design. |
+| **Correcting Saved Content**    | Users may discover a typo or another mistake after saving their customized card content.                                                | Allow users to edit each card’s content up to **three times**, giving them room to correct mistakes after the initial customization.                                                                                                       |
+| **Reusing a Purchased Package** | Users may want to create a new game using the NFC Cards they already own.                                                               | Offer a paid option to fully customize a purchased package again, allowing users to create a new experience with the same cards.                                                                                                           |
+
+### Opportunities
+
+| **Opportunity**            | **Description**                                                                                                                                                                                                    |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Kingdom of Gaming**      | The MVP is planned to launch at [**Kingdom of Gaming**](https://kingdomofgaming.com), providing an opportunity to showcase Raccon’s potential for interactive gaming experiences and gather feedback from players. |
+| **Beyond the MVP**         | Making NFC Cards more accessible and encouraging their use in everyday interactive experiences could open opportunities for collaborations with major events, content creators, and brands.                        |
+| **User-Driven Creativity** | Customizability gives users the freedom to create their own clues, stories, and experiences. Their creativity could reveal new use cases and help shape the platform’s future development.                         |
+
+The points above summarize the main conclusions we reached as a team during our brainstorming sessions. This initial evaluation focuses on the concept’s feasibility during the ideation phase, with detailed implementation decisions to follow in later stages. 
+
+
+## Conclusion
+
+This stage established the foundation for Raccon by defining the team’s primary responsibilities, evaluating alternative ideas, and selecting an MVP concept that combines NFC technology with customizable discovery experiences. Feedback gathered at LEAP26 strengthened the team’s confidence in the concept while highlighting areas that require further validation, particularly pricing, sustained engagement, and experience clarity.
 
 ### Authors
 * **Eman Hamdan** - [iEmanHamdan](https://github.com/iEmanHamdan)
