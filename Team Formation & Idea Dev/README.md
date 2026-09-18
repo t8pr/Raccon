@@ -1,5 +1,19 @@
 # Stage 1 Report: Team Formation & Idea Dev
 
+### Raccon is comming for your cookies
+![alt text](images.png)
+
+### Table of Contents
+
+- [Team Formation Overview](#team-formation-overview)
+- [Ideas Explored](#ideas-explored)
+- [Selected MVP Concept: Raccon](#selected-mvp-concept-raccon)
+  1. [Summary](#summary)
+  2. [Reasons for Selection](#reasons-for-selection)
+- [LEAP26 Validation & Feedback Summary](#leap26-validation--feedback-summary)
+     1. [Key Findings](#key-findings)
+- [Authors](#authors)
+
 ## Team Formation Overview
 
 Raccon team, **EAGO TEAM**, will contribute across different areas of software engineering, including business analysis, backend development, frontend development, and DevOps. However, each member will be assigned a primary role to streamline the process of designing, building, and maintaining the project while ensuring clear ownership and responsibilities.
@@ -37,11 +51,39 @@ The second is an **Open Hunt Experience**, where users can explore freely, with 
 
 ### Reasons for Selection
 
-**1. WOW factor:** Looking beyond typical software engineering technologies, the team explored the **Near Field Communication (NFC)** cards a short-range wireless technology usually limited to business cards, product tags, payments, and keycards. Inspired by a social media post about a creative NFC use case (someone turning their home into a mini scavenger hunt using fact-tagged NFC chips), the team saw an opportunity to build an underused technology into a capstone project.
+| **Reason** | **Description** |
+|---|---|
+| **1. WOW Factor** | Looking beyond typical software engineering technologies, the team explored the **Near Field Communication (NFC)** cards a short-range wireless technology usually limited to business cards, product tags, payments, and keycards. Inspired by a social media post about a creative NFC use case (someone turning their home into a mini scavenger hunt using fact-tagged NFC chips), the team saw an opportunity to build an underused technology into a capstone project. |
+| **2. Vision 2030 Alignment** | NFC-driven physical activity aligns with Saudi Vision 2030's focus on movement and initiatives like the Sports Boulevard, and with tourism, where historic sites could be brought to life through activity based experiences. |
+| **3. Technical Appropriateness** | The concept directly applies the capstone's core areas **authentication, databases, and full-stack development** while pushing the team to learn a new frontend framework and design a flexible database schema for experience customization, both seen as valuable learning opportunities. |
 
-**2. Innovation and alignment with Vision 2030:** NFC-driven physical activity aligns with Saudi Vision 2030's focus on movement and initiatives like the Sports Boulevard, and with tourism, where historic sites could be brought to life through activity based experiences.
+## LEAP26 Validation & Feedback Summary
 
-**3. Technical appropriateness:** The concept directly applies the capstone's core areas **authentication, databases, and full-stack development** while pushing the team to learn a new frontend framework and design a flexible database schema for experience customization, both seen as valuable learning opportunities.
+Following our in-person validation at LEAP26 through conversations with entrepreneurs, investors, and event managers, including the **Kingdom of Games** team. we gathered vital qualitative insights. While most feedback was verbal, survey results from 10 respondents (9 players, 1 investor) collected from Sep 2–Sep 11 
+
+### Key Findings
+
+```mermaid
+flowchart TD
+    A[LEAP Validation] --> B[Player Feedback]
+    A --> C[Product Insights]
+    A --> D[Business Opportunities]
+    A --> E[Potential Partnership]
+```
+| **Feedback Area** | **Key Insight** |
+|---|---|
+| **NFC Excitement** | 8 out of 9 players responded positively to the technology. |
+| **Willingness to Play** | 6 players expressed positive willingness to engage. One price-sensitive response reflected a pricing concern rather than a concept objection. |
+| **Pricing Concerns** | Responses ranged from SAR 100–150 to requests for lower pricing, indicating price sensitivity worth testing against an ~SAR 80 ceiling. |
+| **Feature Requests** | Two respondents suggested AI-assisted content generation for easier clue and question creation. |
+| **Technical Suggestion** | One respondent proposed password-based chip unlocking to enforce sequencing. |
+| **Usage Model** | Concerns about engagement fading led to a suggestion for one high-traffic venue with redeemable rewards. |
+| **Business Potential** | One respondent identified marketing campaign and retention use cases. |
+| **Investor Response** | The investor viewed the concept positively for the Saudi market but flagged customer acquisition and experience clarity risks. |
+| **Kingdom of Games** | Their team responded positively. A proof of concept will be shared at a later stage. | 
+
+Overall, the validation through direct feedback and suggestions was a significant factor in the team's decision to pursue with **Raccon** over alternative concepts. 
+
 
 ### Authors
 * **Eman Hamdan** - [iEmanHamdan](https://github.com/iEmanHamdan)
