@@ -104,7 +104,7 @@ The Raccon platform presents risks and possibilities that may be viewed as chall
 
 | **Opportunity**            | **Description**                                                                                                                                                                                                    |
 | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Kingdom of Gaming**      | The MVP is planned to launch at [**Kingdom of Gaming**](https://kingdomofgaming.com), providing an opportunity to showcase Raccon’s potential for interactive gaming experiences and gather feedback from players. |
+| **Kingdom of Gaming**      | The MVP has a chance to be launched at [**Kingdom of Gaming**](https://kingdomofgaming.com), providing an opportunity to showcase Raccon’s potential for interactive gaming experiences and gather feedback from players. |
 | **Beyond the MVP**         | Making NFC Cards more accessible and encouraging their use in everyday interactive experiences could open opportunities for collaborations with major events, content creators, and brands.                        |
 | **User-Driven Creativity** | Customizability gives users the freedom to create their own clues, stories, and experiences. Their creativity could reveal new use cases and help shape the platform’s future development.                         |
 
