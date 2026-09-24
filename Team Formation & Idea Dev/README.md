@@ -6,6 +6,7 @@
 ### Table of Contents
 
 - [Team Formation Overview](#team-formation-overview)
+  1. [Team Norms & Operational Setup](#team-norms--operational-setup)
 - [Ideas Explored](#ideas-explored)
 - [Selected MVP Concept: Raccon](#selected-mvp-concept-raccon)
   1. [Summary](#summary)
@@ -30,6 +31,24 @@ Raccon team, **EAGO TEAM**, will contribute across different areas of software e
 | **Ghaida Alsabti** - [Ghaaidda](https://github.com/Ghaaidda) | QA - Backend |
 | **Osama Alhamdan** - [t8pr](https://github.com/t8pr) | DevOps - Full-stack |
 
+### Team Norms & Operational Setup
+
+To maintain momentum and delivery cadence, the team established clear communication and operational guidelines:
+
+**Tooling Stack:**
+  * **Discord:** Primary asynchronous chat, voice huddles, and quick pair-programming sessions.
+  * **Trello:** Sprint task tracking, stage deliverables, and individual backlogs.
+  * **Miro:** Brainstorming, flowcharts, and architecture mapping.
+  * **Figma:** UI/UX wireframing, screen states, and design system components.
+  * **Google Sheets:** Evaluation matrices, and survey data analysis.
+* **Meeting Cadence:** Daily in-person standups at the academy to review progress, workshop technical roadblocks, and clarify new concepts for upcoming project stages.
+
+**Decision-Making & Tie-Breaking:** 
+  1. *Research & Baseline Vote:* Each team member investigates technical viability and casts an initial vote.
+  2. *Structured Debate:* If opinions diverge, the team holds an open debate.
+  3. *Merit-Based Resolution:* The final decision is awarded to the member who presents the most objective, validated technical argument and alignment with project scope, rather than relying on a blind majority vote.
+
+ 
 ## Ideas Explored
 
 The team evaluated multiple concepts before settling on Raccoon platform. The table below summarizes some of the ideas we considered, providing a brief description of each concept along with its key strengths and weaknesses. Additionally, it outlines our reasoning for rejecting or deciding not to pursue each idea further.
