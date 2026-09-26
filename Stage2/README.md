@@ -113,12 +113,12 @@ Key internal and external stakeholders, along with defined project team responsi
 
 ### 2.1 Internal Stakeholders
 
-| Name | Role | Description |
+| Name | Role | Responsibilities |
 |---|---|---|
-| Eman Hamdan | Project Manager – Frontend | Oversees planning and tracks progress. |
-| Abdulrahman Alsalhi | Solution Architect – Frontend | UML and project structure design. |
-| Ghaida Alsabti | QA – Backend | Continuous testing to meet quality standards. |
-| Osama Alhamdan | DevOps – Full-stack | Maintains software delivery and infrastructure. |
+| **Eman Hamdan** | • Project Manager <br>• UI/UX <br>• Frontend | • Co-leads the project with the Tech Lead and owns **workflow and deliverables**.<br>• Plans the project timeline, milestones, and stage deliverables.<br>• Manages the Trello board, assigns tasks, and tracks deliverable deadlines.<br>• Runs daily standups and removes workflow blockers.<br>• Manages scope (MoSCoW) and keeps the MVP on track.<br>• Coordinates with external stakeholders and pilot partners.<br>• Leads UI/UX design in Figma: user flows, wireframes, screen states, and the design system, with input from the team.<br>• Develops frontend pages and components in React. |
+| **Abdulrahman Alsalhi** | • Solution Architect <br>• Frontend | • Designs the overall system architecture and project structure.<br>• Creates UML diagrams (use case, class, sequence) and architecture maps in Miro.<br>• Leads database schema design, including card sequencing and experience customization.<br>• Defines technical standards, folder structure, and API contracts between frontend and backend.<br>• Reviews technical decisions for scalability and fit with project scope.<br>• Contributes to UI/UX reviews so designs stay technically feasible.<br>• Develops frontend features and the PWA setup. |
+| **Ghaida Alsabti** | • QA <br>• Backend | • Writes test plans and test cases for core features (auth, packages, experience modes).<br>• Tests features continuously during development and reports bugs.<br>• Runs final QA and integration testing before the Beta launch.<br>• Checks that features meet requirements and quality standards, including usability checks against the UI/UX designs.<br>• Develops backend APIs and business logic in FastAPI (scoring, clues, traps, timers). |
+| **Osama Alhamdan** | • Tech Lead <br>• DevOps <br>• Full-stack | • Co-leads the project with the Project Manager and owns **development accuracy and progress**.<br>• Tracks development progress and checks that implementation matches requirements and architecture.<br>• Reviews code and pull requests to keep quality and consistency high.<br>• Guides the team on technical challenges and knowledge-transfer sessions.<br>• Sets up and maintains the repository, branching strategy, and CI/CD pipelines.<br>• Manages hosting, deployment, and environments (development, staging, production).<br>• Integrates third-party services (payment gateway, order management) and handles security configuration.<br>• Contributes to both frontend and backend development. |
 
 ### 2.2 External Stakeholders
 
