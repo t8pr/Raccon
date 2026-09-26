@@ -3,21 +3,52 @@
 ### Raccon is comming for your cookies
 ![alt text](images.png)
 
+---
+
 ### Table of Contents
 
-- [Team Formation Overview](#team-formation-overview)
-  1. [Team Norms & Operational Setup](#team-norms--operational-setup)
-- [Ideas Explored](#ideas-explored)
-- [Selected MVP Concept: Raccon](#selected-mvp-concept-raccon)
-  1. [Summary](#summary)
-  2. [Reasons for Selection](#reasons-for-selection)
-- [LEAP26 Validation & Feedback Summary](#leap26-validation--feedback-summary)
-  1. [Key Findings](#key-findings)
-- [Challenges & Opportunities](#challenges--opportunities)
-  1. [Challenges](#challenges)
-  2. [Opportunities](#opportunities)
-- [Conclusion](#conclusion)
-- [Authors](#authors)
+- [Executive Summary](#executive-summary)
+1. [Team Formation Overview](#team-formation-overview)
+- 1.1 [Team Norms & Operational Setup](#team-norms--operational-setup)
+2. [Ideas Explored](#ideas-explored)
+3. [Selected MVP Concept: Raccon](#selected-mvp-concept-raccon)
+- 3.1 [Summary](#summary)
+- 3.2 [Reasons for Selection](#reasons-for-selection)
+4. [LEAP26 Validation & Feedback Summary](#leap26-validation--feedback-summary)
+- 4.1 [Key Findings](#key-findings)
+5. [Challenges & Opportunities](#challenges--opportunities)
+- 5.1 [Challenges](#challenges)
+- 5.2 [Opportunities](#opportunities)
+6. [Conclusion](#conclusion)
+7. [Authors](#authors)
+
+---
+
+## Executive Summary
+
+**EAGO TEAM** has formed to build **Raccon**, a web platform that lets users create treasure-hunt-style experiences with **NFC Cards**. It offers two modes:
+
+- **Sequential Experience:** guides players step by step through a place. It suits events like LEAP or Money20/20.
+- **Open Hunt Experience:** free, competitive play for groups. Players find hidden cards, follow clues and avoid traps that cost points.
+
+**Team:** four members, each with a primary role: Project Manager, Solution Architect, QA and DevOps. The team works with Discord, Trello, Miro, Figma and Google Sheets, holds daily in-person standups, and makes decisions by argument rather than majority vote.
+
+**Idea selection:** the team also explored *Clubs WhiteLabel* and *Jeneral Pass*. Both were set aside rather than rejected. Raccon was chosen for three reasons:
+- its "wow factor" of putting an underused technology (NFC) to new use
+- its fit with Saudi Vision 2030 goals for physical activity and tourism
+- its strong technical fit with the capstone: authentication, databases and full-stack development
+
+**Validation at LEAP26:** the team talked with entrepreneurs, investors and event managers, and ran a survey with 10 respondents (9 players, 1 investor).
+- 8 of the 9 players were excited about NFC, and 6 said they were willing to play.
+- Pricing is a concern. Answers ranged from SAR 100–150 to requests for lower prices, so a ~SAR 80 ceiling is worth testing.
+- The investor saw potential in the Saudi market but flagged risks around customer acquisition and making the experience clear.
+- The **Kingdom of Gaming** team responded positively, which opens a possible MVP launch with them.
+
+**Challenges and opportunities:**
+- **Challenges:** the three to solve are sequencing the cards, fixing content after it's saved (up to 3 edits) and reusing packages (a paid re-customization option).
+- **Opportunities:** the Kingdom of Gaming launch, partnerships with events and brands, and new use cases driven by what users create.
+
+**Next focus:** validating pricing, keeping players engaged over time and making the experience easy to understand.
 
 ## Team Formation Overview
 
