@@ -4,6 +4,7 @@ from core.database import get_session
 from models.user import User
 from api.auth.dependencies import get_current_user
 from api.users.schemas import UserResponse, UserUpdate
+from core.logger import logger
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
@@ -30,5 +31,5 @@ def update_profile(
     session.add(current_user)
     session.commit()
     session.refresh(current_user)
-    
+    logger.info(f"User profile updated: {current_user.username} (ID: {current_user.id})")
     return current_user

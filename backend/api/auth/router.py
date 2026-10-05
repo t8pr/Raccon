@@ -7,6 +7,7 @@ from api.auth.schemas import UserRegister, UserLogin, Token
 from api.auth.dependencies import get_current_user
 from fastapi.security import OAuth2PasswordRequestForm
 from api.auth.schemas import ChangePassword
+from core.logger import logger
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -31,7 +32,7 @@ def register_user(user_data: UserRegister, session: Session = Depends(get_sessio
     session.add(new_user)
     session.commit()
     session.refresh(new_user)
-    
+    logger.info(f"New user registered: {new_user.username} (ID: {new_user.id})")
     return {"message": "User registered successfully", "user_id": new_user.id}
 
 @router.post("/login", response_model=Token)
@@ -50,7 +51,7 @@ def login_user(
         raise HTTPException(status_code=400, detail="Invalid credentials")
 
     access_token = create_access_token(data={"sub": str(user.id)})
-    
+    logger.info(f"User logged in: {user.username} (ID: {user.id})")
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/logout")
@@ -69,7 +70,6 @@ def change_password(
     current_user.password = hash_password(request.new_password)
     session.add(current_user)
     session.commit()
-
     return {"message": "Password changed successfully"}
 
 @router.delete("/delete-account")
@@ -79,4 +79,5 @@ def delete_account(
 ):
     session.delete(current_user)
     session.commit()
+    logger.info(f"User deleted: {current_user.username} (ID: {current_user.id})")
     return {"message": "Account deleted successfully"}
