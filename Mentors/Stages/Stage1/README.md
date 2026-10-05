@@ -1,6 +1,6 @@
 # Stage 1 Report: Team Formation & Idea Dev
 
-### Raccon is comming for your cookies
+### Raccon is coming for your cookies
 ![alt text](images.png)
 
 ---
