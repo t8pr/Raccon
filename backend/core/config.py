@@ -7,7 +7,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
     
-    # المتغيرات الاختيارية
     AXIOM_TOKEN: Optional[str] = None
     AXIOM_DATASET: Optional[str] = None
 
