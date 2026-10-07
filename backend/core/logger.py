@@ -1,18 +1,14 @@
 import logging
-import os
-from axiom.logging import AxiomHandler
-from dotenv import load_dotenv
-
-load_dotenv()
+import axiom_py
+from axiom_py.logging import AxiomHandler
+from core.config import settings
 
 logger = logging.getLogger("raccon")
 logger.setLevel(logging.INFO)
 
-axiom_token = os.getenv("AXIOM_TOKEN")
-axiom_dataset = os.getenv("AXIOM_DATASET")
-
-if axiom_token and axiom_dataset:
-    axiom_handler = AxiomHandler(token=axiom_token, dataset=axiom_dataset)
+if settings.AXIOM_TOKEN and settings.AXIOM_DATASET:
+    client = axiom_py.Client(token=settings.AXIOM_TOKEN)
+    axiom_handler = AxiomHandler(client, settings.AXIOM_DATASET)
     logger.addHandler(axiom_handler)
 else:
     console_handler = logging.StreamHandler()

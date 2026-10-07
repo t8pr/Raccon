@@ -14,3 +14,4 @@ bcrypt
 PyJWT
 alembic
 axiom-py
+pydantic-settings

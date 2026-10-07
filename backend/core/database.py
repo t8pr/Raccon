@@ -1,15 +1,10 @@
-import os
 from sqlmodel import create_engine, Session, SQLModel
-from dotenv import load_dotenv
+from core.config import settings
 
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-engine = create_engine(DATABASE_URL, echo=True)
+engine = create_engine(settings.DATABASE_URL, echo=True)
 
 def init_db():
-    import models  # Ensure models are loaded before creating tables
+    import models
 
 def get_session():
     with Session(engine) as session:
