@@ -47,19 +47,9 @@ The backend identifies the authenticated user from the token; clients must not s
 | `POST` | `/api/packages/{package_id}/images` | Owner | US-05 | To Do |
 | `PUT` | `/api/packages/{package_id}/settings` | Owner | US-08, Timer | To Do |
 | `POST` | `/api/packages/{package_id}/configuration/save` | Owner | US-04,06,07,08 | To Do |
-| `POST` | `/api/packages/{package_id}/tags/{tag_id}/scan` | Player | US-10–14 | To Do |
-| `POST` | `/api/packages/{package_id}/tags/{tag_id}/choose-trap` | Player | US-07,13,14 | To Do; rules unresolved |
 | `GET` | `/api/packages/{package_id}/play-state` | Player | US-12–14, Timer | To Do |
 | `GET` | `/api/packages/{package_id}/leaderboard` | Player | US-15 | To Do |
-| `GET` | `/api/templates` | Public | US-16 | To Do; scope disputed |
-| `GET` | `/api/templates/{template_id}` | Public | US-16 | To Do; scope disputed |
-| `GET` | `/api/users/me/favorites` | User | US-16 | To Do; scope disputed |
-| `PUT` | `/api/users/me/favorites/{template_id}` | User | US-16 | To Do; scope disputed |
-| `DELETE` | `/api/users/me/favorites/{template_id}` | User | US-16 | To Do; scope disputed |
-| `POST` | `/api/admin/packages` | Admin | Admin notes | To Do — needs requirements |
-| `GET` | `/api/admin/packages/{package_id}/tags` | Admin | Admin notes | To Do — needs requirements |
-| `GET` | `/api/admin/users` | Admin | Incomplete admin story | To Do — needs requirements |
-| `POST` | `/api/webhooks/purchases` | Verified store | Claiming a Package | To Do — needs requirements |
+
 
 ## 3. Authentication and user profile
 
