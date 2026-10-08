@@ -1140,7 +1140,5 @@ The admin story has no acceptance criteria, and the purchase integration lacks a
 | US-13 Freeze | `POST .../scan`, `GET .../play-state` |
 | US-14 Boom | `POST .../scan`, `GET .../play-state` |
 | US-15 Leaderboard | `GET .../leaderboard` |
-| US-16 Favorites | Template/favorite endpoints, **scope pending** |
-| Admin notes | Admin candidate endpoints, **not specified enough to finalize** |
 
 ---
