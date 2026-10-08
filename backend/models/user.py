@@ -10,4 +10,3 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     phone_number: str
     password: str
-    bio: str | None = None
