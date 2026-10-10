@@ -8,6 +8,7 @@
   - [Admin Stories](#admin-stories)
   - [Figma Mockups](#figma-mockups)
   - [System Architecture](#system-architecture)
+  - [High-Level Class Diagram](#high-level-class-diagram)
   - [High-Level Sequence Diagrams](#high-level-sequence-diagrams)
   - [Raccon REST API Documentation](#raccon-rest-api-documentation)
   - [4. Package purchase, claiming, and ownership](#4-package-purchase-claiming-and-ownership)
@@ -675,6 +676,154 @@ flowchart TB
 3. FastAPI authenticates requests, validates data, and executes business logic.
 4. The business logic communicates with repositories to access PostgreSQL.
 5. Results are returned through FastAPI to React, which updates the user interface.
+
+## High-Level Class Diagram
+
+The following class diagram illustrates the main entities in the Raccon system, their attributes, methods, and relationships. UUIDs are used consistently for entity identifiers and foreign keys.
+
+```mermaid
+classDiagram
+    direction TB
+
+    class User {
+        +UUID id
+        +string name
+        +string username
+        +string email
+        +string passwordHash
+        +string phoneNumber
+        +UserRole userRole
+        +updateProfile()
+    }
+
+    class Package {
+        +UUID id
+        +UUID ownerId
+        +string name
+        +PackageMode mode
+        +int numberOfTags
+        +float price
+        +boolean tagsEnabled
+        +createPackage()
+    }
+
+    class Tag {
+        +UUID id
+        +UUID packageId
+        +string link
+        +int sortNumber
+        +int point
+    }
+
+    class TagContent {
+        +UUID id
+        +UUID tagId
+        +string hintText
+        +string hintImage
+        +edit()
+    }
+
+    class GameRound {
+        +UUID id
+        +UUID experienceId
+        +DateTime startAt
+        +DateTime endAt
+        +RoundStatus status
+        +boolean timer
+        +start()
+        +end()
+    }
+
+    class Participation {
+        +UUID id
+        +UUID userId
+        +UUID gameRoundId
+        +int score
+        +int currentOrder
+        +DateTime startAt
+        +DateTime endAt
+        +ParticipationStatus status
+        +addPoints()
+        +complete()
+    }
+
+    class TagScan {
+        +UUID id
+        +UUID tagId
+        +UUID participationId
+        +DateTime scannedAt
+        +ScanResultType resultType
+        +int pointsEarned
+        +boolean trapTriggered
+        +recordScan()
+    }
+
+    class TagTrap {
+        +UUID id
+        +UUID tagId
+        +UUID trapId
+        +TriggerType triggerType
+    }
+
+    class Trap {
+        +UUID id
+        +string name
+        +TrapType type
+        +int value
+        +int duration
+        +string description
+        +execute()
+    }
+
+    class PlacedTrap {
+        +UUID id
+        +UUID tagTrapId
+        +UUID trapId
+        +UUID placedByParticipationId
+        +UUID triggeredByParticipationId
+        +DateTime placedAt
+        +DateTime triggeredAt
+        +boolean isTriggered
+        +trigger()
+    }
+
+    User "1" --> "0..*" Package : owns
+    User "1" --> "0..*" Participation : participates
+
+    Package "1" --> "1..*" Tag : contains
+    Package "1" --> "0..*" GameRound : hosts
+
+    GameRound "1" --> "0..*" Participation : includes
+
+    Participation "1" --> "0..*" TagScan : records
+    Tag "1" --> "0..*" TagScan : scanned in
+
+    Tag "1" --> "0..1" TagContent : has
+
+    Tag "1" --> "0..*" TagTrap : has
+    TagTrap "0..*" --> "1" Trap : defines
+
+    TagTrap "1" --> "0..*" PlacedTrap : placements
+    Trap "1" --> "0..*" PlacedTrap : type
+
+    Participation "1" --> "0..*" PlacedTrap : places
+    PlacedTrap "0..*" --> "0..1" Participation : triggered by
+```
+
+### Class Overview
+
+| Class | Responsibility |
+|---|---|
+| `User` | Stores user accounts and profile information. |
+| `Package` | Represents an NFC package owned by a user. |
+| `Tag` | Represents an individual NFC tag belonging to a package. |
+| `TagContent` | Stores the hint text and image associated with a tag. |
+| `GameRound` | Represents a gameplay session with a start time, end time, and status. |
+| `Participation` | Tracks a player's progress, score, and status within a game round. |
+| `TagScan` | Records NFC tag scans and their results. |
+| `TagTrap` | Associates traps with NFC tags and defines their trigger behavior. |
+| `Trap` | Defines available trap types and their effects. |
+| `PlacedTrap` | Records traps placed by players and their activation details. |
 
 ## High-Level Sequence Diagrams
 
