@@ -2,23 +2,17 @@
 
 ## Table of Contents
 
-- [User Stories](#user-stories)
-  - [Owner Stories](#owner-stories)
-  - [Player Stories](#player-stories)
-  - [Admin Stories](#admin-stories)
-  - [Figma Mockups](#figma-mockups)
-  - [System Architecture](#system-architecture)
-  - [High-Level Class Diagram](#high-level-class-diagram)
-  - [High-Level Sequence Diagrams](#high-level-sequence-diagrams)
-  - [Raccon REST API Documentation](#raccon-rest-api-documentation)
-  - [4. Package purchase, claiming, and ownership](#4-package-purchase-claiming-and-ownership)
-  - [5. Package customization](#5-package-customization)
-  - [6. NFC gameplay](#6-nfc-gameplay)
-  - [7. Leaderboard](#7-leaderboard)
-  - [8. Admin and store integration](#8-admin-and-store-integration)
-  - [9. External integrations](#9-external-integrations)
-  - [10. Traceability summary](#10-traceability-summary)
-- [SCM and QA Plans](#scm-and-qa-plans)
+1. [User Stories](#user-stories)
+   - [Owner Stories](#owner-stories)
+   - [Player Stories](#player-stories)
+   - [Admin Stories](#admin-stories)
+   - [Figma Mockups](#figma-mockups)
+2. [System Architecture](#system-architecture)
+3. [High-Level Class Diagram](#high-level-class-diagram)
+4. [Database ER Diagram (ERD)](#database-er-diagram)
+5. [High-Level Sequence Diagrams](#high-level-sequence-diagrams)
+6. [Raccon REST API Documentation](#raccon-rest-api-documentation)
+7. [SCM and QA Plans](#scm-and-qa-plans)
 
 ---
 
@@ -824,6 +818,105 @@ classDiagram
 | `TagTrap` | Associates traps with NFC tags and defines their trigger behavior. |
 | `Trap` | Defines available trap types and their effects. |
 | `PlacedTrap` | Records traps placed by players and their activation details. |
+
+## Database ER Diagram
+```mermaid
+erDiagram
+    users |o--o{ packs : owns
+    packs ||--o{ tags : contains
+    packs ||--o| events : has
+
+    events ||--o{ event_tags : includes
+    tags ||--o{ event_tags : used_in
+
+    users ||--o{ event_players : participates
+    events ||--o{ event_players : has
+
+    event_players ||--o{ tag_scans : performs
+    event_tags ||--o{ tag_scans : receives
+
+    event_players |o--o{ event_tags : claims
+
+    event_tags ||--o| choose_trap_state : has
+    event_players ||--o{ choose_trap_state : configures
+
+    users {
+        uuid id PK
+        string name
+        string username UK
+        string email UK
+        string phone_number
+        string password_hash
+        string avatar_id
+        string role "default: user"
+    }
+
+    packs {
+        uuid id PK
+        uuid owner_id FK "nullable"
+        string mode
+        int tags_count
+        string master_auth_hash UK
+    }
+
+    tags {
+        uuid id PK
+        uuid pack_id FK
+        string static_hash UK
+        int sequence_num
+        boolean is_printed "default: false"
+    }
+
+    events {
+        uuid id PK
+        uuid pack_id FK,UK
+        string title "default: Untitled"
+        string status "default: pending"
+        int edits_used "default: 0"
+        boolean hashing_enabled "default: false"
+        boolean timer_enabled "default: false"
+        int duration_seconds "nullable"
+        boolean tags_left_enabled "default: false"
+    }
+
+    event_tags {
+        uuid id PK
+        uuid event_id FK
+        uuid tag_id FK
+        string tag_type "default: clue"
+        jsonb content "nullable"
+        uuid claimed_by_player_id FK "nullable"
+        datetime claimed_at "nullable"
+    }
+
+    event_players {
+        uuid id PK
+        uuid event_id FK
+        uuid user_id FK
+        int score "default: 0"
+        int highest_tag "default: 0"
+        datetime started_at
+        datetime frozen_until "nullable"
+    }
+
+    tag_scans {
+        uuid id PK
+        uuid event_player_id FK
+        uuid event_tag_id FK
+        datetime scanned_at
+        string result
+        int points_delta
+    }
+
+    choose_trap_state {
+        uuid id PK
+        uuid event_tag_id FK,UK
+        uuid configured_by_player_id FK
+        string selected_trap
+        int duration_seconds "nullable"
+        datetime configured_at
+    }
+```
 
 ## High-Level Sequence Diagrams
 
