@@ -1,3 +1,26 @@
+# Raccon Technical Documentation
+
+## Table of Contents
+
+- [User Stories](#user-stories)
+  - [Owner Stories](#owner-stories)
+  - [Player Stories](#player-stories)
+  - [Admin Stories](#admin-stories)
+  - [Figma Mockups](#figma-mockups)
+  - [System Architecture](#system-architecture)
+  - [High-Level Sequence Diagrams](#high-level-sequence-diagrams)
+  - [Raccon REST API Documentation](#raccon-rest-api-documentation)
+  - [4. Package purchase, claiming, and ownership](#4-package-purchase-claiming-and-ownership)
+  - [5. Package customization](#5-package-customization)
+  - [6. NFC gameplay](#6-nfc-gameplay)
+  - [7. Leaderboard](#7-leaderboard)
+  - [8. Admin and store integration](#8-admin-and-store-integration)
+  - [9. External integrations](#9-external-integrations)
+  - [10. Traceability summary](#10-traceability-summary)
+- [SCM and QA Plans](#scm-and-qa-plans)
+
+---
+
 # User Stories
 
 The following user stories describe the Raccon experience from the perspective of three roles. The **Owner** purchases and claims NFC packages, customizes their tags, and manages the experiences they create. The **Player** interacts with those experiences by scanning NFC tags to discover content, progress through the activity, earn points, encounter traps, and view the leaderboard. The **Admin** prepares the physical NFC packages by programming and locking each tag and recording its completion. These roles organize the requirements by who performs each action.
@@ -175,7 +198,7 @@ The following user stories describe the Raccon experience from the perspective o
 - The Package ID, mode and number of tags should not be editable.
 - The package status should not be directly editable by changing the package information.
 - The Package Name should be the only editable package-information field.
-- The package name text field maximum characters is 20.
+- The package name field should have a maximum length of 20 characters.
 - The owner should be able to rename the package at any time without an edit limit.
 - Renaming the package should not count toward the package's customization edit limit.
 - The owner should only be able to access packages associated with their account.
@@ -190,9 +213,9 @@ The following user stories describe the Raccon experience from the perspective o
 
 **User story**
 
-> As a NFC package owner,
+> As an NFC package owner,
 > I want to customize the individual tags in my package,
-> So I can create experiences that fits my intended activity.
+> So I can create experiences that fit my intended activity.
 
 **Acceptance criteria**
 
@@ -225,7 +248,7 @@ The following user stories describe the Raccon experience from the perspective o
 - Hint text should have a maximum length of 255 characters and minimum of 0 characters.
 - The interface should display the current character count.
 - The owner should not be able to enter more than 255 characters.
-- The text field Thmanabyah, font size 18px, color #2D3B33.
+- The text field should use the Thmanabyah font, a font size of 18px, and the color `#2D3B33`.
 - The owner should be able to optionally upload an image.
 - Supported image formats should be JPG, PNG, and WEBP.
 - An uploaded image should not exceed 5 MB.
@@ -397,7 +420,7 @@ The following user stories describe the Raccon experience from the perspective o
 - The preview should display the configured hint text when present.
 - The preview should display the configured image when present.
 - The preview should use a fixed Open Hunt experience layout, regardless of the package being customized.
-- The preview should display a generic leaderboard with sample player information
+- The preview should display a generic leaderboard with sample player information.
 - Opening or closing a preview should not save the tag or consume one of the available edits.
 
 ---
@@ -469,7 +492,7 @@ The following user stories describe the Raccon experience from the perspective o
 - If neither text nor an image is configured, the scan result should still display the relevant tag information.
 - The first player to successfully scan an unclaimed tag should claim that tag.
 - The first player to claim the tag should receive one extra point.
-- tag claimed by Player A should no longer award points to Player B, Player C, or any other player.
+- A tag claimed by Player A should no longer award points to Player B, Player C, or any other player.
 - Re-scanning a tag already claimed by the same player should also award no additional points.
 - The player should be able to see their current score.
 - If Tags Left is enabled, the number of remaining tags should be displayed.
@@ -929,8 +952,7 @@ The backend identifies the authenticated user from the token; clients must not s
 
 - Login currently uses `application/x-www-form-urlencoded` (OAuth2 form fields).
 
-- All durations  use **seconds**.
-
+- All durations use **seconds**.
 
 
 ### 2. Endpoint summary
@@ -959,11 +981,12 @@ The backend identifies the authenticated user from the token; clients must not s
 | `POST` | `/api/packages/{package_id}/tags/{tag_id}/choose-trap` | Player | US-13 | Planned |
 | `GET` | `/api/packages/{package_id}/play-state` | Player | US-17–US-20 | Planned |
 | `GET` | `/api/packages/{package_id}/leaderboard` | Player | US-21 | Planned |
+| `POST` | `/api/admin/packages` | Admin | US-22 (supporting operation) | Planned |
+| `POST` | `/api/webhooks/purchases` | Provider webhook | US-06 (supporting integration) | Planned |
 | `GET` | `/api/admin/packages/{package_id}/tags` | Admin | US-22 | Planned |
 | `GET` | `/` | Public | Operations | Existing |
 | `GET` | `/health/` | Public | Operations | Existing |
 | `POST` | `/api/admin/packages/{package_id}/tags/{tag_id}/printed` | Admin | US-22 | Planned |
-
 
 
 ### 3. Authentication and user profile
@@ -980,7 +1003,7 @@ The backend identifies the authenticated user from the token; clients must not s
 
 **Content-Type:** `application/json`.
 
-**To Do request:**
+**Planned request:**
 
 ```json
 {
@@ -993,7 +1016,7 @@ The backend identifies the authenticated user from the token; clients must not s
 }
 ```
 
-**To Do `201` response:**
+**Planned `201` response:**
 
 ```json
 {
@@ -1156,14 +1179,14 @@ username=ahmed_ali&password=examplePassword
 
 **Request body:** None.
 
-Example responses from the previously reviewed backend:
+Example backend responses:
 
 ```json
 { "message": "System is running. Database connected!" }
 ```
 
 ```json
-{ "status": "ok", "message": "Raccon APIs is running!" }
+{ "status": "ok", "message": "Raccon API is running!" }
 ```
 
 ### 3.9 `POST /auth/forgot-password`
@@ -1173,19 +1196,19 @@ Example responses from the previously reviewed backend:
 **Auth:** Public.  
 **Content-Type:** `application/json`.
 
-**Proposed request:**
+**Planned request:**
 
 ```json
 { "email": "ahmed@example.com" }
 ```
 
-**Proposed `200` response (same for known and unknown emails):**
+**Planned `200` response (same for known and unknown emails):**
 
 ```json
 { "message": "If an account exists for this email, password reset instructions have been sent." }
 ```
 
-**Rules:** Validate email format. For a registered email, send a unique, time-limited, single-use reset link to that address; never return its token in the public API response. The frontend opens the reset-password form from the link. Invalid email format: proposed `422`. Token lifetime, email provider, delivery failure handling, and rate limits require agreement; no numeric defaults are invented here.
+**Rules:** Validate email format. For a registered email, send a unique, time-limited, single-use reset link to that address; never return its token in the public API response. The frontend opens the reset-password form from the link. Invalid email format: proposed `422`.
 
 ### 3.10 `POST /auth/reset-password`
 
@@ -1194,7 +1217,7 @@ Example responses from the previously reviewed backend:
 **Auth:** Public; valid reset token required.  
 **Content-Type:** `application/json`.
 
-**Proposed request:**
+**Planned request:**
 
 ```json
 {
@@ -1204,13 +1227,13 @@ Example responses from the previously reviewed backend:
 }
 ```
 
-**Proposed `200` response:**
+**Planned `200` response:**
 
 ```json
 { "message": "Password reset successfully. Please sign in with your new password." }
 ```
 
-**Rules:** Validate the token, expiration, unused status, password policy, and equality of both password fields. Persist the new password securely and consume the token atomically only on a successful reset. Reject invalid, expired, or used links with a clear error (proposed `400`);
+**Rules:** Validate the token, expiration, unused status, password policy, and equality of both password fields. Persist the new password securely and consume the token atomically only on a successful reset. Reject invalid, expired, or used links with a clear error (proposed `400`).
 
 ## 4. Package purchase, claiming, and ownership
 
@@ -1395,7 +1418,7 @@ Example responses from the previously reviewed backend:
 }
 ```
 
-**Rules:** Return all tags in ascending order. Whether to return saved and draft versions separately requires a team decision. Frontend handles selected-circle/hover UI, default first-tag selection, and empty/configured/current visual states. Returned tag count must match the purchased package. 
+**Rules:** Return all tags in ascending order. Frontend handles selected-circle/hover UI, default first-tag selection, and empty/configured/current visual states. Returned tag count must match the purchased package. 
 
 ### 5.2 `PUT /api/packages/{package_id}/tags/{tag_id}`
 
@@ -1481,7 +1504,7 @@ Example responses from the previously reviewed backend:
 
 **Rules:** Validate real file type and size server-side. Invalid replacement uploads must leave the previously saved image unchanged. 
 
-### 5.5 `POST /api/packages/{package_id}/configuration/save`
+### 5.4 `POST /api/packages/{package_id}/configuration/save`
 
 **User stories:** US-08–US-13.
 
@@ -1523,13 +1546,13 @@ Example responses from the previously reviewed backend:
 
 **Content-Type:** JSON.
 
-**To Do request:**
+**Planned request:**
 
 ```json
 { "tag_access_token": "<optional-access-proof>" }
 ```
 
-`tag_access_token` is an inherited proposed field, not a finalized username-hash protocol. Its optionality when protection is disabled depends on approval of the unmapped package-wide hashing toggle; optional access cannot be claimed as satisfying US-16. US-16 specifies a username-derived hash in a tag link and comparison against the authenticated player's username hash; mismatches deny access and award no points/progress. The protocol must enforce that requirement rather than accepting a player identity from the body.
+US-16 requires a username-derived hash in the tag link to be compared against a hash generated from the authenticated player's username. Mismatches deny access and award no points or progress. Player identity is determined from authentication, not from the request body.
 
 **`200` sequential success:**
 
@@ -1604,7 +1627,7 @@ Example responses from the previously reviewed backend:
 }
 ```
 
-**Proposed `200` expired timer (expiration policy requires approval):**
+**Proposed `200` expired timer response:**
 
 ```json
 {
@@ -1732,7 +1755,7 @@ Example responses from the previously reviewed backend:
 }
 ```
 
-**Rules:** Open Hunt ranking uses total successfully earned points adjusted by traps. Sequential ranking uses the highest successfully scanned sequential tag; in that mode the numeric field should be renamed to `highest_tag` or a neutral `value` rather than `score`. Frontend highlights the current player.
+**Rules:** Open Hunt ranking uses total successfully earned points adjusted by traps. Sequential ranking uses the highest successfully scanned sequential tag; in that mode the numeric field represents the highest successfully scanned tag. Frontend highlights the current player.
 
 ## 8. Admin and store integration
 
@@ -1746,7 +1769,7 @@ Example responses from the previously reviewed backend:
 
 **Auth:** Admin.  
 
-**To Do JSON request:**
+**Planned JSON request:**
 
 ```json
 { "mode": "sequential", "tag_count": 20 }
@@ -1758,7 +1781,6 @@ Example responses from the previously reviewed backend:
 { "package_id": "pkg_123", "status": "unclaimed" }
 ```
 
-**Open:** Package creation permissions, unique ID generation, master-link lifecycle, physical provisioning process.
 
 ### 8.2 `GET /api/admin/packages/{package_id}/tags`
 
@@ -1781,7 +1803,7 @@ Example responses from the previously reviewed backend:
 }
 ```
 
-### 8.4 `POST /api/webhooks/purchases`
+### 8.3 `POST /api/webhooks/purchases`
 
 **User stories:** US-06.
 
@@ -1812,7 +1834,7 @@ Example responses from the previously reviewed backend:
 
 **Rules:** Verify source authenticity, deduplicate repeated webhook deliveries, and only provision/associate packages for qualifying paid orders. Final path, headers, signature verification, and payload fields depend on the actual provider's documentation.
 
-### 8.5 `POST /api/admin/packages/{package_id}/tags/{tag_id}/printed`
+### 8.4 `POST /api/admin/packages/{package_id}/tags/{tag_id}/printed`
 
 **User story:** US-22 — Prepare an NFC Package.  
 **Status:** Planned addition; proposed path and contract.  
@@ -1826,7 +1848,7 @@ Example responses from the previously reviewed backend:
 { "programmed": true, "locked": true }
 ```
 
-**Proposed `200` response:**
+**Planned `200` response:**
 
 ```json
 {
@@ -1844,41 +1866,41 @@ Example responses from the previously reviewed backend:
 
 ## 9. External integrations
 
-| Integration | To Do use | Status/qualification |
+| Integration | Planned use | Status/qualification |
 |---|---|---|
-| Axiom | Centralized application logs | Optional integration noted in previously reviewed backend |
-| Upstash Redis | Optional live leaderboard/short-lived game state | Planned; assess whether PostgreSQL alone is sufficient |
+| Axiom | Centralized application logs | Optional backend integration |
+| Upstash Redis | Optional live leaderboard/short-lived game state | Planned; optional |
 | Cloudflare R2 | Store tag images/media | Planned |
 | GitHub Actions | CI/CD automation | Deployment tool, not a runtime gameplay API |
 
 ## 10. Traceability summary
 
-In rows below, `...` means `/api/packages/{package_id}`. Mappings describe coverage, a single endpoint can support multiple stories.
+In the rows below, `...` means `/api/packages/{package_id}`. Mappings describe coverage; a single endpoint can support multiple stories.
 
-| ID | Final user story | Category | API/frontend coverage | Status and remaining gap |
+| ID | Final user story | Category | API/frontend coverage | Status and coverage |
 |---|---|---|---|---|
-| US-01 | Registration | Owner | `POST /auth/register` (§3.1) | Existing; avatar and automatic sign-in gap |
+| US-01 | Registration | Owner | `POST /auth/register` (§3.1) | Existing; registration |
 | US-02 | Log In | Owner | `POST /auth/login` (§3.2) | Existing; preserve scanned-tag destination |
-| US-03 | Log Out | Owner | `POST /auth/logout` (§3.3) | Existing; token revocation limitation |
+| US-03 | Log Out | Owner | `POST /auth/logout` (§3.3) | Existing; logout |
 | US-04 | Forgot Password | Owner | `POST /auth/forgot-password`, `POST /auth/reset-password` (§3.9–3.10) | Planned additions |
-| US-05 | Manage Account | Owner | `GET/PATCH /users/me`, `POST /auth/change-password`, `DELETE /auth/delete-account` (§3.4–3.7) | Existing; confirmation/logout UI and deletion consequences |
-| US-06 | Claim a Purchased Package | Owner | `GET /api/package-options`, `POST /api/packages/claim` (§4.1–4.2); purchase webhook candidate (§8.4) | Planned; price and required link delivery; provider contract open |
+| US-05 | Manage Account | Owner | `GET/PATCH /users/me`, `POST /auth/change-password`, `DELETE /auth/delete-account` (§3.4–3.7) | Existing; account management |
+| US-06 | Claim a Purchased Package | Owner | `GET /api/package-options`, `POST /api/packages/claim` (§4.1–4.2); planned purchase webhook (§8.3) | Planned; price and required link delivery |
 | US-07 | View and Manage Purchased NFC Packages | Owner | `GET /api/packages`, `GET/PATCH /api/packages/{package_id}` (§4.3–4.5) | Planned; owner access and rename rules |
-| US-08 | NFC Package Customization | Owner | `GET.../configuration`, `PUT.../tags/{tag_id}`, `POST.../configuration/save` (§5.1–5.2, §5.5) | Planned; dashboard UI frontend |
-| US-09 | Customize Tag Content | Owner | `PUT.../tags/{tag_id}`, `POST.../images` (§5.2–5.3) | Planned; individual save/draft interpretation open |
-| US-10 | Edit a Saved Package Configuration | Owner | `GET.../configuration`, `PUT.../tags/{tag_id}`, `POST.../configuration/save` (§5.1–5.2, §5.5) | Planned; three sessions; Edit UI and draft contract |
-| US-11 | Configure Freeze Trap | Owner | `PUT.../tags/{tag_id}`, `POST.../configuration/save` (§5.2, §5.5) | Planned; 30–180 seconds in 30-second steps |
-| US-12 | Configure Boom Trap | Owner | `PUT.../tags/{tag_id}`, `POST.../configuration/save` (§5.2, §5.5) | Planned; fixed one-point Boom, repeat rule |
-| US-13 | Configure Choose Trap | Owner | `PUT.../tags/{tag_id}`, `POST.../configuration/save`, `POST.../choose-trap` (§5.2, §5.5, §6.2) | Planned/provisional; persistence/eligibility decision |
-| US-14 | Preview Sequential Tag Experience | Owner | No backend endpoint (§5.6) | Frontend-only; Sequential layout, unsaved data, sample leaderboard |
-| US-15 | Preview Open Hunt Tag Experience | Owner | No backend endpoint (§5.6) | Frontend-only; Open Hunt layout, unsaved data, sample leaderboard |
-| US-16 | Scan a Hashed NFC Tag | Player | Access validation in `POST.../scan` (§6.1) | Planned; username hash requirement; secure protocol unresolved |
-| US-17 | View Successful Sequential Scan Result | Player | `POST.../scan`, `GET.../play-state` (§6.1, §6.3); leaderboard (§7.1) | Planned; Sequential result/progress and conditional display |
-| US-18 | View Successful Open Hunt Scan Result | Player | `POST.../scan`, `GET.../play-state` (§6.1, §6.3); leaderboard (§7.1) | Planned; normal-tag claim, extra point, no repeat rewards |
-| US-19 | Experience a Freeze Trap | Player | `POST.../scan`, `GET.../play-state` (§6.1, §6.3) | Planned; per-player Freeze and unchanged countdown |
-| US-20 | Experience a Boom Trap | Player | `POST.../scan`, `GET.../play-state`, leaderboard (§6.1, §6.3, §7.1) | Planned; one point, zero floor, trigger record and repeat eligibility |
+| US-08 | NFC Package Customization | Owner | `GET.../configuration`, `PUT.../tags/{tag_id}`, `POST.../configuration/save` (§5.1–5.2, §5.4) | Planned; dashboard UI frontend |
+| US-09 | Customize Tag Content | Owner | `PUT.../tags/{tag_id}`, `POST.../images` (§5.2–5.3) | Planned; individual tag saving |
+| US-10 | Edit a Saved Package Configuration | Owner | `GET.../configuration`, `PUT.../tags/{tag_id}`, `POST.../configuration/save` (§5.1–5.2, §5.4) | Planned; three sessions; Edit UI and draft contract |
+| US-11 | Configure Freeze Trap | Owner | `PUT.../tags/{tag_id}`, `POST.../configuration/save` (§5.2, §5.4) | Planned; 30–180 seconds in 30-second steps |
+| US-12 | Configure Boom Trap | Owner | `PUT.../tags/{tag_id}`, `POST.../configuration/save` (§5.2, §5.4) | Planned; fixed one-point Boom, repeat rule |
+| US-13 | Configure Choose Trap | Owner | `PUT.../tags/{tag_id}`, `POST.../configuration/save`, `POST.../choose-trap` (§5.2, §5.4, §6.2) | Planned/provisional; Choose Trap configuration |
+| US-14 | Preview Sequential Tag Experience | Owner | No backend endpoint (frontend-only preview) | Frontend-only; Sequential layout, unsaved data, sample leaderboard |
+| US-15 | Preview Open Hunt Tag Experience | Owner | No backend endpoint (frontend-only preview) | Frontend-only; Open Hunt layout, unsaved data, sample leaderboard |
+| US-16 | Scan a Hashed NFC Tag | Player | Access validation in `POST.../tags/{tag_id}` (§6.1) | Planned; username hash validation |
+| US-17 | View Successful Sequential Scan Result | Player | `POST.../tags/{tag_id}`, `GET.../play-state` (§6.1, §6.3); leaderboard (§7.1) | Planned; Sequential result/progress and conditional display |
+| US-18 | View Successful Open Hunt Scan Result | Player | `POST.../tags/{tag_id}`, `GET.../play-state` (§6.1, §6.3); leaderboard (§7.1) | Planned; normal-tag claim, extra point, no repeat rewards |
+| US-19 | Experience a Freeze Trap | Player | `POST.../tags/{tag_id}`, `GET.../play-state` (§6.1, §6.3) | Planned; per-player Freeze and unchanged countdown |
+| US-20 | Experience a Boom Trap | Player | `POST.../tags/{tag_id}`, `GET.../play-state`, leaderboard (§6.1, §6.3, §7.1) | Planned; one point, zero floor, trigger record and repeat eligibility |
 | US-21 | View Leaderboard | Player | `GET.../leaderboard` (§7.1) | Planned; mode-specific value and score refresh |
-| US-22 | Prepare an NFC Package | Admin | `GET /api/admin/packages/{package_id}/tags`, `POST /api/admin/packages/{package_id}/tags/{tag_id}/printed` (§8.2, §8.5) | Planned; load contract incomplete; safe retry decision |
+| US-22 | Prepare an NFC Package | Admin | `GET /api/admin/packages/{package_id}/tags`, `POST /api/admin/packages/{package_id}/tags/{tag_id}/printed` (§8.2, §8.3) | Planned; NFC package preparation |
 
 # SCM and QA Plans
 
@@ -1949,4 +1971,4 @@ Deployment is automated to reduce human error and ensure consistent delivery acr
 After deployment, monitoring helps the team detect errors and availability issues:
 
 - **Centralized Logging:** System errors, API requests, and critical events are sent to a central logging dashboard, such as Axiom, for real-time observability.
-- **Health Checks:** Uptime monitors regularly check the `/api/health` endpoint to verify application availability and infrastructure responsiveness.
+- **Health Checks:** Uptime monitors regularly check the `/health/` endpoint to verify application availability and infrastructure responsiveness.
