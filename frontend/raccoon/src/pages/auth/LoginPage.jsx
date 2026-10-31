@@ -8,6 +8,7 @@ import AuthPromo from "../../components/layout/AuthPromo";
 import { useNavigate } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
 import DehmScan from "../../components/ui/DehmScan";
+import { takeClaimReturn } from "../../utils/claimReturn";
 
 export default function LoginPage() {
   const { signIn } = useAuth(); // userData from Authcontext
@@ -37,7 +38,8 @@ export default function LoginPage() {
       const userData = await getCurrentUser(result.access_token);
 
       signIn(result.access_token, userData);
-      navigate("/home", { replace: true });
+      const returnTo = takeClaimReturn();
+      navigate(returnTo ?? "/home", { replace: true });
     } catch (error) {
       if (error.status === 401 || error.status === 400) {
         setServerError("اسم المستخدم/البريد أو كلمة المرور غير صحيحة.");

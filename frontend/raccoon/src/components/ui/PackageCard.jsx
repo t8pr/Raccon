@@ -2,11 +2,12 @@ import Chip from "./Chip";
 import Button from "./Button";
 import Mark from "../../assets/Mark.png";
 
-// pkg: بيانات الباكج.
-// onDetails: دالة تستقبل معرّف الباكج لفتح تفاصيله.
 export default function PackageCard({ pkg, onDetails }) {
   const modeLabel = pkg.mode === "sequential" ? "تسلسلي" : "صيد مفتوح";
+
   const modeTone = pkg.mode === "sequential" ? "accent" : "dark";
+
+  const [, duration, players] = pkg.meta.split("·");
 
   return (
     <article className="package-card">
@@ -44,7 +45,26 @@ export default function PackageCard({ pkg, onDetails }) {
 
         <p className="package-card__description">{pkg.description}</p>
 
-        <p className="package-card__meta">{pkg.meta}</p>
+        <dl className="store-card-facts">
+          <div>
+            <dt>عدد القطع</dt>
+            <dd>{pkg.pieces} قطعة NFC</dd>
+          </div>
+
+          <div>
+            <dt>مدة الجولة</dt>
+            <dd>
+              <bdi>{duration?.trim()}</bdi>
+            </dd>
+          </div>
+
+          <div>
+            <dt>عدد اللاعبين</dt>
+            <dd>
+              <bdi>{players?.trim()}</bdi>
+            </dd>
+          </div>
+        </dl>
 
         <div className="package-card__footer">
           <strong className="package-card__price">

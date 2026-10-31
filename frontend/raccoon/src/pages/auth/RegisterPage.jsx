@@ -9,6 +9,8 @@ import { registerUser, loginUser } from "../../api/auth/authApi";
 import { getCurrentUser } from "../../api/users/usersApi";
 import { useAuth } from "../../context/AuthContext";
 import RegisterWelcome from "../../components/auth/RegisterWelcome";
+import { useNavigate } from "react-router-dom";
+import { takeClaimReturn } from "../../utils/claimReturn";
 
 export default function RegisterPage() {
   const [isSubmitting, setIsSubmitting] = useState(false); // is the submitting is load
@@ -17,6 +19,7 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState({}); // check the logic of auth(name/email/password/..) in backend
   const [successMessage, setSuccessMessage] = useState(""); // message register success
   const { signIn } = useAuth();
+  const navigate = useNavigate();
 
   const [registeredUser, setRegisteredUser] = useState(null);
   const [welcomeStatus, setWelcomeStatus] = useState("loading"); // after registeration success
@@ -57,6 +60,12 @@ export default function RegisterPage() {
         const profile = await getCurrentUser(result.access_token);
 
         signIn(result.access_token, profile);
+        const returnTo = takeClaimReturn();
+
+        if (returnTo) {
+          navigate(returnTo, { replace: true });
+          return;
+        }
         setWelcomeStatus("ready");
       } catch {
         setWelcomeStatus("error");

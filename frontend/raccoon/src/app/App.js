@@ -24,6 +24,9 @@ import CustomizationPage from "../pages/Customization/CustomizationPage";
 // Profile Page
 import ProfilePage from "../pages/Profile/ProfilePage";
 
+// ClaimPackage
+import ClaimPage from "../pages/Claim/ClaimPage";
+
 function AppContent() {
   const location = useLocation(); // work only insdie BrowserRouter and App create useLocation(}
 
@@ -86,6 +89,7 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          <Route path="/claim/:masterAuthHash" element={<ClaimPage />} />
         </Routes>
       </main>
     </div>
