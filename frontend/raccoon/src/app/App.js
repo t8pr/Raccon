@@ -10,6 +10,8 @@ import {
 // Auth (Register / login)
 import RegisterPage from "../pages/auth/RegisterPage";
 import LoginPage from "../pages/auth/LoginPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import { AuthProvider } from "../context/AuthContext";
 
 // Home
@@ -28,8 +30,8 @@ function AppContent() {
   const location = useLocation(); // work only insdie BrowserRouter and App create useLocation(}
 
   // Pages without Sidebar and Topbar
-  const isAuthPage =
-    location.pathname === "/register" || location.pathname === "/login";
+  const authPaths = ["/register", "/login", "/forgot-password", "/reset-password"];
+  const isAuthPage = authPaths.includes(location.pathname);
 
   return (
     <div>
@@ -41,6 +43,9 @@ function AppContent() {
           {/* Authentication */}
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          {/* The email link opens /reset-password?token=... */}
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           {/*Home page*/}
           <Route
             path="/home"
