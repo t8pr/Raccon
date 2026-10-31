@@ -81,3 +81,33 @@ export function deleteAccount(accessToken) {
     "تعذر حذف الحساب.",
   );
 }
+
+// ForgotPassword
+export function requestPasswordReset(email) {
+  return apiRequest(
+    "/auth/forgot-password",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ email }),
+    },
+    "تعذر إرسال رابط إعادة تعيين كلمة المرور.",
+  );
+}
+
+// ResetPassword
+export function resetPassword({ token, newPassword }) {
+  return apiRequest(
+    "/auth/reset-password",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token, new_password: newPassword }),
+    },
+    "تعذر تغيير كلمة المرور.",
+  );
+}
