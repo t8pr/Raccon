@@ -155,10 +155,7 @@ function PackagesContent({ auth }) {
     const previewQuery = previewQueries[index];
     const pack = previewQuery.data;
 
-    const verified =
-      previewQuery.isSuccess &&
-      !previewQuery.isError &&
-      !previewQuery.isFetching;
+    const verified = Boolean(pack);
 
     const ownedByMe = Boolean(verified && pack.owner_id === user.id);
 
@@ -173,8 +170,7 @@ function PackagesContent({ auth }) {
     // لا نختار حدثًا عشوائيًا عند وجود أكثر من نتيجة.
     const targetEvent =
       ownedByMe &&
-      eventsQuery.isSuccess &&
-      !eventsQuery.isFetching &&
+      Array.isArray(eventsQuery.data) &&
       matchingEvents.length === 1
         ? matchingEvents[0]
         : null;
@@ -203,7 +199,10 @@ function PackagesContent({ auth }) {
       eventId: targetEvent?.id ?? null,
       previewQuery,
 
-      // لا نفترض عدد القطع المجهزة بعد الربط.
+      checkingAction: !pack || (ownedByMe && !Array.isArray(eventsQuery.data)),
+
+      actionError: previewQuery.isError || (ownedByMe && eventsQuery.isError),
+
       showEmptyProgress: verified && pack.owner_id === null,
     };
   });
@@ -291,6 +290,14 @@ function PackagesContent({ auth }) {
   function getActionLabel(pkg) {
     if (pkg.eventId) {
       return "فتح التخصيص";
+    }
+
+    if (pkg.actionError) {
+      return "تعذر التحقق";
+    }
+
+    if (pkg.checkingAction) {
+      return "جارٍ التحقق...";
     }
 
     if (pkg.status === "other") {
@@ -541,7 +548,12 @@ function PackagesContent({ auth }) {
                       )}
 
                       <div className="owned-package__actions">
-                        <Button fullWidth onClick={() => openPackage(pkg)}>
+                        <Button
+                          fullWidth
+                          loading={pkg.checkingAction && !pkg.actionError}
+                          disabled={pkg.checkingAction || pkg.actionError}
+                          onClick={() => openPackage(pkg)}
+                        >
                           {getActionLabel(pkg)}
                         </Button>
                       </div>
