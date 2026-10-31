@@ -97,3 +97,6 @@ class AdminService:
         self.session.add(tag)
         self.session.commit()
         return tag.sequence_num
+
+    def get_packs(self, admin_user: User):
+        return self.packs.get_packs()

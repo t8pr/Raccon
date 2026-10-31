@@ -11,6 +11,7 @@ from api.events.router import router as events_router
 from api.journey.router import router as journey_router
 from scalar_fastapi import get_scalar_api_reference
 from core.logger import listener
+from fastapi_pagination import add_pagination
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -44,6 +45,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+add_pagination(app)
 
 @app.get("/")
 def root():

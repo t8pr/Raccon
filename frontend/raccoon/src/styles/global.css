@@ -3307,6 +3307,142 @@ video {
   }
 }
 
+/* ==========================================
+   FEATURE: FORGOT & RESET PASSWORD
+========================================== */
+
+/* "Forgot password?" link on the login form */
+
+.login-form__forgot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* touch target */
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+.login-form__forgot a:hover {
+  text-decoration: underline;
+}
+
+.login-form__forgot a:focus-visible,
+.auth-status__link:focus-visible {
+  outline: none;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* Status panel: check email / link expired / password changed */
+
+.auth-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 440px;
+  direction: rtl;
+  text-align: start;
+}
+
+.auth-status__icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+.auth-status--success .auth-status__icon {
+  background: var(--banner-success-bg);
+  color: var(--banner-success-text);
+}
+
+.auth-status--error .auth-status__icon {
+  background: var(--banner-error-bg);
+  color: var(--banner-error-text);
+}
+
+.auth-status__spinner {
+  width: 24px;
+  height: 24px;
+  border-color: var(--line);
+  border-top-color: var(--accent);
+}
+
+.auth-status__title {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.auth-status__text,
+.auth-status__hint {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--ink-muted);
+  overflow-wrap: anywhere; /* long emails */
+}
+
+.auth-status__hint {
+  font-size: 14px;
+}
+
+.auth-status__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-4);
+}
+
+.auth-status__link {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+.auth-status__link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 767px) {
+  .auth-status {
+    max-width: none;
+    align-items: center;
+    text-align: center;
+    padding-top: var(--space-4);
+  }
+
+  /* Title already displayed in the mobile header (like the login form) */
+  .auth-status__title {
+    display: none;
+  }
+
+  .auth-status__actions {
+    margin-top: var(--space-2);
+  }
+}
+/* Hide Edge's built-in password reveal button (we use our own eye icon) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
 /* Claim page */
 
 .claim-view {
