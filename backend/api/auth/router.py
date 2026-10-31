@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, Response
 from services.auth_service import AuthService
 from models.user import User
 from api.auth.schemas import UserRegister, UserLogin, Token, ChangePassword, ForgotPassword, ResetPassword, GoogleLoginRequest
@@ -14,10 +14,21 @@ def register_user(user_data: UserRegister, service: AuthService = Depends()):
 
 @router.post("/login", response_model=Token)
 def login_user(
+    response: Response,
     user_data: OAuth2PasswordRequestForm = Depends(),
     service: AuthService = Depends()
 ):
     access_token = service.login(user_data.username, user_data.password)
+    
+    response.set_cookie(
+        key="access_token",
+        value=f"Bearer {access_token}",
+        httponly=True,
+        samesite="lax", # Set to "none" later 
+        secure=False, # Set to True in production Raccon.app
+        max_age=60 * 24 * 7 * 60
+    )
+    
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/google", response_model=Token)

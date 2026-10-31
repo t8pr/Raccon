@@ -118,39 +118,34 @@ class EventService:
 
     def setup_event_journey(self, user: User, event_id: uuid.UUID, request) -> None:
         event, pack = self.validate_event_ownership(user, event_id, request)
-
         if event.status != "draft":
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST,
-                "You can't setup a saved event, use the edit option.",
+                "You can't setup a saved/live event, use the edit option.",
             )
-
+        
         self.configure_tag(pack, event, request)
-
-        event.status = "paused"
-        self.events.add_event(event)
         self.session.commit()
 
     def edit_event(self, user: User, event_id: uuid.UUID, request) -> dict:
         event, pack = self.validate_event_ownership(user, event_id, request)
-
-        if event.status != "paused":
+        
+        if event.status == "draft":
             raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, "Event must be paused to edit."
+                status.HTTP_400_BAD_REQUEST, "Event is still in draft. Use setup instead."
             )
-
+            
         if event.edit_count >= settings.MAX_EDIT_LIMIT:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You have reached the maximum edit limit.",
             )
-
+            
         self.configure_tag(pack, event, request)
-
         event.edit_count += 1
         self.events.add_event(event)
         self.session.commit()
-
+        
         return {
             "edit_count": event.edit_count,
             "edits_remaining": settings.MAX_EDIT_LIMIT - event.edit_count,

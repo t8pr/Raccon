@@ -11,6 +11,7 @@ from api.events.router import router as events_router
 from api.journey.router import router as journey_router
 from scalar_fastapi import get_scalar_api_reference
 from core.logger import listener
+from api.nfc.router import router as nfc_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -28,6 +29,7 @@ app.include_router(admin_router)
 app.include_router(packs_router)
 app.include_router(events_router)
 app.include_router(journey_router)
+app.include_router(nfc_router)
 
 origins = [
     "https://react-learning.aalsalhi-eng.workers.dev",

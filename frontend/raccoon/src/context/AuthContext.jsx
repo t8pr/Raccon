@@ -18,7 +18,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let active = true;
 
-    const savedToken = sessionStorage.getItem(TOKEN_KEY); // after refresh the page it will return the tokon
+    const savedToken = localStorage.getItem(TOKEN_KEY); // after refresh the page it will return the tokon
 
     if (!savedToken) {
       setIsRestoring(false);
@@ -40,7 +40,7 @@ export function AuthProvider({ children }) {
 
         if (error.status === 401 || error.status === 403) {
           // Token is invalid
-          sessionStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(TOKEN_KEY);
 
           setAccessToken(null);
           setUser(null);
@@ -64,7 +64,7 @@ export function AuthProvider({ children }) {
 
   // Login
   function signIn(token, userData) {
-    sessionStorage.setItem(TOKEN_KEY, token); // save the jwt token in the browser
+    localStorage.setItem(TOKEN_KEY, token); // save the jwt token in the browser
 
     setAccessToken(token);
     setUser(userData);
@@ -73,7 +73,7 @@ export function AuthProvider({ children }) {
 
   // Logout
   function clearSession() {
-    sessionStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(TOKEN_KEY);
 
     setAccessToken(null);
     setUser(null);
