@@ -3,41 +3,7 @@ import { Link } from "react-router-dom";
 import AuthField from "../ui/AuthField";
 import Button from "../ui/Button";
 import InlineMessage from "../ui/InlineMessage";
-
-// Validate Username or Email
-function validateIdentifier(value) {
-  const identifier = value.trim();
-
-  // Required
-  if (!identifier) {
-    return "أدخل اسم المستخدم أو البريد الإلكتروني.";
-  }
-
-  // Email Validation
-  if (identifier.includes("@")) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-    if (!emailRegex.test(identifier)) {
-      return "أدخل بريدًا إلكترونيًا صحيحًا.";
-    }
-
-    return "";
-  }
-
-  // Username Length
-  if (identifier.length < 3) {
-    return "اسم المستخدم يجب أن يكون 3 أحرف على الأقل.";
-  }
-
-  // Username Format
-  const usernameRegex = /^[a-z0-9_]+$/;
-
-  if (!usernameRegex.test(identifier)) {
-    return "استخدم حروفًا إنجليزية صغيرة أو أرقامًا أو _ فقط.";
-  }
-
-  return "";
-}
+import { loginSchema, validateForm } from "../../utils/validation";
 
 export default function LoginForm({
   onLogin,
@@ -49,8 +15,9 @@ export default function LoginForm({
   const [touched, setTouched] = useState({});
 
   // Check if all required fields have values
-  const isFormValid =
-    validateIdentifier(values.identifier) === "" && values.password !== "";
+  const validation = validateForm(loginSchema, values);
+  const errors = validation.errors;
+  const isFormValid = validation.success;
 
   // Update input values
   function handleChange(event) {
@@ -80,16 +47,18 @@ export default function LoginForm({
   function handleSubmit(event) {
     event.preventDefault();
 
-    if (!isFormValid || isSubmitting) {
+    if (isSubmitting) return;
+
+    const result = validateForm(loginSchema, values);
+
+    if (!result.success) {
+      setTouched({
+        identifier: true,
+        password: true,
+      });
       return;
     }
-
-    if (onLogin) {
-      onLogin({
-        identifier: values.identifier.trim(),
-        password: values.password,
-      });
-    }
+    onLogin?.(result.data);
   }
 
   return (
@@ -116,9 +85,7 @@ export default function LoginForm({
           onChange={handleChange}
           onBlur={handleBlur}
           placeholder="اسم المستخدم أو البريد الإلكتروني"
-          error={
-            touched.identifier ? validateIdentifier(values.identifier) : ""
-          }
+          error={touched.identifier ? errors.identifier || "" : ""}
           autoComplete="username"
         />
 
@@ -130,9 +97,7 @@ export default function LoginForm({
           onChange={handleChange}
           onBlur={handleBlur}
           placeholder="أدخل كلمة المرور"
-          error={
-            touched.password && !values.password ? "أدخل كلمة المرور." : ""
-          }
+          error={touched.identifier ? errors.password || "" : ""}
           autoComplete="current-password"
         />
       </div>

@@ -1,83 +1,107 @@
-// userData and Token
-import { createContext, useContext, useState, useEffect } from "react";
-import { getCurrentUser } from "../api/authApi";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getCurrentUser } from "../api/users/usersApi";
 
-const AuthContext = createContext(null); // Apply when use useAuth() outer Provider
+const AuthContext = createContext(null);
 const TOKEN_KEY = "raccoon_access_token";
 
+function createSession(token) {
+  return {
+    token,
+    key: crypto.randomUUID(),
+  };
+}
+
 export function AuthProvider({ children }) {
-  // Authentication State For register
-  const [accessToken, setAccessToken] = useState(null);
-  const [user, setUser] = useState(null);
+  const queryClient = useQueryClient();
 
-  // Session Restoration State
-  const [isRestoring, setIsRestoring] = useState(true);
-  const [restoreError, setRestoreError] = useState("");
+  const [session, setSession] = useState(() =>
+    createSession(localStorage.getItem(TOKEN_KEY)),
+  );
 
-  // Restore session when React starts
+  const [accountDeleted, setAccountDeleted] = useState(false);
+
+  const accessToken = localStorage.getItem(TOKEN_KEY);
+  const profileKey = ["profile", accessToken];
+
+  const profileQuery = useQuery({
+    queryKey: profileKey,
+    queryFn: ({ signal }) => getCurrentUser(accessToken, { signal }),
+    enabled: Boolean(accessToken) && !accountDeleted,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  const unauthorized =
+    profileQuery.error?.status === 401 || profileQuery.error?.status === 403;
+
+  const user =
+    accessToken && !unauthorized ? (profileQuery.data ?? null) : null;
+
+  const isRestoring =
+    Boolean(accessToken) && profileQuery.isPending && !accountDeleted;
+
+  const restoreError =
+      accessToken &&
+      !accountDeleted &&
+      !unauthorized &&
+      profileQuery.isError &&
+      !profileQuery.data
+        ? "تعذر التحقق من جلسة الدخول. حاول مرة أخرى."
+        : "";
+
+  const clearSession = useCallback(() => {
+      localStorage.removeItem(TOKEN_KEY);
+      void queryClient.cancelQueries({ queryKey: ["profile"] });
+      queryClient.removeQueries({ queryKey: ["profile"] });
+      setAccountDeleted(false);
+      setSession(createSession(null));
+  }, [queryClient]);
+
   useEffect(() => {
-    let active = true;
-
-    const savedToken = localStorage.getItem(TOKEN_KEY); // after refresh the page it will return the tokon
-
-    if (!savedToken) {
-      setIsRestoring(false);
-      return undefined;
+    if (unauthorized) {
+      clearSession();
     }
+  }, [unauthorized, clearSession]);
 
-    async function restoreSession() {
-      try {
-        // Verify saved token with FastAPI
-        const profile = await getCurrentUser(savedToken);
-
-        if (!active) return;
-
-        setAccessToken(savedToken);
-        setUser(profile);
-        setRestoreError("");
-      } catch (error) {
-        if (!active) return;
-
-        if (error.status === 401 || error.status === 403) {
-          // Token is invalid
-          localStorage.removeItem(TOKEN_KEY);
-
-          setAccessToken(null);
-          setUser(null);
-        } else {
-          // Network or server error
-          setRestoreError("تعذر التحقق من جلسة الدخول. حاول مرة أخرى.");
-        }
-      } finally {
-        if (active) {
-          setIsRestoring(false);
-        }
-      }
-    }
-
-    restoreSession();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Login
   function signIn(token, userData) {
-    localStorage.setItem(TOKEN_KEY, token); // save the jwt token in the browser
+    const nextSession = createSession(token);
 
-    setAccessToken(token);
-    setUser(userData);
-    setRestoreError("");
+    void queryClient.cancelQueries({
+      queryKey: ["profile"],
+    });
+    queryClient.removeQueries({
+      queryKey: ["profile"],
+    });
+
+    localStorage.setItem(TOKEN_KEY, token);
+    queryClient.setQueryData(["profile", nextSession.key], userData);
+
+    setAccountDeleted(false);
+    setSession(nextSession);
   }
 
-  // Logout
-  function clearSession() {
-    localStorage.removeItem(TOKEN_KEY);
+  async function updateUser(updatedUser) {
+    await queryClient.cancelQueries({
+      queryKey: profileKey,
+      exact: true,
+    });
+    queryClient.setQueryData(profileKey, updatedUser);
+  }
 
-    setAccessToken(null);
-    setUser(null);
-    setRestoreError("");
+  async function markAccountDeleted() {
+    localStorage.removeItem(TOKEN_KEY);
+    setAccountDeleted(true);
+    await queryClient.cancelQueries({
+      queryKey: profileKey,
+      exact: true,
+    });
   }
 
   return (
@@ -89,6 +113,8 @@ export function AuthProvider({ children }) {
         restoreError,
         signIn,
         clearSession,
+        updateUser,
+        markAccountDeleted,
       }}
     >
       {children}
@@ -96,13 +122,11 @@ export function AuthProvider({ children }) {
   );
 }
 
-// Customize Hooks
 export function useAuth() {
   const context = useContext(AuthContext);
 
   if (context === null) {
     throw new Error("useAuth must be used within AuthProvider");
   }
-
   return context;
 }

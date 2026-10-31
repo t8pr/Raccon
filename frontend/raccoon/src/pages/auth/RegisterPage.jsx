@@ -5,7 +5,8 @@ import AuthPromo from "../../components/layout/AuthPromo";
 import DehmScan from "../../components/ui/DehmScan";
 import RegisterForm from "../../components/auth/RegisterForm";
 
-import { registerUser, loginUser, getCurrentUser } from "../../api/authApi";
+import { registerUser, loginUser } from "../../api/auth/authApi";
+import { getCurrentUser } from "../../api/users/usersApi";
 import { useAuth } from "../../context/AuthContext";
 import RegisterWelcome from "../../components/auth/RegisterWelcome";
 
@@ -121,6 +122,7 @@ export default function RegisterPage() {
   }
   return (
     <AuthLayout
+      variant="register"
       promo={<AuthPromo scene={<DehmScan />} mobileTitle="أنشى حسابك" />}
     >
       <RegisterForm

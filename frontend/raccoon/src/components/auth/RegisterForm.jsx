@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import googleLogo from "../../assets/googleLogo.png";
 import AuthField from "../ui/AuthField";
-import CharacterPicker from "../ui/CharacterPicker";
 import Button from "../ui/Button";
 import InlineMessage from "../ui/InlineMessage";
+import { registerSchema, validateForm } from "../../utils/validation";
 
 const initialValues = {
   name: "",
@@ -13,60 +13,7 @@ const initialValues = {
   phone_number: "",
   password: "",
   confirmPassword: "",
-  avatar_id: null,
 };
-
-// Frontend Validation
-function validateRegister(values) {
-  const errors = {};
-
-  // Avatar
-  if (!values.avatar_id) {
-    errors.avatar_id = "اختر صورة رمزية للمتابعة.";
-  }
-
-  // Name
-  if (!values.name.trim()) {
-    errors.name = "أدخل اسمك.";
-  }
-
-  // Username
-  if (!values.username.trim()) {
-    errors.username = "اختر اسم مستخدم.";
-  } else if (values.username.trim().length < 3) {
-    errors.username = "اسم المستخدم يجب أن يحتوي على 3 أحرف على الأقل.";
-  }
-
-  // Email
-  if (!values.email.trim()) {
-    errors.email = "أدخل بريدك الإلكتروني.";
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
-    errors.email = "أدخل بريدًا إلكترونيًا صحيحًا.";
-  }
-
-  // Phone
-  if (!values.phone_number.trim()) {
-    errors.phone_number = "أدخل رقم جوالك.";
-  } else if (!/^5\d{8}$/.test(values.phone_number.trim())) {
-    errors.phone_number = "أدخل رقم جوال سعودي صحيحًا يبدأ بـ 5.";
-  }
-
-  // Password
-  if (!values.password) {
-    errors.password = "أدخل كلمة المرور.";
-  } else if (values.password.length < 8) {
-    errors.password = "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل.";
-  }
-
-  // Confirm Password
-  if (!values.confirmPassword) {
-    errors.confirmPassword = "أكد كلمة المرور.";
-  } else if (values.confirmPassword !== values.password) {
-    errors.confirmPassword = "كلمتا المرور غير متطابقتين.";
-  }
-
-  return errors;
-}
 
 export default function RegisterForm({
   onRegister,
@@ -78,8 +25,9 @@ export default function RegisterForm({
 }) {
   const [values, setValues] = useState(initialValues);
   const [touched, setTouched] = useState({});
-  const errors = validateRegister(values);
-  const isFormValid = Object.keys(errors).length === 0;
+  const validation = validateForm(registerSchema, values);
+  const errors = validation.errors;
+  const isFormValid = validation.success;
 
   // error massage under the field: touched error or fieldErrors from server
   function getFieldError(name) {
@@ -93,14 +41,20 @@ export default function RegisterForm({
   // Update Input
   function handleChange(event) {
     const { name, value } = event.target;
-    if (onEdit) {
-      onEdit();
-    }
+
+    onEdit?.();
 
     setValues((previous) => ({
       ...previous,
       [name]: value,
     }));
+
+    if (name === "confirmPassword") {
+      setTouched((previous) => ({
+        ...previous,
+        confirmPassword: true,
+      }));
+    }
   }
 
   // Validate after leaving field
@@ -113,36 +67,21 @@ export default function RegisterForm({
     }));
   }
 
-  // Select Avatar
-  function handleAvatarChange(id) {
-    if (onEdit) {
-      onEdit();
-    }
-
-    setValues((previous) => ({
-      ...previous,
-      avatar_id: id,
-    }));
-  }
-
   // Submit Form
   function handleSubmit(event) {
     event.preventDefault();
 
-    if (!isFormValid || isSubmitting) {
+    if (isSubmitting) return;
+    const result = validateForm(registerSchema, values);
+    if (!result.success) {
+      setTouched(
+        Object.fromEntries(
+          Object.keys(initialValues).map((field) => [field, true]),
+        ),
+      );
       return;
     }
-
-    if (onRegister) {
-      onRegister({
-        name: values.name.trim(),
-        username: values.username.trim(),
-        email: values.email.trim(),
-        phone_number: values.phone_number.trim(),
-        password: values.password,
-        avatar_id: values.avatar_id,
-      });
-    }
+    onRegister?.(result.data);
   }
 
   return (
@@ -150,16 +89,6 @@ export default function RegisterForm({
       {/* Header */}
       <div className="register-form__header">
         <h1 className="register-form__title">أنشئ حسابك</h1>
-      </div>
-
-      {/* Character Picker */}
-      <div className="register-form__avatars">
-        <CharacterPicker
-          value={values.avatar_id}
-          onChange={handleAvatarChange}
-          required
-          error={getFieldError("avatar_id")}
-        />
       </div>
 
       {/* Fields */}

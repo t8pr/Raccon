@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { loginUser, getCurrentUser } from "../../api/authApi";
+import { loginUser } from "../../api/auth/authApi";
+import { getCurrentUser } from "../../api/users/usersApi";
 import { useAuth } from "../../context/AuthContext";
 import AuthLayout from "../../components/layout/AuthLayout";
 import AuthPromo from "../../components/layout/AuthPromo";
