@@ -71,6 +71,12 @@ class AdminService:
         if not pack:
             raise HTTPException(status_code=404, detail="Pack not found")
             
+        owner_name = None
+        if pack.owner_id:
+            owner = self.users.get_by_id(pack.owner_id)
+            if owner:
+                owner_name = owner.name or owner.username
+
         tags = self.tags.get_by_pack_id(pack_id)
         
         tags_view = []
@@ -83,9 +89,10 @@ class AdminService:
             })
             
         return {
-            "pack_id":pack.id,
-            "mode":pack.mode,
-            "tags_to_program":tags_view
+            "pack_id": pack.id,
+            "mode": pack.mode,
+            "owner_name": owner_name,
+            "tags_to_program": tags_view
         }
         
     def mark_tag_as_printed(self, admin_user: User, tag_id: uuid.UUID) -> int:
