@@ -23,6 +23,11 @@ import StorePage from "../pages/Store/StorePage";
 import PackagesPage from "../pages/Packages/PackagesPage";
 import CustomizationPage from "../pages/Customization/CustomizationPage";
 
+// Admin
+import AdminRoute from "../pages/Admin/AdminRoute";
+import AdminExperiencesPage from "../pages/Admin/Experiences/AdminExperiencesPage";
+import CreateExperiencePage from "../pages/Admin/Experiences/CreateExperiencePage";
+
 // Profile Page
 import ProfilePage from "../pages/Profile/ProfilePage";
 
@@ -103,6 +108,31 @@ function AppContent() {
             }
           />
           <Route path="/claim/:masterAuthHash" element={<ClaimPage />} />
+          {/* Admin › إدارة التجارب */}
+          <Route
+            path="/admin/experiences"
+            element={
+              <AdminRoute>
+                <AdminExperiencesPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/experiences/new"
+            element={
+              <AdminRoute>
+                <CreateExperiencePage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/experiences/:id/edit"
+            element={
+              <AdminRoute>
+                <CreateExperiencePage />
+              </AdminRoute>
+            }
+          />
         </Routes>
         
       </main>

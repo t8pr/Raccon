@@ -11,6 +11,7 @@ class UserResponse(BaseModel):
     email: str
     phone_number: str
     avatar_id: int
+    role: str = "user"
     created_at: datetime
 
 class UserUpdate(BaseModel):
