@@ -13,7 +13,7 @@ import LoginPage from "../pages/auth/LoginPage";
 import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import { AuthProvider } from "../context/AuthContext";
-
+import ScanPage from "../pages/journey/ScanPage";
 // Home
 import HomePage from "../pages/Home/HomePage";
 import ProtectedRoute from "../pages/auth/ProtectedRoute";
@@ -40,6 +40,14 @@ function AppContent() {
     <div>
       <main className={isAuthPage ? "" : "main-content"}>
         <Routes>
+          <Route
+            path="/scan"
+            element={
+              <ProtectedRoute>
+                <ScanPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Default Route */}
           <Route path="/" element={<Navigate to="/register" replace />} />{" "}
           {/* Element is the jsx file*/}
@@ -96,6 +104,7 @@ function AppContent() {
           />
           <Route path="/claim/:masterAuthHash" element={<ClaimPage />} />
         </Routes>
+        
       </main>
     </div>
   );

@@ -10,6 +10,7 @@ from repositories.user_repo import UserRepository
 from models import User, JourneyProgress
 from datetime import datetime, timezone
 from typing import Literal
+import uuid
 
 
 class JourneyService:
@@ -130,9 +131,21 @@ class JourneyService:
             "message": f"Tag {tag.sequence_num} scanned successfully!",
             "tag_sequence": tag.sequence_num,
             "tag_type": event_tag.tag_type if event_tag else None,
-            "content": event_tag.content if event_tag else None
+            "content": event_tag.content if event_tag else None,
+            "current_score": progress.score
         }
-        
+    
+    def get_progress(self, user: User, event_id: uuid.UUID):
+        progress = self.journey_progress_repo.get_user_journey(event_id, user.user_hash)
+        if not progress:
+            return {"score": 0, "status": "not_started", "visited_sequences": []}
+        return {
+            "score": progress.score, 
+            "status": progress.status, 
+            "visited_sequences": progress.visited_sequences
+        }
+
+    
     def set_player_trap(
         self,
         user: User,
