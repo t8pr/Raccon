@@ -317,7 +317,7 @@ function PackagesContent({ auth }) {
 
       <section className="packages-page" aria-labelledby="packages-title">
         <header className="packages-page__header">
-          <h1 id="packages-title">باقاتي</h1>
+          <h1 id="packages-title">التجارب</h1>
         </header>
 
         {signedIn && items.length > 0 && (
