@@ -12,6 +12,7 @@ class TagScanResponse(BaseModel):
     tag_sequence: int
     tag_type: Optional[str] = None
     content: Optional[TagContent] = None
+    current_score: int = 0
 
 class SetTrapRequest(BaseModel):
     tag_hash: str
