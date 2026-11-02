@@ -4,13 +4,13 @@ import { getCurrentUser } from "../../api/users/usersApi";
 import { useAuth } from "../../context/AuthContext";
 import AuthLayout from "../../components/layout/AuthLayout";
 import AuthPromo from "../../components/layout/AuthPromo";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import LoginForm from "../../components/auth/LoginForm";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";import LoginForm from "../../components/auth/LoginForm";
 import DehmScan from "../../components/ui/DehmScan";
 
 export default function LoginPage() {
   const { signIn, user, accessToken, isRestoring } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [searchParams] = useSearchParams();
   const redirectTag = searchParams.get("redirect_tag");
