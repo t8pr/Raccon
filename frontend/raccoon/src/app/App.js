@@ -19,10 +19,12 @@ import ProtectedRoute from "../pages/auth/ProtectedRoute";
 // Store Page
 import StorePage from "../pages/Store/StorePage";
 import PackagesPage from "../pages/Packages/PackagesPage";
-import CustomizationPage from "../pages/Customization/CustomizationPage";
 
 // Profile Page
 import ProfilePage from "../pages/Profile/ProfilePage";
+
+// Customization Page
+import CustomizationPage from "../pages/Customization/CustomizationPage";
 
 function AppContent() {
   const location = useLocation(); // work only insdie BrowserRouter and App create useLocation(}
@@ -87,7 +89,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/customization/:packageId"
+            path="/customization/:eventId"
             element={
               <ProtectedRoute>
                 <CustomizationPage />
