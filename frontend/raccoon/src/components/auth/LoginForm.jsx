@@ -9,6 +9,7 @@ export default function LoginForm({
   onLogin,
   isSubmitting = false,
   serverError = "",
+  notice = "", // success message, e.g. after resetting the password
   onEdit,
 }) {
   const [values, setValues] = useState({ identifier: "", password: "" });
@@ -71,7 +72,11 @@ export default function LoginForm({
       </div>
 
       <div className="login-form__error" aria-live="polite">
-        {serverError && <InlineMessage type="error" message={serverError} />}
+        {serverError ? (
+          <InlineMessage type="error" message={serverError} />
+        ) : (
+          notice && <InlineMessage type="success" message={notice} />
+        )}
       </div>
 
       {/* Fields */}
@@ -104,7 +109,7 @@ export default function LoginForm({
 
       {/* Forgot Password */}
       <div className="login-form__forgot">
-        <span>نسيت كلمة المرور؟</span>
+        <Link to="/forgot-password">نسيت كلمة المرور؟</Link>
       </div>
 
       {/* Submit */}

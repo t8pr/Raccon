@@ -17,6 +17,12 @@ export default function LoginPage() {
   const redirectUser = searchParams.get("redirect_user");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // shown once after a successful password reset (sent from ResetPasswordPage)
+  const [notice, setNotice] = useState(
+    location.state?.passwordReset
+      ? "تم تغيير كلمة المرور. ادخل بكلمة المرور الجديدة."
+      : "",
+  );
   const [serverError, setServerError] = useState("");
 
   useEffect(() => {
@@ -34,6 +40,7 @@ export default function LoginPage() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setServerError("");
+    setNotice("");
 
     try {
       const result = await loginUser(credentials);
@@ -82,6 +89,7 @@ export default function LoginPage() {
           onLogin={handleLogin}
           isSubmitting={isSubmitting}
           serverError={serverError}
+          notice={notice}
           onEdit={() => setServerError("")}
         />
       </div>
