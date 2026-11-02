@@ -9,10 +9,10 @@ import TrapField from "../../components/ui/TrapField";
 import Chip from "../../components/ui/Chip";
 import InlineMessage from "../../components/ui/InlineMessage";
 
-import { GetEventDetails } from "../../api/EventApi";
-import { SaveTagSetup } from "../../api/EventApi";
-import { UpdateEventStatus } from "../../api/EventApi";
-import { SaveTagEdits } from "../../api/EventApi";
+import { GetEventDetails } from "../../api/events/eventsApi";
+import { SaveTagSetup } from "../../api/events/eventsApi";
+import { UpdateEventStatus } from "../../api/events/eventsApi";
+import { SaveTagEdits } from "../../api/events/eventsApi";
 import { useAuth } from "../../context/AuthContext";
 
 
