@@ -1198,7 +1198,10 @@ video {
   align-items: center;
   gap: 20px;
   min-height: 72px;
+  margin: 24px 48px 0;
   padding: 12px 32px;
+  border: 1px solid var(--panel);
+  border-radius: var(--radius-lg);
   background: var(--night);
 }
 
@@ -1227,8 +1230,21 @@ video {
 }
 
 .rac-navbar__link--active {
-  border-bottom-color: var(--on-panel);
+  position: relative;
   font-weight: 700;
+}
+
+/* short mint bar under the active page */
+.rac-navbar__link--active::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 4px;
+  width: 20px;
+  height: 3px;
+  margin-inline: auto;
+  border-radius: var(--radius-pill);
+  background: var(--mint);
 }
 
 .rac-navbar__link--disabled {
@@ -1324,10 +1340,17 @@ video {
   background: var(--banner-error-bg);
 }
 
+@media (max-width: 1199px) {
+  .rac-navbar {
+    margin-inline: 24px;
+  }
+}
+
 @media (max-width: 600px) {
   .rac-navbar {
     grid-template-columns: 1fr 1fr;
     gap: 8px;
+    margin: 16px 16px 0;
     padding: 12px 16px;
   }
 
