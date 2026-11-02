@@ -1,38 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 
 import AppNavbar from "../../components/layout/AppNavbar";
 import Button from "../../components/ui/Button";
 import HintField from "../../components/ui/HintField"
+import TrapField from "../../components/ui/TrapField";
+import Chip from "../../components/ui/Chip";
+import InlineMessage from "../../components/ui/InlineMessage";
 
 import { GetEventDetails } from "../../api/EventApi";
 import { SaveTagSetup } from "../../api/EventApi";
-import { StartRound } from "../../api/EventApi";
+import { UpdateEventStatus } from "../../api/EventApi";
+import { SaveTagEdits } from "../../api/EventApi";
 import { useAuth } from "../../context/AuthContext";
 
-
-/*async function handleSaveButton({ eventId, accessToken }){
-  const eventData = await GetEventDetails(eventId, accessToken)
-
-  const eventStatus = eventData.status;
-  const selectedTag = eventData.tags.find(
-  (tag) => tag.tag_id === selectedTagId
-  );
-}*/
-
-async function handleStartRound({ eventId, accessToken }){
-  const response = await StartRound(eventId, accessToken)
-
-}
 
 export default function CustomizationPage() {
   const { eventId } = useParams();
   const { accessToken } = useAuth();
+
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [hint, setHint] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
+  const [startError, setStartError] = useState("");
+  const [trap, setTrap] = useState(null);
+  const [freezeSeconds, setFreezeSeconds] = useState(null);
+  const [showLastEditWarning, setShowLastEditWarning] = useState(false);
+
+  useEffect(() => {
+  if (!saveSuccess) return;
+
+  const timer = setTimeout(() => {
+    setSaveSuccess("");
+  }, 3000);
+
+  return () => clearTimeout(timer);
+  }, [saveSuccess]);
 
   const eventQuery = useQuery({
   queryKey: ["event", eventId, accessToken],
@@ -61,6 +69,14 @@ if (!eventId) {
   } else {
   const eventData = eventQuery.data;
 
+  const canStartEditing =
+    eventData.status === "paused" &&
+    eventData.edits_remaining > 0;
+
+  const canCustomize =
+    eventData.status === "draft" ||
+    (canStartEditing && isEditing);
+
   const selectedTag =
     selectedTagId === null
     ? eventData.tags[0]
@@ -70,44 +86,157 @@ if (!eventId) {
 
   const displayedHint = hint ?? savedHint;
 
-  const hasChanges = displayedHint !== savedHint;
+  const supportsTraps = eventData.mode === "open";
 
-  async function handleSavedTag() {
+  const savedTrap =
+    selectedTag?.tag_type !== "trap"
+      ? "none"
+      : selectedTag.content?.freeze != null
+        ? "freeze"
+        : selectedTag.content?.boom === 1
+          ? "boom"
+          : selectedTag.content?.choose === true
+            ? "choose"
+            : "none";
+
+  const displayedTrap = trap ?? savedTrap;
+
+  const savedFreezeSeconds = selectedTag?.content?.freeze ?? 60;
+
+  const displayedFreezeSeconds =
+    freezeSeconds ?? savedFreezeSeconds;
+
+  const hintHasChanges = displayedHint !== savedHint;
+
+  const trapHasChanges =
+    displayedTrap !== savedTrap ||
+    (displayedTrap === "freeze" &&
+      Number(displayedFreezeSeconds) !== Number(savedFreezeSeconds));
+
+  const isTrapSelected =
+  supportsTraps && displayedTrap !== "none";
+
+  const hasChanges =
+    trapHasChanges ||
+    (!isTrapSelected && hintHasChanges);
+
+  const canStartRound =
+    (eventData.status === "draft" ||
+      eventData.status === "paused") &&
+    !hasChanges &&
+    !isEditing &&
+    !isSaving &&
+    !isStarting;
+
+  const isLive = eventData.status === "live";
+
+  const canChangeRoundStatus = isLive
+    ? !isSaving && !isStarting
+    : canStartRound;
+
+  async function handleRoundStatusChange() {
+    if (!canChangeRoundStatus) return;
+
+    setIsStarting(true);
+    setStartError("");
+
+    const nextStatus = isLive ? "paused" : "live";
+
+    try {
+      await UpdateEventStatus(eventId, accessToken, nextStatus);
+      await eventQuery.refetch();
+    } catch (error) {
+      setStartError(error.message || "تعذر تحديث حالة الجولة.");
+    } finally {
+      setIsStarting(false);
+    }
+  }
+
+  async function handleSavedTag(lastEditConfirmed = false) {
     if (
-      eventData.status !== "draft" ||
+      !canCustomize ||
       !selectedTag ||
       !hasChanges ||
-      isSaving
+      isSaving ||
+      isStarting
     ) {
     return;
     }
+    
+    setSaveError("");
+    setSaveSuccess("");
+
+    if (
+    eventData.status === "paused" &&
+    eventData.edits_remaining === 1 &&
+    lastEditConfirmed !== true
+    ) {
+      setShowLastEditWarning(true);
+      return;
+    }
+
+    setShowLastEditWarning(false);
 
     setIsSaving(true);
     setSaveError("");
 
-    const tagsConfig = [
-    {
-      tag_id: selectedTag.tag_id,
-      tag_type: selectedTag.tag_type ?? "clue",
-      content: {
-        ...selectedTag.content, /*for perserving content like image*/
+    const isTrap = supportsTraps && displayedTrap !== "none";
+
+    let content;
+
+    if (!isTrap) {
+      content = {
+        ...selectedTag.content,
         hint: displayedHint,
+      };
+    } else if (displayedTrap === "boom") {
+      content = { boom: 1 };
+    } else if (displayedTrap === "freeze") {
+      content = { freeze: Number(displayedFreezeSeconds) };
+    } else {
+      content = { choose: true };
+    }
+
+    const tagsConfig = [
+      {
+        tag_id: selectedTag.tag_id,
+        tag_type: isTrap ? "trap" : "clue",
+        content,
       },
-    },
-  ];
+    ];
 
   try {
-    await SaveTagSetup(eventId, accessToken, tagsConfig);
+    if (eventData.status === "draft") {
+      await SaveTagSetup(eventId, accessToken, tagsConfig);
+    } else if (eventData.status === "paused") {
+      await SaveTagEdits(eventId, accessToken, tagsConfig);
+    }   
+
+    if (eventData.status === "paused") {
+      setIsEditing(false);
+    }
 
     await eventQuery.refetch(); /*get new saved data*/
     setHint(null);
+    setTrap(null);
+    setFreezeSeconds(null);
+
+    setSaveSuccess(
+    `انحفظت القطعة ${String(selectedTag.sequence_num).padStart(2, "0")} بنجاح`
+    );
 
   } catch (error) {
     setSaveError(error.message || "تعذر حفظ القطعة.");
   } finally {
     setIsSaving(false);
+    }
   }
-}
+
+  function handleResetHint() {
+    if (isSaving || isStarting) return;
+
+    setHint(null);
+  }
   
   function handleSelectTag(tag) {
     if (isSaving) return;
@@ -121,19 +250,13 @@ if (!eventId) {
     if (!shouldDiscard) return;
   }
 
+  setShowLastEditWarning(false);
+
   setSelectedTagId(tag.tag_id);
   setHint(null);
+  setTrap(null);
+  setFreezeSeconds(null);
 }
-  /*
-  const canEditTags =
-  eventStatus === "draft" || eventStatus === "paused";
-
-  const canSave =
-  hasChanges &&
-  canEditTags &&
-  !isSaving &&
-  Boolean(eventId) &&
-  Boolean(accessToken);*/
 
   if (!eventId) {
   return (
@@ -148,35 +271,76 @@ if (!eventId) {
     <div className="customization-view" dir="rtl">
       <AppNavbar />
 
+      {saveSuccess && (
+        <div className="customization-toast" role="status" dir="rtl">
+          <span aria-hidden="true">✓</span>
+          <span>{saveSuccess}</span>
+        </div>
+      )}
+
       <div className="customization-space">
 
       <section className="customization-editor">
         <div className="customization-editor__header">
-          <h2 id="tag-title">{selectedTag.sequence_num} القطعة</h2>
+          <h2 id="tag-title">
+            القطعة {String(selectedTag.sequence_num).padStart(2, "0")}
+          </h2>
+
           <p id="tag-indicator">تعدّل القطعة {selectedTag.sequence_num} من {eventData.tags.length}</p>
+
+          <div className="customization-editor__edits">
+          <Chip tone="mint" size="sm">
+            التعديلات الباقية{" "}
+            <bdi dir="ltr">
+              {eventData.edits_remaining}/{eventData.max_edits}
+            </bdi>
+          </Chip>
+          </div>
         </div>
 
         <HintField 
         text={displayedHint} 
         onTextChange={setHint}
-        disabled={isSaving}
+        disabled={isSaving || !canCustomize || isStarting}
         />
        
         {/* image uploadre component*/}
         <div className="ImageUploader">soon</div>
 
+        {supportsTraps && (
+        <TrapField
+          value={displayedTrap}
+          onValueChange={setTrap}
+          freezeSeconds={displayedFreezeSeconds}
+          onFreezeSecondsChange={setFreezeSeconds}
+          disabled={isSaving || isStarting || !canCustomize}
+        />
+        )}
+
         <div className="customization-editor__actions">
           <Button
-            onClick={handleSavedTag}
+            onClick={() => handleSavedTag()}
             loading={isSaving}
             disabled={
-              eventData.status !== "draft" ||
+              !canCustomize ||
               !selectedTag ||
-              !hasChanges
+              !hasChanges ||
+              showLastEditWarning ||
+              isStarting
+              
             }
           >
             احفظ القطعة
           </Button>
+
+          <Button
+          variant="outline"
+          onClick={handleResetHint}
+          disabled={isSaving || isStarting || displayedHint === savedHint}
+        >
+          إعادة تعيين النص
+        </Button>
+
           <Button
             /*onClick={handlePreview}*/
             disabled
@@ -184,6 +348,31 @@ if (!eventId) {
             معاينة 
           </Button>
         </div>
+
+        {showLastEditWarning && (
+        <div>
+          <InlineMessage
+            type="warning"
+            message="هذا آخر تعديل متاح لك. بعد الحفظ ما تقدر تعدّل أي قطعة في الباقة. تبغى تكمل؟"
+          />
+
+          <div className="customization-editor__actions">
+            <Button
+              onClick={() => handleSavedTag(true)}
+              disabled={!canCustomize || !hasChanges || isSaving || isStarting}
+            >
+              تأكيد الحفظ
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => setShowLastEditWarning(false)}
+            >
+              إلغاء
+            </Button>
+          </div>
+        </div>
+      )}
 
         {saveError && <p role="alert">{saveError}</p>}
       </section>
@@ -197,12 +386,25 @@ if (!eventId) {
 
         <div className="Round-settings__actions">
           <Button
-            /*onClick={handleStartRound}*/
-            disabled
-          >
-            ابدأ الجولة
+            onClick={handleRoundStatusChange}
+            loading={isStarting}
+            disabled={!canChangeRoundStatus}
+            variant={isLive ? "danger" : "primary"}
+            >
+            {isLive ? "إنهاء الجولة" : "ابدأ الجولة"}
+          </Button>
+
+          <Button
+            onClick={() => {
+            if (!canStartEditing || isEditing || isSaving || isStarting) return;
+              setIsEditing(true);
+            }}
+            disabled={!canStartEditing || isEditing || isSaving || isStarting}
+            >
+             تعديل الباقة
           </Button>
         </div>
+        {startError && <p role="alert">{startError}</p>}
       </section>
 
       <section className="Tag-Selector">

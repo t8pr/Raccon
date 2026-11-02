@@ -56,6 +56,7 @@ class EventService:
             "id": event.id,
             "pack_id": event.pack_id,
             "title": event.title,
+            "mode": pack.mode,
             "status": event.status,
             "tags": tags_view,
             "edit_count": event.edit_count,

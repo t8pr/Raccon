@@ -42,23 +42,42 @@ export async function SaveTagSetup(eventId, accessToken, tagsConfig) {
   return data;
 }
 
-export async function StartRound(eventId, accessToken) {
-    const response = await fetch(`${API_URL}/events/${eventId}`,
-        {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-                "title": null,
-                "status": "live"
-            })
-        });
+export async function UpdateEventStatus(eventId, accessToken, status) {
+  const response = await fetch(`${API_URL}/events/${eventId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ status }),
+  });
 
-    if (!response.ok) {
-        const error = new Error("حدث خطأ عند بدءالجولة.");
-        error.status = response.status;
-        throw error;
-    }
+  if (!response.ok) {
+    const error = new Error("تعذر تحديث حالة الجولة.");
+    error.status = response.status;
+    throw error;
+  }
+}
+
+export async function SaveTagEdits(eventId, accessToken, tagsConfig) {
+  const response = await fetch(`${API_URL}/events/${eventId}/edit`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      tags_config: tagsConfig,
+    }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error("تعذر حفظ تعديلات الباقة.");
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
 }

@@ -3,7 +3,7 @@ return (
 <div className="hint-field">
     <div className="hint-field__header">
         <label className="hint-field__label" htmlFor="tag-hint">نص التلميح</label>
-        <span className="hint-field__indicator">Optional</span>
+        <span className="hint-field__indicator">اختياري</span>
     </div>
     <textarea className="hint-field__input"
         id="tag-hint"
