@@ -7,12 +7,22 @@ import { logoutUser } from "../../api/auth/authApi";
 import Mark from "../../assets/Mark.png";
 import { avatarImages } from "../ui/avatarImages";
 
-const navigationItems = [
-  { label: "باقاتي", to: "/packages", disabled: false },
-  { label: "التخصيص", to: "/customization", disabled: false },
-  { label: "المتصدرين", to: "/leaderboard", disabled: false },
-  { label: "المتجر", to: "/store", disabled: false },
-];
+// Each role sees its own pages 
+// "disabled" = page not built yet → shown as «قريبًا» instead of a dead link (cheated from Laila)
+const navigationByRole = {
+  user: [
+    { label: "الرئيسية", to: "/home", end: true },
+    { label: "التجارب", to: "/packages" },
+    { label: "المتجر", to: "/store" },
+    { label: "طلب خاص", to: "/special-request", disabled: true },
+  ],
+  admin: [
+    { label: "الرئيسية", to: "/home", end: true },
+    { label: "إدارة التجارب", to: "/admin/experiences" },
+    { label: "إدارة المستخدمين", to: "/admin/users", disabled: true },
+    { label: "المتجر", to: "/store" },
+  ],
+};
 
 export default function AppNavbar() {
   const { accessToken, user, clearSession } = useAuth();
@@ -22,6 +32,8 @@ export default function AppNavbar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const avatarId = Number(user?.avatar_id);
   const avatarSrc = avatarImages[avatarId] ?? avatarImages[1];
+  const navigationItems =
+    user?.role === "admin" ? navigationByRole.admin : navigationByRole.user;
 
   async function handleLogout() {
     if (isLoggingOut) return;

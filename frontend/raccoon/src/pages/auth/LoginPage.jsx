@@ -4,26 +4,36 @@ import { getCurrentUser } from "../../api/users/usersApi";
 import { useAuth } from "../../context/AuthContext";
 import AuthLayout from "../../components/layout/AuthLayout";
 import AuthPromo from "../../components/layout/AuthPromo";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
 import DehmScan from "../../components/ui/DehmScan";
+import { takeClaimReturn } from "../../utils/claimReturn";
 
 export default function LoginPage() {
   const { signIn, user, accessToken, isRestoring } = useAuth();
   const navigate = useNavigate();
-  
+  const location = useLocation();
+
   const [searchParams] = useSearchParams();
   const redirectTag = searchParams.get("redirect_tag");
   const redirectUser = searchParams.get("redirect_user");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // shown once after a successful password reset (sent from ResetPasswordPage)
+  const [notice, setNotice] = useState(
+    location.state?.passwordReset
+      ? "تم تغيير كلمة المرور. ادخل بكلمة المرور الجديدة."
+      : "",
+  );
   const [serverError, setServerError] = useState("");
 
   useEffect(() => {
     if (!isRestoring && accessToken && user) {
       if (redirectTag) {
         const hashToUse = redirectUser ? redirectUser : user.user_hash;
-        navigate(`/scan?tag=${redirectTag}&user=${hashToUse}`, { replace: true });
+        navigate(`/scan?tag=${redirectTag}&user=${hashToUse}`, {
+          replace: true,
+        });
       } else {
         navigate("/home", { replace: true });
       }
@@ -34,23 +44,37 @@ export default function LoginPage() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     setServerError("");
+    setNotice("");
 
     try {
       const result = await loginUser(credentials);
-      if (typeof result.access_token !== "string" || !result.access_token.trim()) {
+      if (
+        typeof result.access_token !== "string" ||
+        !result.access_token.trim()
+      ) {
         throw new Error("Missing access token");
       }
-      
+
       const userData = await getCurrentUser(result.access_token);
       signIn(result.access_token, userData);
 
+      const returnTo = takeClaimReturn();
+
       if (redirectTag) {
-        const hashToUse = redirectUser ? redirectUser : userData.user_hash;
-        navigate(`/scan?tag=${redirectTag}&user=${hashToUse}`, { replace: true });
+        const hashToUse = redirectUser || userData.user_hash;
+
+        navigate(
+          `/scan?${new URLSearchParams({
+            tag: redirectTag,
+            user: hashToUse,
+          }).toString()}`,
+          { replace: true },
+        );
+      } else if (returnTo) {
+        navigate(returnTo, { replace: true });
       } else {
         navigate("/home", { replace: true });
       }
-
     } catch (error) {
       if (error.status === 401 || error.status === 400) {
         setServerError("اسم المستخدم/البريد أو كلمة المرور غير صحيحة.");
@@ -82,6 +106,7 @@ export default function LoginPage() {
           onLogin={handleLogin}
           isSubmitting={isSubmitting}
           serverError={serverError}
+          notice={notice}
           onEdit={() => setServerError("")}
         />
       </div>

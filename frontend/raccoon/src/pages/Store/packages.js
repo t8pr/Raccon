@@ -1,7 +1,8 @@
-// بيانات تجريبية إلى أن يتم ربط API.
 export const packages = [
   {
     id: "games",
+    claimHash: "urr_9C_3Rxcp2mWJ",
+    introduction: "مغامرة بين الألعاب تجمع اللاعبين وتكافئ من يكمل المسار.",
     title: "مملكة الألعاب",
     pieces: 12,
     description: "قطع مخبّأة في صالة الألعاب، كل وحدة تدلّك على اللي بعدها.",
@@ -9,6 +10,7 @@ export const packages = [
     price: 199,
     mode: "sequential",
     coverTone: "mint",
+    suitableFor: ["جمعة الأصدقاء", "صالة الألعاب"],
     contents: [
       "12 قطعة NFC جاهزة للصق",
       "رابط تفعيل للمالك (Master Claim Link)",
@@ -20,6 +22,8 @@ export const packages = [
   },
   {
     id: "museum",
+    claimHash: "KHGJZxkcdWfK484l",
+    introduction: "مغامرة بين الألعاب تجمع اللاعبين وتكافئ من يكمل المسار.",
     title: "ليلة المتحف",
     pieces: 11,
     description: "جولة صيد في معرض أو بيت كبير، والنقاط للأسرع.",
@@ -27,6 +31,7 @@ export const packages = [
     price: 179,
     mode: "open",
     coverTone: "soft",
+    suitableFor: ["العائلة", "المعارض"],
     contents: [
       "11 قطعة NFC جاهزة للصق",
       "رابط تفعيل للمالك (Master Claim Link)",
@@ -38,6 +43,8 @@ export const packages = [
   },
   {
     id: "riyadh",
+    claimHash: "VpQlqq-FaNgLwq3G",
+    introduction: "مغامرة بين الألعاب تجمع اللاعبين وتكافئ من يكمل المسار.",
     title: "موسم الرياض",
     pieces: 15,
     description: "باكج كبير للفعاليات والمهرجانات مع فخاخ.",
@@ -45,6 +52,7 @@ export const packages = [
     price: 249,
     mode: "open",
     coverTone: "mint",
+    suitableFor: ["الفعاليات", "المهرجانات"],
     contents: [
       "15 قطعة NFC جاهزة للصق",
       "رابط تفعيل للمالك (Master Claim Link)",
@@ -56,6 +64,8 @@ export const packages = [
   },
   {
     id: "birthday",
+    claimHash: "pUsFcGoIbn8IADJr",
+    introduction: "مغامرة بين الألعاب تجمع اللاعبين وتكافئ من يكمل المسار.",
     title: "حفلة عيد ميلاد",
     pieces: 8,
     description: "للأطفال والعائلة، تلميحات سهلة وممتعة.",
@@ -63,6 +73,7 @@ export const packages = [
     price: 129,
     mode: "sequential",
     coverTone: "soft",
+    suitableFor: ["الأطفال", "العائلة"],
     contents: [
       "8 قطعة NFC جاهزة للصق",
       "رابط تفعيل للمالك (Master Claim Link)",
@@ -74,6 +85,8 @@ export const packages = [
   },
   {
     id: "office",
+    claimHash: "ASIdRoMkzottr8Cm",
+    introduction: "مغامرة بين الألعاب تجمع اللاعبين وتكافئ من يكمل المسار.",
     title: "تحدّي المكتب",
     pieces: 10,
     description: "نشاط فريق العمل، يكسر الروتين في ساعة.",
@@ -81,6 +94,7 @@ export const packages = [
     price: 169,
     mode: "open",
     coverTone: "mint",
+    suitableFor: ["فريق العمل"],
     contents: [
       "10 قطعة NFC جاهزة للصق",
       "رابط تفعيل للمالك (Master Claim Link)",
@@ -92,6 +106,8 @@ export const packages = [
   },
   {
     id: "camp",
+    claimHash: "hmoDLE-_5DkR6Ia9",
+    introduction: "مغامرة بين الألعاب تجمع اللاعبين وتكافئ من يكمل المسار.",
     title: "رحلة البر",
     pieces: 12,
     description: "للكشتات والمخيمات، القطع تتحمل الشمس.",
@@ -99,6 +115,7 @@ export const packages = [
     price: 189,
     mode: "sequential",
     coverTone: "soft",
+    suitableFor: ["الكشتات", "المخيمات"],
     contents: [
       "12 قطعة NFC جاهزة للصق",
       "رابط تفعيل للمالك (Master Claim Link)",
