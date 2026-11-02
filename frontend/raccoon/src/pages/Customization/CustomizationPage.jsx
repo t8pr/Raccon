@@ -7,6 +7,7 @@ import Button from "../../components/ui/Button";
 import HintField from "../../components/ui/HintField"
 
 import { GetEventDetails } from "../../api/EventApi";
+import { SaveTagSetup } from "../../api/EventApi";
 import { StartRound } from "../../api/EventApi";
 import { useAuth } from "../../context/AuthContext";
 
@@ -18,8 +19,6 @@ import { useAuth } from "../../context/AuthContext";
   const selectedTag = eventData.tags.find(
   (tag) => tag.tag_id === selectedTagId
   );
-  
-
 }*/
 
 async function handleStartRound({ eventId, accessToken }){
@@ -32,6 +31,8 @@ export default function CustomizationPage() {
   const { accessToken } = useAuth();
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [hint, setHint] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const eventQuery = useQuery({
   queryKey: ["event", eventId, accessToken],
@@ -69,10 +70,48 @@ if (!eventId) {
 
   const displayedHint = hint ?? savedHint;
 
-  const hasChanges = hint !== savedHint;
+  const hasChanges = displayedHint !== savedHint;
+
+  async function handleSavedTag() {
+    if (
+      eventData.status !== "draft" ||
+      !selectedTag ||
+      !hasChanges ||
+      isSaving
+    ) {
+    return;
+    }
+
+    setIsSaving(true);
+    setSaveError("");
+
+    const tagsConfig = [
+    {
+      tag_id: selectedTag.tag_id,
+      tag_type: selectedTag.tag_type ?? "clue",
+      content: {
+        ...selectedTag.content, /*for perserving content like image*/
+        hint: displayedHint,
+      },
+    },
+  ];
+
+  try {
+    await SaveTagSetup(eventId, accessToken, tagsConfig);
+
+    await eventQuery.refetch(); /*get new saved data*/
+    setHint(null);
+
+  } catch (error) {
+    setSaveError(error.message || "تعذر حفظ القطعة.");
+  } finally {
+    setIsSaving(false);
+  }
+}
   
   function handleSelectTag(tag) {
-  if (tag.tag_id === selectedTag?.tag_id) return;
+    if (isSaving) return;
+    if (tag.tag_id === selectedTag?.tag_id) return;
 
   if (hasChanges) {
     const shouldDiscard = window.confirm(
@@ -86,8 +125,6 @@ if (!eventId) {
   setHint(null);
 }
   /*
-  
-
   const canEditTags =
   eventStatus === "draft" || eventStatus === "paused";
 
@@ -112,37 +149,53 @@ if (!eventId) {
       <AppNavbar />
 
       <div className="customization-space">
+
       <section className="customization-editor">
         <div className="customization-editor__header">
           <h2 id="tag-title">{selectedTag.sequence_num} القطعة</h2>
           <p id="tag-indicator">تعدّل القطعة {selectedTag.sequence_num} من {eventData.tags.length}</p>
         </div>
 
-        <HintField text={displayedHint} onTextChange={setHint}/>
+        <HintField 
+        text={displayedHint} 
+        onTextChange={setHint}
+        disabled={isSaving}
+        />
        
         {/* image uploadre component*/}
         <div className="ImageUploader">soon</div>
 
         <div className="customization-editor__actions">
           <Button
-            /*onClick={handleStartRound}*/
-            disabled
+            onClick={handleSavedTag}
+            loading={isSaving}
+            disabled={
+              eventData.status !== "draft" ||
+              !selectedTag ||
+              !hasChanges
+            }
           >
             احفظ القطعة
           </Button>
-          {/* preview button */}
+          <Button
+            /*onClick={handlePreview}*/
+            disabled
+          >
+            معاينة 
+          </Button>
         </div>
+
+        {saveError && <p role="alert">{saveError}</p>}
       </section>
 
       <section className="Round-settings">
         <h2>إعدادات الجولة</h2>
 
-        <div className="customization-editor__content">
-          {/* Text field */}
-          {/* Image uploader */}
+        <div className="Round-settings__content">
+          {/* idk whats in here */}
         </div>
 
-        <div className="customization-editor__actions">
+        <div className="Round-settings__actions">
           <Button
             /*onClick={handleStartRound}*/
             disabled
@@ -160,9 +213,10 @@ if (!eventId) {
         key={tag.tag_id}
         type="button"
         onClick={() => handleSelectTag(tag)}
+        disabled={isSaving}
       >
        القطعة {tag.sequence_num}
-        {selectedTagId === tag.tag_id && " ✓"}
+        {selectedTag?.tag_id === tag.tag_id && " ✓"}
       </button>
       ))}
 

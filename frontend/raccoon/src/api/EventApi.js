@@ -19,6 +19,29 @@ export async function GetEventDetails(eventId, accessToken) {
     return data;
 }
 
+export async function SaveTagSetup(eventId, accessToken, tagsConfig) {
+  const response = await fetch(`${API_URL}/events/${eventId}/setup`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      tags_config: tagsConfig,
+    }),
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        const error = new Error("حدث خطأ أثناء حفظ إعدادات القطعة.");
+        error.status = response.status;
+        throw error;
+  }
+
+  return data;
+}
+
 export async function StartRound(eventId, accessToken) {
     const response = await fetch(`${API_URL}/events/${eventId}`,
         {

@@ -1,4 +1,4 @@
-export default function HintField({ text, onTextChange }) {
+export default function HintField({ text, onTextChange, disabled = false }) {
 return (
 <div className="hint-field">
     <div className="hint-field__header">
@@ -9,6 +9,7 @@ return (
         id="tag-hint"
         value={text}
         onChange={(event) => onTextChange(event.target.value)}
+        disabled={disabled}
         maxLength={255}
         placeholder="اكتب تلميح للقطعة..."
     />
