@@ -18,7 +18,7 @@ const navigationByRole = {
   ],
   admin: [
     { label: "الرئيسية", to: "/home", end: true },
-    { label: "إدارة التجارب", to: "/admin/experiences", disabled: true },
+    { label: "إدارة التجارب", to: "/admin/experiences" },
     { label: "إدارة المستخدمين", to: "/admin/users", disabled: true },
     { label: "المتجر", to: "/store" },
   ],
@@ -60,7 +60,7 @@ export default function AppNavbar() {
         items={navigationItems}
         account={
           <ProfileMenu
-            accountPath="/profile" 
+            accountPath="/profile" // in profile icon if press حسابي  will Route u in profile page
             name={user?.name || "حسابي"}
             username={user?.username}
             avatarSrc={avatarSrc}

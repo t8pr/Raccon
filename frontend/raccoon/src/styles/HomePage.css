@@ -61,6 +61,7 @@
   color: var(--ink-muted);
 }
 
+/* Outlined button — no offset shadow */
 .rc-home__cta {
   display: inline-flex;
   align-items: center;
@@ -69,24 +70,17 @@
   min-height: 52px;
   padding: 0 28px;
   border: 2px solid var(--accent);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--surface);
-  box-shadow: -4px 4px 0 var(--accent);
   color: var(--accent);
   font-size: 18px;
   font-weight: 700;
   text-decoration: none;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  transition: background-color 0.15s ease;
 }
 
 .rc-home__cta:hover {
-  transform: translate(-2px, 2px);
-  box-shadow: -2px 2px 0 var(--accent);
-}
-
-.rc-home__cta:active {
-  transform: translate(-4px, 4px);
-  box-shadow: none;
+  background: var(--surface-soft);
 }
 
 .rc-home__art {

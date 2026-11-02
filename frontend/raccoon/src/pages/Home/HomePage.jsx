@@ -1,6 +1,6 @@
-import AppNavbar from "../../components/layout/AppNavbar";
 import { Link } from "react-router-dom";
 import { ChevronLeft, Nfc } from "lucide-react";
+import AppNavbar from "../../components/layout/AppNavbar";
 import NfcCoil from "../../components/ui/NfcCoil";
 import { useAuth } from "../../context/AuthContext";
 import Dehem from "../../assets/avatars/Dehem.png";
