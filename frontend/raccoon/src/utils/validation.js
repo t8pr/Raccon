@@ -196,3 +196,19 @@ export function validateForm(schema, values) {
     errors,
   };
 }
+
+// رمز الاستلام الحالي يولّده الباك بصيغة URL-safe
+export const claimHashSchema = z
+  .string()
+  .min(1, "رابط الاستلام غير مكتمل.")
+  .regex(/^[A-Za-z0-9_-]+$/, "صيغة رابط الاستلام غير صحيحة.");
+
+export const claimRequestSchema = z.object({
+  master_auth_hash: claimHashSchema,
+});
+
+// نسمح بالرجوع إلى صفحة الاستلام فقط
+export const claimReturnSchema = z.object({
+  path: z.string().regex(/^\/claim\/[A-Za-z0-9_-]+$/),
+  createdAt: z.number().int().nonnegative(),
+});
