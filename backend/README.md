@@ -385,7 +385,7 @@ const json = { "Content-Type": "application/json" };
 | 27 | GET | `/t/{tag_hash}` | 🍪 cookie | NFC redirect into the frontend |
 
 ---
-
+ 
 ### 4.1 System
 
 #### 1 · `GET /` 🔓 · 2 · `GET /health/` 🔓
