@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Pencil, X } from "lucide-react";
 
 import AppNavbar from "../../components/layout/AppNavbar";
@@ -11,15 +11,7 @@ import FilterBar from "../../components/ui/FilterBar";
 import Mark from "../../assets/Mark.png";
 
 import { useAuth } from "../../context/AuthContext";
-import { previewPack } from "../../api/packs/packsApi";
-import { getMyEvents } from "../../api/events/eventsApi";
-
-import {
-  readLocalPurchases,
-  renameLocalPurchase,
-  localPurchasesKey,
-  purchasesStorageKey,
-} from "../../utils/localPurchases";
+import { getMyEvents, RenameEvent } from "../../api/events/eventsApi";
 
 const statuses = {
   pending: {
@@ -92,119 +84,58 @@ function PackagesContent({ auth }) {
     user?.id && accessToken && !isRestoring && !restoreError,
   );
 
-  // مشتريات التجربة المحفوظة لهذا الحساب في المتصفح.
-  const purchasesQuery = useQuery({
-    queryKey: localPurchasesKey(user?.id),
-
-    queryFn: () => readLocalPurchases(user.id),
-
+  // الأحداث التابعة للحساب؛ نحتاج event.id للتخصيص.
+  const eventsQuery = useQuery({
+    queryKey: ["my-events", user?.id],
+    queryFn: ({ signal }) => getMyEvents(accessToken, { signal }),
     enabled: signedIn,
     staleTime: 0,
     retry: false,
   });
 
-  const purchases = signedIn ? (purchasesQuery.data ?? []) : [];
+  const items = signedIn
+    ? (eventsQuery.data ?? []).map((event) => {
+        const title = event.title?.trim() ?? "";
+        const isUntitled =
+          !title || /^(untitled(?:\s+event)?|بدون اسم)$/i.test(title);
 
-  // تحديث القائمة لو تغير التخزين في تبويب آخر.
-  useEffect(() => {
-    if (!signedIn) return;
+        return {
+          id: event.id,
+          eventId: event.id,
+          packId: event.pack_id,
+          name: isUntitled ? "بدون اسم" : title,
+          status: event.status,
+          mode: event.mode,
+          pieces: event.tags_count,
+          coverTone: "mint",
+        };
+      })
+    : [];
 
-    function handleStorage(event) {
-      if (event.key === null || event.key === purchasesStorageKey(user.id)) {
-        void queryClient.invalidateQueries({
-          queryKey: localPurchasesKey(user.id),
-        });
-      }
-    }
+  const renameMutation = useMutation({
+    mutationFn: ({ eventId, title }) =>
+      RenameEvent(eventId, accessToken, title),
 
-    window.addEventListener("storage", handleStorage);
-
-    return () => {
-      window.removeEventListener("storage", handleStorage);
-    };
-  }, [signedIn, user?.id, queryClient]);
-
-  /*
-   * قراءة كل حزمة من الباك اند باستخدام رمزها.
-   * نفس queryKey المستخدمة في ClaimPage عندك.
-   */
-  const previewQueries = useQueries({
-    queries: purchases.map((purchase) => ({
-      queryKey: ["pack-preview", purchase.claimHash, user.id],
-
-      queryFn: ({ signal }) => previewPack(purchase.claimHash, { signal }),
-
-      staleTime: 0,
-      gcTime: 0,
-      retry: false,
-    })),
-  });
-
-  // الأحداث التابعة للحساب؛ نحتاج event.id للتخصيص.
-  const eventsQuery = useQuery({
-    queryKey: ["my-events", user?.id],
-
-    queryFn: ({ signal }) => getMyEvents(accessToken, { signal }),
-
-    enabled: signedIn && purchases.length > 0,
-    staleTime: 0,
     retry: false,
-  });
 
-  const items = purchases.map((purchase, index) => {
-    const previewQuery = previewQueries[index];
-    const pack = previewQuery.data;
+    onSuccess: (updatedEvent) => {
+      queryClient.setQueryData(["my-events", user.id], (current) =>
+        current?.map((event) =>
+          event.id === updatedEvent.id ? { ...event, ...updatedEvent } : event,
+        ),
+      );
 
-    const verified = Boolean(pack);
+      setNotice("تم حفظ اسم الباقة.");
+      closeEditing();
 
-    const ownedByMe = Boolean(verified && pack.owner_id === user.id);
+      void queryClient.invalidateQueries({
+        queryKey: ["my-events", user.id],
+      });
+    },
 
-    const ownedByAnother = Boolean(
-      verified && pack.owner_id != null && pack.owner_id !== user.id,
-    );
-
-    const matchingEvents = (eventsQuery.data ?? []).filter(
-      (event) => event.pack_id === pack?.id,
-    );
-
-    // لا نختار حدثًا عشوائيًا عند وجود أكثر من نتيجة.
-    const targetEvent =
-      ownedByMe &&
-      Array.isArray(eventsQuery.data) &&
-      matchingEvents.length === 1
-        ? matchingEvents[0]
-        : null;
-
-    let status = "checking";
-
-    if (previewQuery.isError) {
-      status = "unavailable";
-    } else if (verified && ownedByAnother) {
-      status = "other";
-    } else if (verified && ownedByMe) {
-      status = targetEvent?.status ?? "linked";
-    } else if (verified && pack.owner_id === null) {
-      status = "pending";
-    }
-
-    return {
-      ...purchase,
-
-      packId: pack?.id ?? null,
-      mode: pack?.mode ?? purchase.mode,
-      pieces: pack?.tags_count ?? purchase.pieces,
-
-      status,
-      ownedByMe,
-      eventId: targetEvent?.id ?? null,
-      previewQuery,
-
-      checkingAction: !pack || (ownedByMe && !Array.isArray(eventsQuery.data)),
-
-      actionError: previewQuery.isError || (ownedByMe && eventsQuery.isError),
-
-      showEmptyProgress: verified && pack.owner_id === null,
-    };
+    onError: (error) => {
+      setNotice(error.message || "تعذر حفظ الاسم.");
+    },
   });
 
   function getFilterStatus(pkg) {
@@ -259,56 +190,24 @@ function PackagesContent({ auth }) {
     });
   }
 
-  function saveName(event, purchaseId) {
+  function saveName(event, eventId) {
     event.preventDefault();
 
-    if (!signedIn) return;
+    if (!signedIn || renameMutation.isPending) return;
 
-    try {
-      const updated = renameLocalPurchase(user.id, purchaseId, draftName);
+    const title = draftName.trim();
 
-      queryClient.setQueryData(localPurchasesKey(user.id), updated);
-
-      setNotice("تم حفظ الاسم في هذا المتصفح.");
-      closeEditing();
-    } catch (error) {
-      setNotice(error.message || "تعذر حفظ الاسم.");
-    }
-  }
-
-  function openPackage(pkg) {
-    if (pkg.eventId) {
-      navigate(`/customization/${encodeURIComponent(pkg.eventId)}`);
-
+    if (!title || title.length > 20) {
+      setNotice("اكتب اسمًا من حرف إلى 20 حرفًا.");
       return;
     }
 
-    // ClaimPage تتحقق مجددًا من الملكية قبل الربط.
-    navigate(`/claim/${encodeURIComponent(pkg.claimHash)}`);
+    setNotice("");
+    renameMutation.mutate({ eventId, title });
   }
 
-  function getActionLabel(pkg) {
-    if (pkg.eventId) {
-      return "فتح التخصيص";
-    }
-
-    if (pkg.actionError) {
-      return "تعذر التحقق";
-    }
-
-    if (pkg.checkingAction) {
-      return "جارٍ التحقق...";
-    }
-
-    if (pkg.status === "other") {
-      return "عرض حالة الحزمة";
-    }
-
-    if (pkg.ownedByMe) {
-      return "متابعة الاستلام";
-    }
-
-    return "اربطها بحسابي";
+  function openPackage(pkg) {
+    navigate(`/customization/${encodeURIComponent(pkg.eventId)}`);
   }
 
   return (
@@ -343,44 +242,24 @@ function PackagesContent({ auth }) {
 
             <Button onClick={() => navigate("/login")}>تسجيل الدخول</Button>
           </div>
-        ) : purchasesQuery.isPending ? (
+        ) : eventsQuery.isPending ? (
           <p role="status">جارٍ تحميل باقاتك...</p>
-        ) : purchasesQuery.isError ? (
+        ) : eventsQuery.isError ? (
           <div className="packages-page__empty">
-            <p role="alert">{purchasesQuery.error.message}</p>
+            <p role="alert">{eventsQuery.error.message}</p>
 
-            <Button variant="outline" onClick={() => purchasesQuery.refetch()}>
+            <Button variant="outline" onClick={() => eventsQuery.refetch()}>
               إعادة المحاولة
             </Button>
           </div>
         ) : items.length === 0 ? (
           <div className="packages-page__empty">
-            <p role="status">
-              ليس لديك حزمة نشطة حاليًا. استكشف الحزم واطلب حزمتك الآن من
-              المتجر.
-            </p>
+            <p role="status">لا توجد باقات مرتبطة بحسابك حاليًا.</p>
 
             <Button onClick={() => navigate("/store")}>استكشف الحزم</Button>
           </div>
         ) : (
           <>
-            {eventsQuery.isError && (
-              <div className="packages-page__empty">
-                <p role="alert">
-                  تعذر تحميل روابط التخصيص. يمكنك متابعة الاستلام من بطاقة
-                  الحزمة.
-                </p>
-
-                <Button
-                  variant="outline"
-                  loading={eventsQuery.isFetching}
-                  onClick={() => eventsQuery.refetch()}
-                >
-                  إعادة المحاولة
-                </Button>
-              </div>
-            )}
-
             <div className="packages-page__grid">
               {visiblePackages.map((pkg) => {
                 const status = statuses[pkg.status] ?? statuses.linked;
@@ -425,7 +304,10 @@ function PackagesContent({ auth }) {
                             onKeyDown={(event) => {
                               if (event.key === "Escape") {
                                 event.preventDefault();
-                                closeEditing();
+
+                                if (!renameMutation.isPending) {
+                                  closeEditing();
+                                }
                               }
                             }}
                           >
@@ -446,13 +328,16 @@ function PackagesContent({ auth }) {
                               required
                               autoFocus
                               aria-describedby={`name-hint-${pkg.id}`}
+                              disabled={renameMutation.isPending}
                             />
 
                             <Button
                               type="submit"
                               variant="tertiary"
                               className="owned-package__icon-button"
-                              disabled={!draftName.trim()}
+                              disabled={
+                                !draftName.trim() || renameMutation.isPending
+                              }
                               aria-label="حفظ اسم الحزمة"
                             >
                               <Check size={18} aria-hidden="true" />
@@ -461,6 +346,7 @@ function PackagesContent({ auth }) {
                             <Button
                               variant="tertiary"
                               className="owned-package__icon-button"
+                              disabled={renameMutation.isPending}
                               onClick={closeEditing}
                               aria-label="إلغاء تعديل الاسم"
                             >
@@ -503,58 +389,27 @@ function PackagesContent({ auth }) {
                         </div>
 
                         <div>
-                          <dt>النوع</dt>
-                          <dd>{getModeLabel(pkg.mode)}</dd>
+                          {pkg.mode != null && (
+                            <div>
+                              <dt>النوع</dt>
+                              <dd>{getModeLabel(pkg.mode)}</dd>
+                            </div>
+                          )}
                         </div>
 
                         <div>
-                          <dt>عدد القطع</dt>
-                          <dd>{pkg.pieces} قطعة NFC</dd>
+                          {pkg.pieces != null && (
+                            <div>
+                              <dt>عدد القطع</dt>
+                              <dd>{pkg.pieces} قطعة NFC</dd>
+                            </div>
+                          )}
                         </div>
                       </dl>
 
-                      {pkg.showEmptyProgress && (
-                        <div className="owned-package__progress">
-                          <div className="owned-package__progress-label">
-                            <label htmlFor={`progress-${pkg.id}`}>
-                              القطع المحفوظة
-                            </label>
-
-                            <bdi>0/{pkg.pieces}</bdi>
-                          </div>
-
-                          <progress
-                            id={`progress-${pkg.id}`}
-                            max={pkg.pieces}
-                            value={0}
-                          />
-                        </div>
-                      )}
-
-                      {pkg.previewQuery.isError && (
-                        <>
-                          <p role="alert" className="owned-package__note">
-                            تعذر التحقق من الحزمة.
-                          </p>
-
-                          <Button
-                            variant="outline"
-                            loading={pkg.previewQuery.isFetching}
-                            onClick={() => pkg.previewQuery.refetch()}
-                          >
-                            إعادة المحاولة
-                          </Button>
-                        </>
-                      )}
-
                       <div className="owned-package__actions">
-                        <Button
-                          fullWidth
-                          loading={pkg.checkingAction && !pkg.actionError}
-                          disabled={pkg.checkingAction || pkg.actionError}
-                          onClick={() => openPackage(pkg)}
-                        >
-                          {getActionLabel(pkg)}
+                        <Button fullWidth onClick={() => openPackage(pkg)}>
+                          فتح التخصيص
                         </Button>
                       </div>
                     </div>
