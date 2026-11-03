@@ -165,7 +165,7 @@ URL /claim/q8Zr…  ─► ClaimPage
 ```
 
 ---
-
+ 
 ## 2. Directory & file structure
 
 ```
