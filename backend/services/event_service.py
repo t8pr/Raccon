@@ -1,4 +1,4 @@
-from sqlmodel import Session
+from sqlmodel import Session, delete
 from fastapi import Depends, HTTPException, status
 from core.database import get_session
 from repositories.pack_repo import PackRepository
@@ -9,7 +9,7 @@ from models import User, Event, EventTag, Pack
 import uuid
 from typing import List
 from core.config import settings
-
+from models.journey_progress import JourneyProgress
 
 class EventService:
     def __init__(self, session: Session = Depends(get_session)):
@@ -184,6 +184,43 @@ class EventService:
 
         return event
 
+    def reset_event(self, user: User, event_id: uuid.UUID) -> dict:
+        event = self.events.get_event(event_id)
+        if not event:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
+            
+        pack = self.packs.get_pack(event.pack_id)
+        if not pack or pack.owner_id != user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not own this pack.")
+
+        statement = delete(JourneyProgress).where(JourneyProgress.event_id == event.id)
+        self.session.exec(statement)
+
+        event_tags = self.event_tags.get_all_by_event_id(event.id)
+        for et in event_tags:
+            modified = False
+            content = et.content or {}
+
+            if "claimed_by" in content:
+                del content["claimed_by"]
+                modified = True
+
+            if et.tag_type == "trap" and content.get("was_choose"):
+                content = {"choose": True}
+                modified = True
+
+            if modified:
+                et.content = content
+                self.session.add(et)
+
+        event.status = "paused"
+        self.session.add(event)
+        
+        self.session.commit()
+        
+        return {"status": "success", "message": "Event has been perfectly reset to its initial state."}
+
+    
     def list_my_events(self, user: User) -> List[Event] | None:
         packs = self.packs.get_by_owner_id(user.id)
         pack_ids = [p.id for p in packs]
