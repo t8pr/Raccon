@@ -39,6 +39,7 @@ const SPIRAL = buildSpiral();
 export default function NfcCoil({
   line = "var(--primary)",
   chip = "var(--primary)",
+  bare = false, // spiral only (no chip / bonding lines), used as a corner decoration
   className = "",
 }) {
   return (
@@ -55,13 +56,17 @@ export default function NfcCoil({
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path
-        d="M134 120 H160 M106 120 H80"
-        stroke={line}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <rect x="106" y="106" width="28" height="28" rx="6" fill={chip} />
+      {!bare && (
+        <>
+          <path
+            d="M134 120 H160 M106 120 H80"
+            stroke={line}
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+          <rect x="106" y="106" width="28" height="28" rx="6" fill={chip} />
+        </>
+      )}
     </svg>
   );
 }

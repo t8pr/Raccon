@@ -125,14 +125,6 @@ function AppContent() {
               </AdminRoute>
             }
           />
-          <Route
-            path="/admin/experiences/:id/edit"
-            element={
-              <AdminRoute>
-                <CreateExperiencePage />
-              </AdminRoute>
-            }
-          />
         </Routes>
         
       </main>

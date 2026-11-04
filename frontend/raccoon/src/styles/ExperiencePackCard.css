@@ -1,0 +1,252 @@
+/* Pack card — admin list + store preview (Figma: Admin/Experience Card).
+   Solid surfaces only, tokens from global.css. */
+
+.pack-card {
+  --card-bg: var(--accent-soft);
+  --card-strong: var(--accent);
+  --card-soft-text: var(--accent);
+  --card-dot: var(--accent);
+
+  position: relative;
+  display: grid;
+  gap: 20px;
+  padding: var(--space-6);
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--card-bg);
+  color: var(--ink);
+}
+
+.pack-card--open {
+  --card-bg: var(--mint);
+  --card-strong: var(--night);
+  --card-soft-text: var(--ink-muted);
+  --card-dot: var(--primary);
+}
+
+.pack-card__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* NFC coil peeking from the top-left corner */
+.pack-card__coil {
+  position: absolute;
+  top: -120px;
+  left: -120px;
+  width: 300px;
+  height: 300px;
+  pointer-events: none;
+}
+
+.pack-card > :not(.pack-card__coil, .pack-card__sr) {
+  position: relative; /* above the coil */
+}
+
+/* ---------- top row: status (right) · price (left) ---------- */
+.pack-card__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 40px;
+}
+
+.pack-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.pack-card__status i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.pack-card__status--draft {
+  background: var(--banner-warning-bg);
+  color: var(--banner-warning-text);
+}
+
+.pack-card__status--draft i {
+  background: var(--banner-warning-text);
+}
+
+.pack-card__status--sold {
+  background: var(--canvas);
+}
+
+.pack-card__status--sold i {
+  background: var(--accent);
+}
+
+.pack-card__status--archived {
+  background: var(--canvas);
+}
+
+.pack-card__status--archived i {
+  background: var(--ink-muted);
+}
+
+.pack-card__price {
+  margin: 0;
+  padding: 8px 16px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* store view: full-width price bar */
+.pack-card--store .pack-card__price {
+  flex: 1;
+  text-align: center;
+}
+
+/* ---------- pieces ---------- */
+.pack-card__pieces {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+}
+
+.pack-card__overline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--card-soft-text);
+}
+
+.pack-card__overline::before,
+.pack-card__overline::after {
+  content: "";
+  width: 28px;
+  height: 1px;
+  background: currentColor;
+}
+
+.pack-card__number {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 132px;
+  line-height: 1;
+  color: var(--card-strong);
+}
+
+.pack-card__edited {
+  margin: -8px 0 0;
+  font-size: 12px;
+  color: var(--ink-muted);
+  text-align: left; /* RTL: sits at the end */
+}
+
+/* ---------- bottom bar: mode (right) · action + ⋯ (left) ---------- */
+.pack-card__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 52px;
+  padding: 4px 16px 4px 4px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.pack-card__mode {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 14px;
+}
+
+.pack-card__mode i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--card-dot);
+}
+
+.pack-card__action + .pack-card__more {
+  margin-inline-start: 0;
+}
+
+.pack-card__action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-inline-start: auto;
+  padding: 0 var(--space-3);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+button.pack-card__action {
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a.pack-card__action:hover,
+button.pack-card__action:hover {
+  color: var(--accent-hover);
+}
+
+.pack-card__more {
+  display: grid;
+  margin-inline-start: auto; /* stays on the left even when there's no action link */
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--canvas);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.pack-card__more:disabled {
+  cursor: default;
+}
+
+.pack-card__action:focus-visible,
+.pack-card__more:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- phone ---------- */
+@media (max-width: 767px) {
+  .pack-card {
+    gap: var(--space-4);
+    padding: 20px;
+  }
+
+  .pack-card__number {
+    font-size: 112px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pack-card__action {
+    transition: none;
+  }
+}

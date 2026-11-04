@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChevronDown } from "lucide-react";
 
 import AppNavbar from "../../components/layout/AppNavbar";
 import PackageCard from "../../components/ui/PackageCard";
+import ExperiencePackCard from "../../components/ui/ExperiencePackCard";
 import FilterBar from "../../components/ui/FilterBar";
 import SortButton from "../../components/ui/SortButton";
 import Button from "../../components/ui/Button";
@@ -19,6 +21,30 @@ import {
 } from "../../utils/localPurchases";
 
 import { packages } from "./packages";
+import { getCustomProducts } from "../../api/store/storeApi";
+import { PACK_SIZES, piecesLabel } from "../Admin/Experiences/packSizes";
+import "../../styles/StorePage.css";
+
+/*
+Store (Figma: C. المتجر).
+Two kinds, one shown at a time (tabs):
+- "ready"  = جاهزة للعب  → static list in ./packages.js, card = PackageCard (+ details dialog)
+- "custom" = اصنع تجربتك → from getCustomProducts() (backend later), card = ExperiencePackCard
+Filters: mode · size & price (one filter, prices are fixed) · sort.
+*/
+
+const KINDS = {
+  ready: {
+    label: "جاهزة للعب",
+    title: "جاهزة للعب",
+    text: "تجارب كاملة بألغازها وقطعها. تفتح الصندوق وتبدأ اللعب على طول.",
+  },
+  custom: {
+    label: "اصنع تجربتك",
+    title: "اصنع تجربتك",
+    text: "اختار عدد القطع وطريقة اللعب، وبعد الشراء تكتب ألغازك وتوزّع القطع بنفسك.",
+  },
+};
 
 const filters = [
   { value: "all", label: "الكل" },
@@ -52,7 +78,9 @@ function StoreContent({ auth }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const [kind, setKind] = useState("ready");
   const [mode, setMode] = useState("all");
+  const [size, setSize] = useState("all");
   const [sort, setSort] = useState("popular");
   const [selectedPackage, setSelectedPackage] = useState(null);
 
@@ -86,9 +114,29 @@ function StoreContent({ auth }) {
     },
   });
 
-  const visiblePackages = packages.filter((pkg) => {
-    return mode === "all" || pkg.mode === mode;
+  // "اصنع تجربتك" products (later from the backend)
+  const customQuery = useQuery({
+    queryKey: ["store-custom-products"],
+    queryFn: ({ signal }) => getCustomProducts({ signal }),
+    staleTime: 5 * 60_000,
   });
+  const customProducts = customQuery.data ?? [];
+
+  const source = kind === "ready" ? packages : customProducts;
+
+  const visiblePackages = source.filter((pkg) => {
+    return (
+      (mode === "all" || pkg.mode === mode) &&
+      (size === "all" || pkg.pieces === Number(size))
+    );
+  });
+
+  const filtersOn = mode !== "all" || size !== "all";
+
+  function clearFilters() {
+    setMode("all");
+    setSize("all");
+  }
 
   visiblePackages.sort((a, b) => {
     if (sort === "price-asc") {
@@ -99,7 +147,8 @@ function StoreContent({ auth }) {
       return b.price - a.price;
     }
 
-    return b.popularity - a.popularity;
+    // custom products have no popularity → keep them small → big
+    return (b.popularity ?? 0) - (a.popularity ?? 0) || a.pieces - b.pieces;
   });
 
   // منع تمرير خلفية الصفحة أثناء فتح النافذة.
@@ -123,7 +172,7 @@ function StoreContent({ auth }) {
   }, [isDialogOpen, step]);
 
   function openDetails(id) {
-    const pkg = packages.find((item) => item.id === id);
+    const pkg = [...packages, ...customProducts].find((item) => item.id === id);
 
     if (!pkg) return;
 
@@ -206,7 +255,11 @@ function StoreContent({ auth }) {
     navigate("/packages");
   }
 
-  let dialogTitle = selectedPackage?.title;
+  const isCustom = selectedPackage?.kind === "custom";
+
+  let dialogTitle = isCustom
+    ? `اصنع تجربتك · ${piecesLabel(selectedPackage.pieces)}`
+    : selectedPackage?.title;
 
   if (step === "confirm") {
     dialogTitle = "تأكيد الطلب";
@@ -223,20 +276,96 @@ function StoreContent({ auth }) {
       <section className="store-page" aria-labelledby="store-title">
         <h1 id="store-title">المتجر</h1>
 
-        <p className="store-page__intro">اختار الحزمة اللي تناسب جمعتكم.</p>
+        <p className="store-page__intro">اختار التجربة اللي تناسب جمعتكم.</p>
+
+        {/* tabs: one kind at a time */}
+        <div className="store-tabs" role="tablist" aria-label="نوع التجربة">
+          {Object.entries(KINDS).map(([key, item]) => {
+            const count = key === "ready" ? packages.length : customProducts.length;
+            return (
+              <button
+                key={key}
+                type="button"
+                role="tab"
+                aria-selected={kind === key}
+                className="store-tabs__tab"
+                onClick={() => setKind(key)}
+              >
+                {item.label}
+                <span className="store-tabs__count">{count}</span>
+              </button>
+            );
+          })}
+        </div>
 
         <FilterBar
           filters={filters}
           value={mode}
           onChange={setMode}
-          sort={<SortButton options={sorts} value={sort} onChange={setSort} />}
+          label="طريقة اللعب"
+          sort={
+            <div className="store-page__selects">
+              <label className="sort-button store-page__size">
+                <select
+                  aria-label="الحجم والسعر"
+                  value={size}
+                  onChange={(event) => setSize(event.target.value)}
+                >
+                  <option value="all">الحجم والسعر: الكل</option>
+                  {PACK_SIZES.map((item) => (
+                    <option key={item.pieces} value={item.pieces}>
+                      {piecesLabel(item.pieces)} · {item.price} ر.س
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown size={16} aria-hidden="true" />
+              </label>
+              <SortButton options={sorts} value={sort} onChange={setSort} />
+            </div>
+          }
         />
 
-        <div className="store-page__grid">
-          {visiblePackages.map((pkg) => (
-            <PackageCard key={pkg.id} pkg={pkg} onDetails={openDetails} />
-          ))}
+        <div className="store-page__results">
+          <p role="status">
+            عرض {visiblePackages.length} من {source.length}
+          </p>
+          {filtersOn && (
+            <button type="button" className="store-page__clear" onClick={clearFilters}>
+              امسح الفلاتر
+            </button>
+          )}
         </div>
+
+        <header className="store-page__section">
+          <h2>{KINDS[kind].title}</h2>
+          <p>{KINDS[kind].text}</p>
+        </header>
+
+        {visiblePackages.length ? (
+          <div className="store-page__grid">
+            {kind === "ready"
+              ? visiblePackages.map((pkg) => (
+                  <PackageCard key={pkg.id} pkg={pkg} onDetails={openDetails} />
+                ))
+              : visiblePackages.map((item) => (
+                  <ExperiencePackCard
+                    key={item.id}
+                    variant="store"
+                    mode={item.mode}
+                    pieces={item.pieces}
+                    price={item.price}
+                    onBuy={() => openDetails(item.id)}
+                  />
+                ))}
+          </div>
+        ) : (
+          <div className="store-page__empty" role="status">
+            <p>ما فيه تجارب بهالفلاتر.</p>
+            <Button variant="outline" onClick={clearFilters}>
+              امسح الفلاتر
+            </Button>
+          </div>
+        )}
       </section>
 
       <dialog
@@ -313,8 +442,9 @@ function StoreContent({ auth }) {
               {step === "details" && (
                 <>
                   <p className="store-modal__intro">
-                    {selectedPackage.introduction ??
-                      selectedPackage.description}
+                    {isCustom
+                      ? `${getModeLabel(selectedPackage.mode)} · ${selectedPackage.price} ر.س — تستلم ${piecesLabel(selectedPackage.pieces)} NFC فاضية، وتكتب ألغازك وتوزّعها بنفسك.`
+                      : selectedPackage.introduction ?? selectedPackage.description}
                   </p>
 
                   {selectedPackage.suitableFor?.length > 0 && (
@@ -342,12 +472,18 @@ function StoreContent({ auth }) {
 
                   <hr className="store-modal__divider" />
 
+                  {isCustom && (
+                    <p className="store-modal__note" role="status">
+                      شراء «اصنع تجربتك» يفتح قريبًا.
+                    </p>
+                  )}
+
                   <Button
                     fullWidth
                     disabled={!canPurchase}
                     onClick={openPurchaseConfirmation}
                   >
-                    اشترِ الحزمة
+                    اشترِ التجربة
                   </Button>
                 </>
               )}
@@ -357,7 +493,7 @@ function StoreContent({ auth }) {
                 <>
                   <dl className="store-modal__summary">
                     <div>
-                      <dt>الحزمة</dt>
+                      <dt>التجربة</dt>
                       <dd>{selectedPackage.title}</dd>
                     </div>
 
@@ -378,7 +514,7 @@ function StoreContent({ auth }) {
                         {isRestoring
                           ? "جارٍ التحقق من الحساب..."
                           : restoreError ||
-                            "سجّل دخولك أولًا حتى نحفظ الحزمة في باقات حسابك."}
+                            "سجّل دخولك أولًا حتى نحفظ التجربة في حسابك."}
                       </p>
 
                       {!isRestoring && (
@@ -399,7 +535,7 @@ function StoreContent({ auth }) {
                   {purchaseMutation.isError && (
                     <p className="store-modal__note" role="alert">
                       {purchaseMutation.error?.message ||
-                        "تعذر حفظ الحزمة. حاول مرة أخرى."}
+                        "تعذر حفظ التجربة. حاول مرة أخرى."}
                     </p>
                   )}
 
@@ -432,7 +568,7 @@ function StoreContent({ auth }) {
               {/* حالة الحفظ */}
               {step === "loading" && (
                 <p role="status" className="store-modal__intro">
-                  جارٍ إضافة الحزمة إلى باقاتك.
+                  جارٍ إضافة التجربة إلى حسابك.
                 </p>
               )}
 
@@ -440,12 +576,12 @@ function StoreContent({ auth }) {
               {step === "success" && (
                 <>
                   <p className="store-modal__intro">
-                    شكرًا لك، حزمتك صارت جاهزة للاستلام.
+                    شكرًا لك، تجربتك صارت جاهزة للاستلام.
                   </p>
 
                   <div className="store-modal__actions">
                     <Button fullWidth onClick={openMyPackages}>
-                      انتقل إلى باقاتي
+                      انتقل إلى تجاربي
                     </Button>
 
                     <Button fullWidth variant="outline" onClick={closeDialog}>

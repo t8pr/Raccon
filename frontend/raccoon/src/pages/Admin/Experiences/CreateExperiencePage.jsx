@@ -1,82 +1,92 @@
-import { useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { Check, MapPin, Minus, Nfc, Plus, ChevronDown } from "lucide-react";
+import { useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Check, MapPin, Minus, Nfc, Plus } from "lucide-react";
 import AppNavbar from "../../../components/layout/AppNavbar";
 import Button from "../../../components/ui/Button";
-import { addExperience, getExperience, updateExperience } from "./ExperiencesData";
+import InlineMessage from "../../../components/ui/InlineMessage";
+import ExperiencePackCard from "../../../components/ui/ExperiencePackCard";
+import { useAuth } from "../../../context/AuthContext";
+import { generatePacks } from "../../../api/admin/adminApi";
+import {
+  MODE_LABEL,
+  PACK_SIZES,
+  PRICE_PER_PIECE,
+  piecesLabel,
+  priceFor,
+  toBackendMode,
+} from "./packSizes";
 import "../../../styles/AdminExperiences.css";
 
 /*
-The display info (name, description…) has no backend table so i kept it in experiencesData.js.
+Create experiences (Figma: Admin · create experience · 1441 / 1442).
+The admin picks: mode, pack size, how many → POST /admin/generate-packs
+  { mode: "seq" | "open", tags_count: 6 | 10 | 15 | 21, quantity: 3–30 }
+The price isn't sent: it's fixed per size (packSizes.js), the preview just shows it.
 */
 
-const MIN_PIECES = 3;
-const MAX_PIECES = 30;
-const NAME_MAX = 25;
+const MIN_QTY = 3;
+const MAX_QTY = 30;
 
-const categories = ["عائلي", "أطفال", "شركات", "تثقيفي", "فعاليات"];
-const playerRanges = ["2–10 لاعب", "3–15 لاعب", "4–20 لاعب", "6–30 لاعب", "10–50 لاعب"];
+const MODES = [
+  { value: "sequential", title: "تسلسلي", text: "كل قطعة تفتح اللي بعدها", Icon: Nfc },
+  { value: "open", title: "صيد مفتوح", text: "كل القطع متاحة بنفس الوقت", Icon: MapPin },
+];
 
 const emptyForm = {
-  title: "",
-  description: "",
-  category: "عائلي",
-  place: "",
-  players: "4–20 لاعب",
   mode: "sequential",
-  pieces: 6,
+  pieces: PACK_SIZES[0].pieces,
+  quantity: MIN_QTY,
 };
 
 export default function CreateExperiencePage() {
-  const { id } = useParams();
   const navigate = useNavigate();
-  const existing = id ? getExperience(id) : null;
-  const isEdit = Boolean(existing);
+  const queryClient = useQueryClient();
+  const { accessToken } = useAuth();
 
-  const initial = useMemo(
-    () => (existing ? { ...emptyForm, ...existing } : emptyForm),
-    [existing],
-  );
-  const [form, setForm] = useState(initial);
-  const [errors, setErrors] = useState({});
+  const [form, setForm] = useState(emptyForm);
   const leaveRef = useRef(null);
 
-  const dirty = JSON.stringify(form) !== JSON.stringify(initial);
-  const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
-  const setPieces = (n) =>
-    setForm((f) => ({ ...f, pieces: Math.min(MAX_PIECES, Math.max(MIN_PIECES, n)) }));
+  const dirty = JSON.stringify(form) !== JSON.stringify(emptyForm);
+  const price = priceFor(form.pieces);
+  const isSeq = form.mode === "sequential";
 
-  function validate(forPublish) {
-    const next = {};
-    const title = form.title.trim();
-    if (!title) next.title = "اكتب اسم التجربة.";
-    else if (title.length > NAME_MAX) next.title = `الاسم لازم يكون ${NAME_MAX} حرف أو أقل.`;
-    if (forPublish && !form.place.trim()) next.place = "اكتب المكان عشان يطلع في المتجر.";
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  }
+  const setField = (key, value) => setForm((f) => ({ ...f, [key]: value }));
+  const setQuantity = (n) =>
+    setField("quantity", Math.min(MAX_QTY, Math.max(MIN_QTY, n)));
 
-  function save(status) {
-    if (!validate(status === "published")) return;
-    const data = { ...form, title: form.title.trim(), place: form.place.trim(), status };
-    if (isEdit) updateExperience(existing.id, data);
-    else addExperience(data);
-    const notice =
-      status === "draft"
-        ? `انحفظت «${data.title}» كمسودة.`
-        : isEdit
-          ? `انحفظت تعديلات «${data.title}».`
-          : `انشأت «${data.title}» وصارت منشورة.`;
-    navigate("/admin/experiences", { state: { notice } });
-  }
+  // useMutation = "send something to the backend that changes data"
+  const createMutation = useMutation({
+    mutationFn: () =>
+      generatePacks(accessToken, {
+        mode: toBackendMode(form.mode),
+        tagsCount: form.pieces,
+        quantity: form.quantity,
+      }),
+    onSuccess: (createdPacks) => {
+      // the list page has old data in its cache → mark it old so it loads again
+      queryClient.invalidateQueries({ queryKey: ["admin-packs"] });
+      const label = `${MODE_LABEL[form.mode]} · ${piecesLabel(form.pieces)}`;
+      navigate("/admin/experiences", {
+        state: { notice: `انشأت ${createdPacks.length} تجارب (${label}).` },
+      });
+    },
+  });
+
+  const errorMessage = createMutation.isError
+    ? createMutation.error.status === 403
+      ? "ما عندك صلاحية تنشئ تجارب. لازم يكون حسابك مشرف."
+      : createMutation.error.status === 422
+        ? "فيه بيانات ناقصة أو غلط. راجع الاختيارات وجرّب مرة ثانية."
+        : "تعذر إنشاء التجربة. تأكد إن الباك إند شغّال وحاول مرة ثانية."
+    : "";
 
   function cancel() {
     if (dirty) leaveRef.current?.showModal();
     else navigate("/admin/experiences");
   }
 
-  const isSeq = form.mode === "sequential";
-  const pageTitle = isEdit ? "تعديل التجربة" : "إنشاء تجربة جديدة";
+  const pageTitle = "إنشاء تجربة جديدة";
 
   return (
     <div className="admin-exp-view" dir="rtl">
@@ -87,7 +97,7 @@ export default function CreateExperiencePage() {
           <div className="admin-exp__heading">
             <p className="admin-exp__crumbs">
               <Link to="/home">الرئيسية</Link> › <Link to="/admin/experiences">إدارة التجارب</Link> ›{" "}
-              {isEdit ? existing.title : "تجربة جديدة"}
+              {pageTitle}
             </p>
             <h1 id="create-title">{pageTitle}</h1>
           </div>
@@ -102,170 +112,155 @@ export default function CreateExperiencePage() {
           noValidate
           onSubmit={(e) => {
             e.preventDefault();
-            save("published");
+            if (!createMutation.isPending) createMutation.mutate();
           }}
         >
-          <div className="admin-create__cards">
-            {/* Card 1 — display info (right in RTL) */}
-            <section className="admin-card" aria-labelledby="info-title">
-              <h2 id="info-title">المعلومات الأساسية</h2>
-              <p className="admin-card__sub">هذي البيانات تطلع للاعبين في كرت التجربة.</p>
+          {/* ---------- card 1: experience data ---------- */}
+          <section className="admin-card" aria-labelledby="exp-data-title">
+            <h2 id="exp-data-title">بيانات التجارب</h2>
+            <p className="admin-card__sub">تحدد طريقة اللعب وعدد القطع في التجربة.</p>
 
-              <div className="admin-field">
-                <label htmlFor="exp-title">
-                  اسم التجربة <span className="admin-field__hint">{form.title.length} / {NAME_MAX}</span>
-                </label>
-                <input
-                  id="exp-title"
-                  value={form.title}
-                  maxLength={NAME_MAX + 5}
-                  onChange={set("title")}
-                  placeholder="مثلًا: تجربة الكشتة"
-                  aria-invalid={Boolean(errors.title)}
-                  aria-describedby={errors.title ? "exp-title-error" : undefined}
-                />
-                {errors.title && (
-                  <p id="exp-title-error" className="admin-field__error" role="alert">
-                    {errors.title}
-                  </p>
-                )}
+            <fieldset className="admin-field">
+              <legend>نوع التجربة</legend>
+              <div className="admin-modes">
+                {MODES.map(({ value, title, text, Icon }) => (
+                  <label key={value} className="admin-mode">
+                    <input
+                      type="radio"
+                      name="mode"
+                      value={value}
+                      checked={form.mode === value}
+                      onChange={() => setField("mode", value)}
+                    />
+                    <span className="admin-mode__text">
+                      <strong>{title}</strong>
+                      <small>{text}</small>
+                    </span>
+                    <Icon size={22} aria-hidden="true" />
+                  </label>
+                ))}
               </div>
+            </fieldset>
 
-              <div className="admin-field">
-                <label htmlFor="exp-desc">
-                  الوصف <span className="admin-field__hint">اختياري</span>
-                </label>
-                <textarea id="exp-desc" rows={3} value={form.description} onChange={set("description")} />
-              </div>
-
-              <div className="admin-field-row">
-                <div className="admin-field">
-                  <label htmlFor="exp-cat">الفئة</label>
-                  <div className="admin-select">
-                    <select id="exp-cat" value={form.category} onChange={set("category")}>
-                      {categories.map((c) => (
-                        <option key={c}>{c}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={16} aria-hidden="true" />
-                  </div>
-                </div>
-
-                <div className="admin-field">
-                  <label htmlFor="exp-place">المكان</label>
-                  <input
-                    id="exp-place"
-                    value={form.place}
-                    onChange={set("place")}
-                    placeholder="بر الثمامة، الرياض"
-                    aria-invalid={Boolean(errors.place)}
-                  />
-                  {errors.place && (
-                    <p className="admin-field__error" role="alert">
-                      {errors.place}
-                    </p>
-                  )}
-                </div>
-
-                <div className="admin-field">
-                  <label htmlFor="exp-players">عدد اللاعبين</label>
-                  <div className="admin-select">
-                    <select id="exp-players" value={form.players} onChange={set("players")}>
-                      {playerRanges.map((r) => (
-                        <option key={r}>{r}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={16} aria-hidden="true" />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            {/* Card 2 — pack settings (left in RTL) */}
-            <section className="admin-card" aria-labelledby="pack-title">
-              <h2 id="pack-title">بيانات الباقات</h2>
-              <p className="admin-card__sub">تحدد طريقة اللعب وعدد القطع في الباقة.</p>
-
-              <fieldset className="admin-field">
-                <legend>نوع الباقة</legend>
-                <div className="admin-modes">
-                  {[
-                    { value: "sequential", title: "تسلسلي", text: "كل قطعة تفتح اللي بعدها", Icon: Nfc },
-                    { value: "open", title: "صيد مفتوح", text: "كل القطع متاحة بنفس الوقت", Icon: MapPin },
-                  ].map(({ value, title, text, Icon }) => (
-                    <label key={value} className="admin-mode">
+            <div className="admin-create__row">
+              <fieldset className="admin-field admin-sizes-field" aria-describedby="size-hint">
+                <legend>
+                  حجم التجربة <span className="admin-field__hint">السعر ثابت لكل حجم</span>
+                </legend>
+                <div className="admin-sizes">
+                  {PACK_SIZES.map((size) => (
+                    <label key={size.pieces} className="admin-size">
                       <input
                         type="radio"
-                        name="mode"
-                        value={value}
-                        checked={form.mode === value}
-                        onChange={set("mode")}
+                        name="pieces"
+                        value={size.pieces}
+                        checked={form.pieces === size.pieces}
+                        onChange={() => setField("pieces", size.pieces)}
                       />
-                      <span className="admin-mode__text">
-                        <strong>{title}</strong>
-                        <small>{text}</small>
+                      <strong>{piecesLabel(size.pieces)}</strong>
+                      <span className="admin-size__price">
+                        {size.price} <span aria-label="ريال سعودي">ر.س</span>
                       </span>
-                      <Icon size={22} aria-hidden="true" />
                     </label>
                   ))}
                 </div>
+                <p id="size-hint" className="admin-field__note">
+                  {PRICE_PER_PIECE} ر.س للقطعة — السعر يتحدد تلقائيًا حسب حجم التجربة.
+                </p>
               </fieldset>
 
-              <div className="admin-field">
-                <label htmlFor="exp-pieces">
-                  عدد القطع في كل باقة{" "}
+              <div className="admin-field admin-qty-field">
+                <label htmlFor="exp-qty">
+                  عدد التجارب{" "}
                   <span className="admin-field__hint">
-                    من {MIN_PIECES} إلى {MAX_PIECES}
+                    من {MIN_QTY} إلى {MAX_QTY}
                   </span>
                 </label>
                 <div className="admin-stepper">
                   <button
                     type="button"
-                    onClick={() => setPieces(form.pieces + 1)}
-                    disabled={form.pieces >= MAX_PIECES}
+                    onClick={() => setQuantity(form.quantity + 1)}
+                    disabled={form.quantity >= MAX_QTY}
                     aria-label="زيادة"
                   >
                     <Plus size={18} aria-hidden="true" />
                   </button>
                   <input
-                    id="exp-pieces"
+                    id="exp-qty"
                     type="number"
                     inputMode="numeric"
-                    min={MIN_PIECES}
-                    max={MAX_PIECES}
-                    value={form.pieces}
-                    onChange={(e) => setPieces(Number(e.target.value) || MIN_PIECES)}
+                    min={MIN_QTY}
+                    max={MAX_QTY}
+                    value={form.quantity}
+                    onChange={(e) => setQuantity(Number(e.target.value) || MIN_QTY)}
                   />
                   <button
                     type="button"
-                    onClick={() => setPieces(form.pieces - 1)}
-                    disabled={form.pieces <= MIN_PIECES}
+                    onClick={() => setQuantity(form.quantity - 1)}
+                    disabled={form.quantity <= MIN_QTY}
                     aria-label="إنقاص"
                   >
                     <Minus size={18} aria-hidden="true" />
                   </button>
                 </div>
               </div>
+            </div>
 
-              <p className="admin-summary">
-                <Nfc size={18} aria-hidden="true" />
-                كل باقة من هالتجربة تجي بـ {form.pieces} قطع NFC
-                {isSeq ? " بترتيب متسلسل." : " متاحة بنفس الوقت."}
+            <p className="admin-summary">
+              <Nfc size={18} aria-hidden="true" />
+              كل تجربة تجي بـ {piecesLabel(form.pieces)} NFC
+              {isSeq ? " بترتيب متسلسل." : " متاحة بنفس الوقت."}
+            </p>
+          </section>
+
+          {/* ---------- card 2: store preview ---------- */}
+          <section className="admin-card admin-preview" aria-labelledby="preview-title">
+            <div className="admin-preview__text">
+              <h2 id="preview-title">كذا بتطلع في المتجر</h2>
+              <p className="admin-card__sub">
+                المعاينة تتغيّر مع اختياراتك: نوع التجربة يحدد لون الكرت، وحجم التجربة يحدد عدد
+                القطع والسعر.
               </p>
-            </section>
-          </div>
+              <ul className="admin-preview__checks">
+                {["نوع التجربة", "حجم التجربة", "السعر (تلقائي)"].map((item) => (
+                  <li key={item}>
+                    <Check size={14} aria-hidden="true" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <p className="admin-preview__note">
+                تطلع في المتجر بعد «أنشئ التجربة».
+              </p>
+            </div>
+
+            {/* live preview: read-only, announced as one sentence for screen readers */}
+            <div className="admin-preview__card">
+              <p className="pack-card__sr" aria-live="polite">
+                المعاينة: {MODE_LABEL[form.mode]}، {piecesLabel(form.pieces)}، {price} ريال.
+              </p>
+              <div inert aria-hidden="true">
+                <ExperiencePackCard
+                  variant="store"
+                  mode={form.mode}
+                  pieces={form.pieces}
+                  price={price}
+                />
+              </div>
+            </div>
+          </section>
+
+          {errorMessage && <InlineMessage type="error" message={errorMessage} />}
 
           <div className="admin-create__bar">
             <button type="button" className="admin-create__cancel" onClick={cancel}>
               إلغاء
             </button>
             <div className="admin-create__actions">
-              <Button type="submit" variant="accent">
-                <Check size={18} aria-hidden="true" /> {isEdit ? "احفظ التعديلات" : "أنشئ التجربة"}
+              <Button type="submit" variant="primary" loading={createMutation.isPending}>
+                أنشئ التجربة
               </Button>
-              <Button variant="outline" onClick={() => save("draft")}>
-                حفظ كمسودة
-              </Button>
+              {/* "حفظ كمسودة" comes back when the backend can save drafts (packs have no status yet) */}
             </div>
           </div>
         </form>

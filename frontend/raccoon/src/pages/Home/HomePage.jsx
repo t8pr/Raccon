@@ -36,13 +36,13 @@ const homeContent = {
   admin: {
     quick: {
       title: "إنشاء تجربة جديدة",
-      text: "تصميم تجربة جديدة وتعديل قطعها بسهولة",
+      text: "اختر النوع وعدد القطع، ونجهّز روابط التفعيل والطباعة",
       action: "انشئ",
       to: "/admin/experiences/new",
     },
     feature: {
       title: "إدارة التجارب",
-      text: "استعراض وعدل جميع التجارب",
+      text: "كل التجارب وحالة تفعيلها",
       action: "تصفح",
       to: "/admin/experiences",
     },
