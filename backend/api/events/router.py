@@ -45,6 +45,13 @@ def update_event(
 ):
     return service.update_event(current_user, event_id, request.model_dump())
 
+@router.post("/{event_id}/reset")
+def reset_event(
+    event_id: uuid.UUID,
+    service: EventService = Depends(),
+    current_user: User = Depends(get_current_user)
+):
+    return service.reset_event(current_user, event_id)
 
 @router.get("", response_model=List[EventBase])
 def list_my_events(
