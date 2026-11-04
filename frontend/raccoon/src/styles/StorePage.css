@@ -1,0 +1,162 @@
+/* Store: tabs, size filter, results line, section header (Figma: C. المتجر).
+   The rest of the store styles live in global.css (store-page section). */
+
+/* ---------- tabs: جاهزة للعب / اصنع تجربتك ---------- */
+.store-tabs {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: var(--space-1);
+  margin: var(--space-4) 0 var(--space-4);
+  padding: var(--space-1);
+  border: 1px solid var(--mint);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+.store-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.store-tabs__tab[aria-selected="true"] {
+  background: var(--night);
+  color: var(--on-panel);
+}
+
+.store-tabs__count {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--canvas);
+  font-size: 12px;
+  color: var(--ink);
+  text-align: center;
+}
+
+.store-tabs__tab[aria-selected="true"] .store-tabs__count {
+  background: var(--surface);
+}
+
+.store-tabs__tab:focus-visible,
+.store-page__clear:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- size & price + sort ---------- */
+.store-page__selects {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.store-page .store-page__size select {
+  width: 190px;
+}
+
+/* ---------- results line ---------- */
+.store-page__results {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  margin-top: var(--space-3);
+}
+
+.store-page__results p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.store-page__clear {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---------- section header ---------- */
+.store-page__section {
+  margin-top: var(--space-6);
+}
+
+.store-page__section h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  line-height: 1.4;
+}
+
+.store-page__section p {
+  margin: var(--space-1) 0 0;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.store-page__section + .store-page__grid {
+  margin-top: var(--space-4);
+}
+
+.store-page__empty {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+  padding: 48px var(--space-6);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  text-align: center;
+}
+
+.store-page__empty p {
+  margin: 0;
+}
+
+/* ---------- phone ---------- */
+@media (max-width: 767px) {
+  .store-tabs {
+    width: 100%;
+  }
+
+  .store-tabs__tab {
+    flex: 1;
+    justify-content: center;
+    padding: 0 var(--space-3);
+    font-size: 15px;
+  }
+
+  .store-page__selects {
+    width: 100%;
+  }
+
+  .store-page__selects > * {
+    flex: 1;
+  }
+
+  .store-page .store-page__size select,
+  .store-page .store-page__selects .sort-button select {
+    width: 100%;
+  }
+
+  .store-page__section h2 {
+    font-size: 22px;
+  }
+}

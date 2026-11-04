@@ -1,14 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ChevronDown, Plus, Search } from "lucide-react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { ChevronDown, Plus } from "lucide-react";
 import AppNavbar from "../../../components/layout/AppNavbar";
-import AdminExperienceCard from "../../../components/ui/AdminExperienceCard";
+import ExperiencePackCard from "../../../components/ui/ExperiencePackCard";
 import FilterBar from "../../../components/ui/FilterBar";
 import SortButton from "../../../components/ui/SortButton";
 import Pagination from "../../../components/ui/Pagination";
 import InlineMessage from "../../../components/ui/InlineMessage";
-import { getExperiences } from "./ExperiencesData";
+import { useAuth } from "../../../context/AuthContext";
+import { getPacks } from "../../../api/admin/adminApi";
+import { fromBackendMode, priceFor } from "./packSizes";
 import "../../../styles/AdminExperiences.css";
+
+/*
+إدارة التجارب — lists the packs from GET /admin/packs (real backend data).
+
+How the data flows:
+1. useQuery calls getPacks(token, { page, size }) → the backend sends ONE page of packs.
+2. toCard() turns each backend pack into what the card needs
+   (mode "seq" → "sequential", tags_count → pieces, price from the fixed price list).
+3. The mode / status filters and the sort work on the page we already have
+   (the backend can't filter yet — see the note at the bottom of this file).
+*/
 
 const modeFilters = [
   { value: "all", label: "الكل" },
@@ -16,17 +30,16 @@ const modeFilters = [
   { value: "open", label: "صيد مفتوح" },
 ];
 
-const sorts = [
-  { value: "updated", label: "آخر تعديل" },
-  { value: "title", label: "الاسم" },
-  { value: "price-desc", label: "السعر: الأعلى أولًا" },
-];
-
 const statusOptions = [
   { value: "all", label: "الكل" },
-  { value: "published", label: "منشورة" },
-  { value: "draft", label: "مسودة" },
-  { value: "archived", label: "مؤرشفة" },
+  { value: "available", label: "متاحة" },
+  { value: "sold", label: "مُباعة" },
+];
+
+const sorts = [
+  { value: "default", label: "الافتراضي" },
+  { value: "pieces-desc", label: "عدد القطع: الأكثر أولًا" },
+  { value: "pieces-asc", label: "عدد القطع: الأقل أولًا" },
 ];
 
 // 9 per page on laptop, 4 on phone (≤ 767px)
@@ -42,15 +55,26 @@ function usePerPage() {
   return isPhone ? 4 : 9;
 }
 
+// backend pack → card props
+function toCard(pack) {
+  return {
+    id: pack.id,
+    mode: fromBackendMode(pack.mode),
+    pieces: pack.tags_count,
+    price: priceFor(pack.tags_count),
+    status: pack.owner_id ? "sold" : "available",
+  };
+}
+
 export default function AdminExperiencesPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const perPage = usePerPage();
+  const { accessToken } = useAuth();
 
   const [mode, setMode] = useState("all");
   const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState("updated");
-  const [query, setQuery] = useState("");
+  const [sort, setSort] = useState("default");
   const [page, setPage] = useState(1);
   const [notice] = useState(location.state?.notice ?? "");
 
@@ -59,44 +83,41 @@ export default function AdminExperiencesPage() {
     if (location.state?.notice) navigate(location.pathname, { replace: true, state: null });
   }, [location, navigate]);
 
-  const all = getExperiences();
+  // phone ↔ laptop changes the page size → start again from page 1
+  useEffect(() => setPage(1), [perPage]);
 
-  const counts = useMemo(
-    () => ({
-      total: all.length,
-      published: all.filter((e) => e.status === "published").length,
-      draft: all.filter((e) => e.status === "draft").length,
-      archived: all.filter((e) => e.status === "archived").length,
-    }),
-    [all],
-  );
+  const packsQuery = useQuery({
+    queryKey: ["admin-packs", page, perPage],
+    queryFn: ({ signal }) => getPacks(accessToken, { page, size: perPage, signal }),
+    enabled: Boolean(accessToken),
+    placeholderData: keepPreviousData, // keep the old page on screen while the next one loads
+  });
+
+  const data = packsQuery.data;
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, data?.pages ?? 1);
 
   const visible = useMemo(() => {
-    const q = query.trim();
-    const list = all.filter(
-      (e) =>
-        (mode === "all" || e.mode === mode) &&
-        (status === "all" || e.status === status) &&
-        (!q || e.title.includes(q)),
+    const cards = (data?.items ?? []).map(toCard);
+    const list = cards.filter(
+      (c) => (mode === "all" || c.mode === mode) && (status === "all" || c.status === status),
     );
-    return [...list].sort((a, b) => {
-      if (sort === "title") return a.title.localeCompare(b.title, "ar");
-      if (sort === "price-desc") return (b.price ?? 0) - (a.price ?? 0);
-      return new Date(b.updatedAt) - new Date(a.updatedAt);
-    });
-  }, [all, mode, status, sort, query]);
+    if (sort === "pieces-desc") return [...list].sort((a, b) => b.pieces - a.pieces);
+    if (sort === "pieces-asc") return [...list].sort((a, b) => a.pieces - b.pieces);
+    return list;
+  }, [data, mode, status, sort]);
 
-  const totalPages = Math.max(1, Math.ceil(visible.length / perPage));
-  const current = Math.min(page, totalPages); // filters can shrink the page count
-  const from = (current - 1) * perPage;
-  const pageItems = visible.slice(from, from + perPage);
-
-  // any filter change → back to page 1
-  useEffect(() => setPage(1), [mode, status, sort, query, perPage]);
+  const filtersOn = mode !== "all" || status !== "all";
+  const from = (page - 1) * perPage;
 
   function goTo(p) {
     setPage(p);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function clearFilters() {
+    setMode("all");
+    setStatus("all");
   }
 
   return (
@@ -111,12 +132,11 @@ export default function AdminExperiencesPage() {
             </p>
             <h1 id="admin-exp-title">إدارة التجارب</h1>
             <p className="admin-exp__intro">
-              التجارب اللي تطلع في المتجر — {counts.total} تجربة · {counts.published} منشورة ·{" "}
-              {counts.draft} مسودة · {counts.archived} مؤرشفة
+              كل التجارب اللي انتجت{data ? ` — ${total} تجربة` : ""}
             </p>
           </div>
 
-          <Link to="/admin/experiences/new" className="ui-button ui-button--accent admin-exp__new">
+          <Link to="/admin/experiences/new" className="ui-button ui-button--primary admin-exp__new">
             <Plus size={18} aria-hidden="true" />
             <span>إنشاء تجربة جديدة</span>
           </Link>
@@ -128,17 +148,6 @@ export default function AdminExperiencesPage() {
           <FilterBar filters={modeFilters} value={mode} onChange={setMode} label="نوع التجربة" />
 
           <div className="admin-exp__controls">
-            <label className="admin-exp__search">
-              <Search size={18} aria-hidden="true" />
-              <input
-                type="search"
-                placeholder="دوّر باسم التجربة…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                aria-label="البحث باسم التجربة"
-              />
-            </label>
-
             <label className="sort-button admin-exp__status">
               <select aria-label="حالة التجربة" value={status} onChange={(e) => setStatus(e.target.value)}>
                 {statusOptions.map((o) => (
@@ -154,40 +163,65 @@ export default function AdminExperiencesPage() {
           </div>
         </div>
 
-        {pageItems.length ? (
-          <div className="admin-exp__grid">
-            {pageItems.map((exp) => (
-              <AdminExperienceCard key={exp.id} experience={exp} />
+        {/* ---------- loading / error / empty / list ---------- */}
+        {packsQuery.isPending ? (
+          <p className="admin-exp__state" role="status">
+            جاري تحميل التجارب...
+          </p>
+        ) : packsQuery.isError ? (
+          <div className="admin-exp__empty" role="alert">
+            <p>
+              {packsQuery.error.status === 403
+                ? "هذي الصفحة للمشرفين بس."
+                : "تعذر تحميل التجارب. تأكد إن الباك إند شغّال وحاول مرة ثانية."}
+            </p>
+            <button type="button" className="ui-button ui-button--outline" onClick={() => packsQuery.refetch()}>
+              حاول مرة ثانية
+            </button>
+          </div>
+        ) : total === 0 ? (
+          <div className="admin-exp__empty" role="status">
+            <p>ما فيه تجارب للحين.</p>
+            <Link to="/admin/experiences/new" className="ui-button ui-button--primary">
+              أنشئ أول تجربة
+            </Link>
+          </div>
+        ) : visible.length ? (
+          <div className="admin-exp__grid" aria-busy={packsQuery.isFetching}>
+            {visible.map((card) => (
+              <ExperiencePackCard key={card.id} variant="admin" {...card} />
             ))}
           </div>
         ) : (
           <div className="admin-exp__empty" role="status">
-            <p>ما لقينا تجارب بهالفلاتر.</p>
-            <button
-              type="button"
-              className="ui-button ui-button--outline"
-              onClick={() => {
-                setMode("all");
-                setStatus("all");
-                setQuery("");
-              }}
-            >
+            <p>ما فيه تجارب بهالفلاتر في هالصفحة.</p>
+            <button type="button" className="ui-button ui-button--outline" onClick={clearFilters}>
               امسح الفلاتر
             </button>
           </div>
         )}
 
-        <Pagination
-          page={current}
-          totalPages={totalPages}
-          onChange={goTo}
-          summary={
-            visible.length
-              ? `عرض ${from + 1}–${from + pageItems.length} من ${visible.length} تجربة`
-              : ""
-          }
-        />
+        {total > 0 && (
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onChange={goTo}
+            summary={
+              filtersOn
+                ? `${visible.length} نتيجة في هالصفحة`
+                : `عرض ${from + 1}–${Math.min(from + perPage, total)} من ${total} تجربة`
+            }
+          />
+        )}
       </main>
     </div>
   );
 }
+
+/*
+Note for the backend team:
+- GET /admin/packs has no filters, so the mode/status filters only search the current page.
+  Adding ?mode=seq|open and ?claimed=true|false to the endpoint would make them search everything.
+- Packs have no name, price, status (draft/published) or created_at in the database.
+  Price comes from the fixed list in packSizes.js; "متاحة / مُباعة" comes from owner_id.
+*/

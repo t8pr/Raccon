@@ -48,7 +48,9 @@ export default function PackageCard({ pkg, onDetails }) {
         <dl className="store-card-facts">
           <div>
             <dt>عدد القطع</dt>
-            <dd>{pkg.pieces} قطعة NFC</dd>
+            <dd>
+              {pkg.pieces >= 3 && pkg.pieces <= 10 ? `${pkg.pieces} قطع` : `${pkg.pieces} قطعة`} NFC
+            </dd>
           </div>
 
           <div>
