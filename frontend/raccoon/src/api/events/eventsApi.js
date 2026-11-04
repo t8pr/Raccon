@@ -33,22 +33,22 @@ export function RenameEvent(eventId, accessToken, title) {
 }
 
 export async function GetEventDetails(eventId, accessToken) {
-    const response = await fetch(`${API_URL}/events/${eventId}`,
-        {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${accessToken}`,
-            }});
+  const response = await fetch(`${API_URL}/events/${eventId}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 
-    const data = await response.json().catch(() => ({}));
+  const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-        const error = new Error("حدث خطأ عند استرجاع معلومات الباقه.");
-        error.status = response.status;
-        throw error;
-    }
-    return data;
+  if (!response.ok) {
+    const error = new Error("حدث خطأ عند استرجاع معلومات الباقه.");
+    error.status = response.status;
+    throw error;
+  }
+  return data;
 }
 
 export async function SaveTagSetup(eventId, accessToken, tagsConfig) {
@@ -61,14 +61,14 @@ export async function SaveTagSetup(eventId, accessToken, tagsConfig) {
     body: JSON.stringify({
       tags_config: tagsConfig,
     }),
-    });
+  });
 
-    const data = await response.json().catch(() => ({}));
+  const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-        const error = new Error("حدث خطأ أثناء حفظ إعدادات القطعة.");
-        error.status = response.status;
-        throw error;
+  if (!response.ok) {
+    const error = new Error("حدث خطأ أثناء حفظ إعدادات القطعة.");
+    error.status = response.status;
+    throw error;
   }
 
   return data;
