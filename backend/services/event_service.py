@@ -56,6 +56,7 @@ class EventService:
             "id": event.id,
             "pack_id": event.pack_id,
             "title": event.title,
+            "mode": pack.mode,
             "status": event.status,
             "tags": tags_view,
             "edit_count": event.edit_count,
@@ -130,9 +131,9 @@ class EventService:
     def edit_event(self, user: User, event_id: uuid.UUID, request) -> dict:
         event, pack = self.validate_event_ownership(user, event_id, request)
         
-        if event.status == "draft":
+        if event.status != "paused":
             raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, "Event is still in draft. Use setup instead."
+                status.HTTP_400_BAD_REQUEST, "Edits are allowed in paused events only."
             )
             
         if event.edit_count >= settings.MAX_EDIT_LIMIT:
@@ -168,7 +169,13 @@ class EventService:
 
         if request.get("title") is not None:
             event.title = request.get("title")
+            
         if request.get("status") is not None:
+            if event.status == "draft" and request.get("status") == "paused":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="You can't pause an event that hasn't started yet."
+                )
             event.status = request.get("status")
 
         self.events.add_event(event)
