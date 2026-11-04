@@ -69,7 +69,7 @@ export default function HomePage() {
     <div dir="rtl" className="rc-home-shell">
       <AppNavbar />
 
-      <main className="rc-home">
+      <main className={`rc-home ${user?.role === "admin" ? "rc-home--admin" : ""}`}>
         <section className="rc-home__bento" aria-labelledby="home-title">
           {/* Hero */}
           <article className="rc-home__hero">

@@ -409,3 +409,59 @@
     transition: none;
   }
 }
+
+
+/* ---------- admin home colours (Figma: Direction · admin · home) ---------- */
+/* "إنشاء تجربة جديدة": green card + mint button */
+.rc-home--admin .rc-home__quick {
+  background: var(--ink-muted);
+  color: var(--on-accent);
+}
+
+.rc-home--admin .rc-home__quick h2 {
+  color: var(--on-accent);
+}
+
+.rc-home--admin .rc-home__quick p {
+  color: var(--mint);
+}
+
+.rc-home--admin .rc-home__quick .rc-home__pill {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+/* "إدارة التجارب": dark violet card + lavender button */
+.rc-home--admin .rc-home__feature {
+  background: var(--panel-raised);
+}
+
+.rc-home--admin .rc-home__feature p {
+  color: var(--on-panel-muted);
+}
+
+.rc-home--admin .rc-home__feature .rc-home__pill {
+  background: var(--on-panel-muted);
+  color: var(--ink);
+}
+
+.rc-home--admin .rc-home__mini-tag {
+  display: none;
+}
+
+.rc-home--admin .rc-home__feature-row {
+  justify-content: flex-end; /* RTL: button on the left */
+}
+
+/* "تصفح المتجر": filled green button */
+.rc-home--admin .rc-home__cta {
+  border-color: var(--ink-muted);
+  background: var(--ink-muted);
+  color: var(--on-accent);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.rc-home--admin .rc-home__cta:hover {
+  border-color: var(--primary);
+  background: var(--primary);
+}
