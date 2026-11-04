@@ -1,4 +1,4 @@
-/* Reuses store classes (.package-card, .filter-bar, .sort-button, .chip). Solid surfaces only. */
+/* Admin experiences: list + create/edit. Cards live in ExperiencePackCard.css. Solid surfaces only. */
 
 .admin-exp-view {
   min-height: 100dvh;
@@ -109,56 +109,11 @@
   gap: var(--space-6);
 }
 
-.admin-exp-card .package-card__cover {
-  position: relative;
-}
-
-.admin-exp-card__status {
-  position: absolute;
-  top: 14px;
-  left: 14px; /* RTL: status on the left, type on the right */
-}
-
-.admin-exp-card .chip--mint {
-  background: var(--surface);
-}
-
-.admin-exp-card .package-card__footer {
-  align-items: center;
-}
-
-.admin-exp-card__price {
-  display: grid;
-  gap: 2px;
-}
-
-.admin-exp-card__price small {
-  font-size: 12px;
+.admin-exp__state {
+  margin: 0;
+  padding: 48px var(--space-6);
+  text-align: center;
   color: var(--ink-muted);
-}
-
-.admin-exp-card__actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.admin-exp-card__edit {
-  min-height: 44px;
-  padding: 0 18px;
-  text-decoration: none;
-}
-
-.admin-exp-card__more {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--canvas);
-  color: var(--ink);
-  cursor: pointer;
 }
 
 .admin-exp__empty {
@@ -238,9 +193,7 @@
 }
 
 .pagination__page:focus-visible,
-.pagination__step:focus-visible,
-.admin-exp-card__more:focus-visible,
-.admin-exp-card__edit:focus-visible {
+.pagination__step:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
@@ -253,13 +206,6 @@
 .admin-create__form {
   display: grid;
   gap: var(--space-6);
-}
-
-.admin-create__cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-6);
-  align-items: stretch;
 }
 
 .admin-card {
@@ -309,66 +255,6 @@
   font-size: 12px;
   font-weight: 400;
   color: var(--ink-muted);
-}
-
-.admin-field input,
-.admin-field textarea,
-.admin-select select {
-  width: 100%;
-  min-height: 48px;
-  padding: 0 var(--space-4);
-  border: 1px solid var(--mint);
-  border-radius: 10px;
-  background: var(--surface);
-  font: inherit;
-  font-size: 16px;
-  color: var(--ink);
-}
-
-.admin-field textarea {
-  padding-block: 12px;
-  resize: vertical;
-}
-
-.admin-field input:focus,
-.admin-field textarea:focus,
-.admin-select select:focus {
-  outline: 0;
-  border: 2px solid var(--accent);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-
-.admin-field [aria-invalid="true"] {
-  border-color: var(--danger);
-}
-
-.admin-field__error {
-  margin: 0;
-  font-size: 13px;
-  color: var(--danger);
-}
-
-.admin-field-row {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--space-4);
-}
-
-.admin-select {
-  position: relative;
-}
-
-.admin-select select {
-  appearance: none;
-  padding-inline-end: 40px;
-}
-
-.admin-select svg {
-  position: absolute;
-  top: 50%;
-  inset-inline-end: 14px;
-  transform: translateY(-50%);
-  pointer-events: none;
 }
 
 /* type cards (radio) */
@@ -453,12 +339,27 @@
 
 .admin-stepper input {
   flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
   border: 0;
   border-radius: 0;
-  text-align: center;
+  background: var(--surface);
+  font: inherit;
   font-size: 28px;
   font-weight: 700;
+  color: var(--ink);
+  text-align: center;
   -moz-appearance: textfield;
+}
+
+.admin-stepper:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.admin-stepper input:focus {
+  outline: 0;
 }
 
 .admin-stepper input::-webkit-outer-spin-button,
@@ -481,6 +382,122 @@
 .admin-summary svg {
   flex-shrink: 0;
   color: var(--accent);
+}
+
+
+/* pack size + quantity on one row (laptop) */
+.admin-create__row {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); /* RTL: sizes right, quantity left */
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.admin-field__note {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+/* pack size tiles (radio) — RTL: radio · size · price */
+.admin-sizes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.admin-size {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 52px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--mint);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.admin-size input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.admin-size strong {
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.admin-size__price {
+  margin-inline-start: auto;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.admin-size:has(input:checked) {
+  border: 2px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.admin-size:has(input:checked) .admin-size__price {
+  color: var(--accent);
+}
+
+.admin-size:has(input:focus-visible) {
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* store preview card: text right, card left */
+.admin-preview {
+  grid-template-columns: minmax(0, 1fr) 384px;
+  align-items: center;
+  gap: var(--space-10);
+}
+
+.admin-preview__text {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.admin-preview__text .admin-card__sub {
+  margin: 0;
+}
+
+.admin-preview__checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-preview__checks li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--mint);
+  border-radius: var(--radius-pill);
+  background: var(--canvas);
+  font-size: 12px;
+}
+
+.admin-preview__checks svg {
+  color: var(--primary);
+}
+
+.admin-preview__note {
+  margin: 0;
+  padding: 12px var(--space-4);
+  border-radius: 12px;
+  background: var(--canvas);
+  font-size: 12px;
+  color: var(--ink-muted);
 }
 
 /* action bar */
@@ -559,8 +576,13 @@
     align-items: stretch;
   }
 
-  .admin-create__cards {
+  .admin-create__row {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-preview {
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: var(--space-6);
   }
 }
 
@@ -634,7 +656,22 @@
     gap: var(--space-4);
   }
 
-  .admin-field-row {
+  .admin-sizes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .admin-size {
+    gap: 6px;
+    padding: 0 var(--space-3);
+  }
+
+  .admin-size strong,
+  .admin-size__price {
+    font-size: 14px;
+  }
+
+  .admin-preview {
     grid-template-columns: minmax(0, 1fr);
   }
 

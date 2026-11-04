@@ -1,13 +1,23 @@
 import { Link } from "react-router-dom";
 import { MoreHorizontal } from "lucide-react";
-import Chip from "./Chip";
-import Mark from "../../assets/Mark.png";
+import NfcCoil from "./NfcCoil";
+import "../../styles/ExperiencePackCard.css";
 
-// Same look as the store's PackageCard, with admin status + actions.
-const statusChip = {
-  published: { label: "منشورة", tone: "mint" },
-  draft: { label: "مسودة", tone: "warning" },
-  archived: { label: "مؤرشفة", tone: "neutral" },
+/*
+One card, two views (Figma: "ADMIN VIEW IN MANAGE MY PACKS" / "USER VIEW IN STORE"):
+- variant="admin": status + price, "آخر تعديل", edit link (كمّل for drafts) and ⋯
+- variant="store": full-width price bar and "شراء" (used as the live preview on the create page)
+Colour comes from the mode: sequential = violet, open = mint.
+*/
+
+const MODE_LABEL = { sequential: "تسلسلي", open: "صيد مفتوح" };
+
+const STATUS = {
+  available: "متاحة", // owner_id = null → nobody claimed it yet
+  sold: "مُباعة", // owner_id set → a customer claimed it
+  published: "منشورة",
+  draft: "مسودة",
+  archived: "مؤرشفة",
 };
 
 function timeAgo(iso) {
@@ -21,61 +31,81 @@ function timeAgo(iso) {
   return days < 60 ? "قبل شهر" : `قبل ${Math.round(days / 30)} أشهر`;
 }
 
-export default function AdminExperienceCard({ experience }) {
-  const { id, title, description, pieces, duration, players, mode, price, status, coverTone, updatedAt } =
-    experience;
-  const isSequential = mode === "sequential";
-  const chip = statusChip[status] ?? statusChip.draft;
-  const meta = [`${pieces} قطعة`, duration, players].filter(Boolean).join(" · ");
+function Price({ value }) {
+  return value ? (
+    <>
+      {value} <span aria-label="ريال سعودي">ر.س</span>
+    </>
+  ) : (
+    "بدون سعر"
+  );
+}
+
+export default function ExperiencePackCard({
+  variant = "admin",
+  title,
+  mode = "sequential",
+  pieces,
+  price,
+  status = "available",
+  updatedAt,
+  editTo,
+}) {
+  const isStore = variant === "store";
+  const tone = mode === "open" ? "open" : "seq";
+  const modeLabel = MODE_LABEL[mode] ?? MODE_LABEL.sequential;
 
   return (
-    <article className="package-card admin-exp-card">
-      <div className={`package-card__cover package-card__cover--${coverTone || "mint"}`}>
-        <div className="package-card__art" aria-hidden="true">
-          <i />
-          <i />
-          <i />
-          <i />
-          <i />
-          <span style={{ maskImage: `url(${Mark})`, WebkitMaskImage: `url(${Mark})` }} />
-        </div>
+    <article className={`pack-card pack-card--${tone} pack-card--${variant}`}>
+      {/* name is only for screen readers / search — the card shows the pieces instead */}
+      {title && <h2 className="pack-card__sr">{title}</h2>}
 
-        <div className="package-card__mode">
-          <Chip tone={isSequential ? "accent" : "dark"}>{isSequential ? "تسلسلي" : "صيد مفتوح"}</Chip>
-        </div>
-        <div className="admin-exp-card__status">
-          <Chip tone={chip.tone}>{chip.label}</Chip>
-        </div>
+      <NfcCoil bare line="var(--surface)" className="pack-card__coil" />
+
+      <div className="pack-card__top">
+        {!isStore && (
+          <span className={`pack-card__status pack-card__status--${status}`}>
+            <i aria-hidden="true" />
+            {STATUS[status] ?? STATUS.available}
+          </span>
+        )}
+        <p className="pack-card__price">
+          <Price value={price} />
+        </p>
       </div>
 
-      <div className="package-card__body">
-        <h2>{title}</h2>
-        {description && <p className="package-card__description">{description}</p>}
-        <p className="package-card__meta">{meta}</p>
+      <div className="pack-card__pieces">
+        <p className="pack-card__overline">عدد القطع</p>
+        <p className="pack-card__number">{pieces}</p>
+      </div>
 
-        <div className="package-card__footer">
-          <div className="admin-exp-card__price">
-            <strong className="package-card__price">
-              {price ? (
-                <>
-                  {price} <span aria-label="ريال سعودي">ر.س</span>
-                </>
-              ) : (
-                "بدون سعر"
-              )}
-            </strong>
-            <small>آخر تعديل {timeAgo(updatedAt)}</small>
-          </div>
+      {!isStore && updatedAt && (
+        <p className="pack-card__edited">آخر تعديل {timeAgo(updatedAt)}</p>
+      )}
 
-          <div className="admin-exp-card__actions">
-            <Link to={`/admin/experiences/${id}/edit`} className="ui-button ui-button--outline admin-exp-card__edit">
-              {status === "draft" ? "كمّل" : "تعديل"}
-            </Link>
-            <button type="button" className="admin-exp-card__more" aria-label={`خيارات «${title}»`}>
-              <MoreHorizontal size={18} aria-hidden="true" />
-            </button>
-          </div>
-        </div>
+      <div className="pack-card__bar">
+        <span className="pack-card__mode">
+          <i aria-hidden="true" />
+          {modeLabel}
+        </span>
+
+        {isStore && <span className="pack-card__action">شراء</span>}
+        {/* edit link only when there's a page for it (the backend has no "edit pack" yet) */}
+        {!isStore && editTo && (
+          <Link to={editTo} className="pack-card__action">
+            {status === "draft" ? "كمّل" : "تعديل"}
+            {title && <span className="pack-card__sr"> «{title}»</span>}
+          </Link>
+        )}
+
+        <button
+          type="button"
+          className="pack-card__more"
+          aria-label={title ? `خيارات «${title}»` : "خيارات"}
+          disabled={isStore}
+        >
+          <MoreHorizontal size={18} aria-hidden="true" />
+        </button>
       </div>
     </article>
   );

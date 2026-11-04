@@ -36,13 +36,13 @@ const homeContent = {
   admin: {
     quick: {
       title: "إنشاء تجربة جديدة",
-      text: "تصميم تجربة جديدة وتعديل قطعها بسهولة",
+      text: "اختر النوع وعدد القطع، ونجهّز روابط التفعيل والطباعة",
       action: "انشئ",
       to: "/admin/experiences/new",
     },
     feature: {
       title: "إدارة التجارب",
-      text: "استعراض وعدل جميع التجارب",
+      text: "كل التجارب وحالة تفعيلها",
       action: "تصفح",
       to: "/admin/experiences",
     },
@@ -69,7 +69,7 @@ export default function HomePage() {
     <div dir="rtl" className="rc-home-shell">
       <AppNavbar />
 
-      <main className="rc-home">
+      <main className={`rc-home ${user?.role === "admin" ? "rc-home--admin" : ""}`}>
         <section className="rc-home__bento" aria-labelledby="home-title">
           {/* Hero */}
           <article className="rc-home__hero">
