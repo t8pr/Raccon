@@ -1,4 +1,4 @@
-from sqlmodel import Session
+from sqlmodel import Session, delete
 from fastapi import Depends, HTTPException, status
 from core.database import get_session
 from repositories.pack_repo import PackRepository
@@ -9,7 +9,7 @@ from models import User, Event, EventTag, Pack
 import uuid
 from typing import List
 from core.config import settings
-
+from models.journey_progress import JourneyProgress
 
 class EventService:
     def __init__(self, session: Session = Depends(get_session)):
@@ -56,6 +56,7 @@ class EventService:
             "id": event.id,
             "pack_id": event.pack_id,
             "title": event.title,
+            "mode": pack.mode,
             "status": event.status,
             "tags": tags_view,
             "edit_count": event.edit_count,
@@ -130,9 +131,9 @@ class EventService:
     def edit_event(self, user: User, event_id: uuid.UUID, request) -> dict:
         event, pack = self.validate_event_ownership(user, event_id, request)
         
-        if event.status == "draft":
+        if event.status != "paused":
             raise HTTPException(
-                status.HTTP_400_BAD_REQUEST, "Event is still in draft. Use setup instead."
+                status.HTTP_400_BAD_REQUEST, "Edits are allowed in paused events only."
             )
             
         if event.edit_count >= settings.MAX_EDIT_LIMIT:
@@ -168,7 +169,13 @@ class EventService:
 
         if request.get("title") is not None:
             event.title = request.get("title")
+            
         if request.get("status") is not None:
+            if event.status == "draft" and request.get("status") == "paused":
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="You can't pause an event that hasn't started yet."
+                )
             event.status = request.get("status")
 
         self.events.add_event(event)
@@ -177,6 +184,43 @@ class EventService:
 
         return event
 
+    def reset_event(self, user: User, event_id: uuid.UUID) -> dict:
+        event = self.events.get_event(event_id)
+        if not event:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
+            
+        pack = self.packs.get_pack(event.pack_id)
+        if not pack or pack.owner_id != user.id:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not own this pack.")
+
+        statement = delete(JourneyProgress).where(JourneyProgress.event_id == event.id)
+        self.session.exec(statement)
+
+        event_tags = self.event_tags.get_all_by_event_id(event.id)
+        for et in event_tags:
+            modified = False
+            content = et.content or {}
+
+            if "claimed_by" in content:
+                del content["claimed_by"]
+                modified = True
+
+            if et.tag_type == "trap" and content.get("was_choose"):
+                content = {"choose": True}
+                modified = True
+
+            if modified:
+                et.content = content
+                self.session.add(et)
+
+        event.status = "paused"
+        self.session.add(event)
+        
+        self.session.commit()
+        
+        return {"status": "success", "message": "Event has been perfectly reset to its initial state."}
+
+    
     def list_my_events(self, user: User) -> List[Event] | None:
         packs = self.packs.get_by_owner_id(user.id)
         pack_ids = [p.id for p in packs]

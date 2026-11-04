@@ -1,6 +1,6 @@
 import uuid
 from pydantic import BaseModel, Field
-from typing import List, Literal
+from typing import List, Literal, Optional
 
 class PackGenerateRequest(BaseModel):
     mode: Literal["open", "seq"] 
@@ -27,4 +27,5 @@ class FactoryTagView(BaseModel):
 class FactoryPackResponse(BaseModel):
     pack_id: uuid.UUID
     mode: str
+    owner_name: Optional[str] = None
     tags_to_program: List[FactoryTagView]

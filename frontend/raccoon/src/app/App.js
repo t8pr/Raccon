@@ -21,7 +21,6 @@ import ProtectedRoute from "../pages/auth/ProtectedRoute";
 // Store Page
 import StorePage from "../pages/Store/StorePage";
 import PackagesPage from "../pages/Packages/PackagesPage";
-import CustomizationPage from "../pages/Customization/CustomizationPage";
 
 // Admin
 import AdminRoute from "../pages/Admin/AdminRoute";
@@ -30,6 +29,9 @@ import CreateExperiencePage from "../pages/Admin/Experiences/CreateExperiencePag
 
 // Profile Page
 import ProfilePage from "../pages/Profile/ProfilePage";
+
+// Customization Page
+import CustomizationPage from "../pages/Customization/CustomizationPage";
 
 // ClaimPackage
 import ClaimPage from "../pages/Claim/ClaimPage";
@@ -100,7 +102,7 @@ function AppContent() {
             }
           />
           <Route
-            path="/customization/:packageId"
+            path="/customization/:eventId"
             element={
               <ProtectedRoute>
                 <CustomizationPage />

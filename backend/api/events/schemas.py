@@ -77,6 +77,7 @@ class EventBase(BaseModel):
     status: str
 
 class EventDetailResponse(EventBase):
+    mode: str
     tags: List[EventTagConfigView]
     edit_count: int
     edits_remaining: int
