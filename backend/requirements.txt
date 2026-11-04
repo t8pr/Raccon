@@ -21,3 +21,4 @@ python-multipart
 google-auth
 fastapi==0.111.1
 fastapi-pagination==0.15.15
+email-validator

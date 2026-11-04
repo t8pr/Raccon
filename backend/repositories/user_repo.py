@@ -1,4 +1,5 @@
 from sqlmodel import Session, select
+from fastapi_pagination.ext.sqlmodel import paginate
 from models import User
 import uuid
 
@@ -23,6 +24,10 @@ class UserRepository:
 
     def get_by_user_hash(self, user_hash: str) -> User | None:
         return self.session.exec(select(User).where(User.user_hash == user_hash)).first()
+
+    def get_users(self):
+            users_info = select(User).order_by(User.name)
+            return paginate(self.session, users_info)
     
     def add_user(self, new_user: User) -> None:
         self.session.add(new_user)

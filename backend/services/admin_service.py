@@ -107,3 +107,6 @@ class AdminService:
 
     def get_packs(self, admin_user: User):
         return self.packs.get_packs()
+
+    def get_users(self, admin_user: User):
+            return self.users.get_users()

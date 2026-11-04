@@ -1,9 +1,9 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 class UserRegister(BaseModel):
     name: str
     username: str = Field(..., pattern=r"^[a-z0-9_]+$")
-    email: str
+    email: EmailStr
     phone_number: str = Field(..., pattern=r"^\d{9}$")
     password: str = Field(max_length=72)
     avatar_id: int = 1

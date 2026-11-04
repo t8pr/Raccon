@@ -3,6 +3,7 @@ from services.admin_service import AdminService
 from models.user import User
 from api.admin.schemas import PackGenerateRequest, PackGenerateResponse, FactoryPackResponse
 from api.packs.schemas import PackResponse
+from api.users.schemas import UserResponse
 from api.auth.dependencies import get_current_admin
 import uuid
 from typing import List
@@ -44,3 +45,17 @@ def get_packs(
     admin_user: User = Depends(get_current_admin)
 ):
     return service.get_packs(admin_user)
+
+@router.get("/users", response_model=Page[UserResponse])
+def get_users(
+    service: AdminService = Depends(),
+    admin_user: User = Depends(get_current_admin)
+):
+    return service.get_users(admin_user)
+
+@router.delete("/delete-user")
+def delete_user(
+    service: AdminService = Depends(),
+    admin_user: User = Depends(get_current_admin)
+):
+    return service.get_users(admin_user)
