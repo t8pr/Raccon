@@ -109,4 +109,26 @@ class AdminService:
         return self.packs.get_packs()
 
     def get_users(self, admin_user: User):
-            return self.users.get_users()
+        return self.users.get_users()
+        
+    def delete_users(self, admin_user: User, user_id: uuid.UUID):
+        user = self.users.get_by_id(user_id)
+
+        if user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        self.users.delete_user(user_id)
+        self.session.commit()
+        
+        return {"message": "User deleted successfully"}
+    
+    def delete_packs(self, admin_user: User, pack_id: uuid.UUID):
+        pack = self.packs.get_pack(pack_id)
+    
+        if pack is None:
+            raise HTTPException(status_code=404, detail="Pack not found")
+    
+        self.packs.delete_pack(pack_id)
+        self.session.commit()
+            
+        return {"message": "Pack deleted successfully"}

@@ -1,6 +1,7 @@
 import uuid
 from pydantic import BaseModel, Field
 from typing import List, Literal, Optional
+from models.user import User
 
 class PackGenerateRequest(BaseModel):
     mode: Literal["open", "seq"] 
