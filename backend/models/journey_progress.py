@@ -9,7 +9,7 @@ class JourneyProgress(SQLModel, table=True):
     __tablename__ = "journey_progress"
     
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
-    event_id: uuid.UUID = Field(foreign_key="events.id", index=True)
+    event_id: uuid.UUID = Field(foreign_key="events.id", ondelete="CASCADE", index=True)
     user_hash: str = Field(index=True) 
     current_sequence: int = Field(default=0) 
     score: int = Field(default=0) 
