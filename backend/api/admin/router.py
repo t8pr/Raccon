@@ -39,12 +39,14 @@ def mark_tag_as_printed(
     sequence_num = service.mark_tag_as_printed(admin_user, tag_id)
     return {"status": "success", "message": f"Tag {sequence_num} marked as printed"}
 
+
 @router.get("/packs", response_model=Page[PackResponse])
 def get_packs(
     service: AdminService = Depends(),
     admin_user: User = Depends(get_current_admin)
 ):
     return service.get_packs(admin_user)
+
 
 @router.get("/users", response_model=Page[UserResponse])
 def get_users(
@@ -53,9 +55,20 @@ def get_users(
 ):
     return service.get_users(admin_user)
 
-@router.delete("/delete-user")
+
+@router.delete("/delete-user/{user_id}")
 def delete_user(
+    user_id: uuid.UUID,
     service: AdminService = Depends(),
     admin_user: User = Depends(get_current_admin)
 ):
-    return service.get_users(admin_user)
+    return service.delete_users(admin_user, user_id)
+
+
+@router.delete("/delete-pack/{pack_id}")
+def delete_pack(
+    pack_id: uuid.UUID,
+    service: AdminService = Depends(),
+    admin_user: User = Depends(get_current_admin)
+):
+    return service.delete_packs(admin_user, pack_id)

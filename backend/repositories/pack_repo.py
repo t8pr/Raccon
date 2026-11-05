@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from fastapi_pagination.ext.sqlmodel import paginate
 from models import Pack
 import uuid
@@ -23,4 +23,6 @@ class PackRepository:
     def add_pack(self, new_pack: Pack) -> None:
         self.session.add(new_pack)
         
+    def delete_pack(self, pack_id: uuid.UUID):
+        self.session.exec(delete(Pack).where(Pack.id == pack_id))
         

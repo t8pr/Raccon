@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from fastapi_pagination.ext.sqlmodel import paginate
 from models import User
 import uuid
@@ -26,11 +26,11 @@ class UserRepository:
         return self.session.exec(select(User).where(User.user_hash == user_hash)).first()
 
     def get_users(self):
-            users_info = select(User).order_by(User.name)
-            return paginate(self.session, users_info)
+        users_info = select(User).order_by(User.name)
+        return paginate(self.session, users_info)
     
     def add_user(self, new_user: User) -> None:
         self.session.add(new_user)
 
-    def delete_user(self, user: User) -> None:
-        self.session.delete(user)
+    def delete_user(self, user_id: uuid.UUID) -> None:
+        self.session.exec(delete(User).where(User.id == user_id))
