@@ -10,6 +10,7 @@ import hmac
 import uuid
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+from email_validator import validate_email, EmailNotValidError
 from core.config import settings
 import secrets
 
@@ -32,6 +33,15 @@ class AuthService:
         if existing_user:
             raise HTTPException(
                 status_code=400, detail="Username or Email already exists"
+            )
+
+        try:
+            email_info = validate_email(email, check_deliverability=True)
+            email = email_info.normalized
+
+        except EmailNotValidError as e:
+            raise HTTPException(
+                status_code = 422, detail="Email validation failed."
             )
 
         hashed_pwd = hash_password(password)

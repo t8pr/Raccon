@@ -79,31 +79,37 @@ export default function RegisterPage() {
       if (error.status === 400) {
         setServerError("اسم المستخدم أو البريد الإلكتروني مستخدم مسبقًا");
       } else if (error.status === 422) {
-        const errors = {};
+        if (typeof error.detail === "string") {
+          setFieldErrors({
+            email: "تعذر التحقق من البريد الإلكتروني."
+          });
+        } else {
+          const errors = {};
 
-        if (Array.isArray(error.detail)) {
-          for (const item of error.detail) {
-            const field = item.loc?.[1];
+          if (Array.isArray(error.detail)) {
+            for (const item of error.detail) {
+              const field = item.loc?.[1];
 
-            if (
-              [
-                "name",
-                "username",
-                "email",
-                "phone_number",
-                "password",
-                "avatar_id",
-              ].includes(field)
-            ) {
-              errors[field] = "تحقق من قيمة هذا الحقل";
+              if (
+                [
+                  "name",
+                  "username",
+                  "email",
+                  "phone_number",
+                  "password",
+                  "avatar_id",
+                ].includes(field)
+              ) {
+                errors[field] = "تحقق من قيمة هذا الحقل";
+              }
             }
           }
-        }
 
-        setFieldErrors(errors);
+          setFieldErrors(errors);
 
-        if (Object.keys(errors).length === 0) {
-          setServerError("يرجى مراجعة البيانات المدخلة");
+          if (Object.keys(errors).length === 0) {
+            setServerError("يرجى مراجعة البيانات المدخلة");
+          }
         }
       } else {
         setServerError("تعذر الاتصال بالخادم أو إكمال التسجيل. حاول مرة أخرى");
