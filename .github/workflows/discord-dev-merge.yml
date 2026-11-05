@@ -17,7 +17,7 @@ jobs:
             -d '{
               "content": "@everyone Heads-up team!",
               "embeds": [{
-                "title": "Merged to `dev`",
+                "title": "Merged to `Dev`",
                 "description": "**${{ github.event.pull_request.title }}**",
                 "color": 5763719,
                 "fields": [
