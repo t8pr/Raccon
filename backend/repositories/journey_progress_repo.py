@@ -1,4 +1,4 @@
-from sqlmodel import Session, select, desc
+from sqlmodel import Session, select, desc, update
 from models import JourneyProgress
 import uuid
 from typing import List
@@ -21,4 +21,10 @@ class JourneyProgressRepository:
     def get_top_players(self, event_id: uuid.UUID) -> None:
         statement = select(JourneyProgress.user_hash, JourneyProgress.score).where(JourneyProgress.event_id == event_id).order_by(desc(JourneyProgress.score)).limit(10)
         return self.session.exec(statement).mappings().all()
-        
+    def update_status(self, event_id: uuid.UUID) -> None:
+        statement = update(JourneyProgress).where(JourneyProgress.event_id == event_id).values(status="completed").execution_options(synchronize_session="fetch")
+        self.session.exec(statement)
+
+    def has_participants(self, event_id: uuid.UUID) -> bool:
+        statement = select(JourneyProgress.id).where(JourneyProgress.event_id == event_id).limit(1)
+        return self.session.exec(statement).first() is not None

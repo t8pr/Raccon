@@ -10,6 +10,7 @@ import uuid
 from typing import List
 from core.config import settings
 from models.journey_progress import JourneyProgress
+from repositories.journey_progress_repo import JourneyProgressRepository
 
 class EventService:
     def __init__(self, session: Session = Depends(get_session)):
@@ -18,6 +19,7 @@ class EventService:
         self.packs = PackRepository(session)
         self.tags = TagRepository(session)
         self.event_tags = EventTagRepository(session)
+        self.journey_progress_repo = JourneyProgressRepository(session)
 
     def get_event_details(self, user: User, event_id: uuid.UUID) -> dict:
         event = self.events.get_event(event_id)
@@ -134,6 +136,12 @@ class EventService:
         if event.status != "paused":
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST, "Edits are allowed in paused events only."
+            )
+
+        if (pack.mode == "open" and self.journey_progress_repo.has_participants(event.id)):
+            raise HTTPException(
+                status_code=409,
+                detail="Reseting open hunt event is required.",
             )
             
         if event.edit_count >= settings.MAX_EDIT_LIMIT:

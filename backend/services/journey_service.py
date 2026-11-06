@@ -42,6 +42,13 @@ class JourneyService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
 
         pack = self.packs.get_pack(event.pack_id)
+
+        if pack.mode == "open" and self.is_complete(event.id):
+            raise HTTPException(
+                status_code=409,
+                detail="The round is completed, check the leaderboard.",
+            )
+
         event_tag = self.event_tags.get_exisiting_event_tag(event.id, tag.id)
         progress = self.journey_progress_repo.get_user_journey(event.id, user.user_hash)
 
@@ -88,7 +95,8 @@ class JourneyService:
                 "message": message,
                 "tag_sequence": tag.sequence_num,
                 "tag_type": "trap",
-                "content": content
+                "content": content,
+                "current_score": progress.score
             }
 
 
@@ -100,6 +108,9 @@ class JourneyService:
             
             progress.current_sequence = tag.sequence_num
             progress.score += 1
+
+            if progress.score >= pack.tags_count:
+                progress.status = "completed"
 
         elif pack.mode == "open":
             content = dict(event_tag.content or {}) #create a seperate dict so sqlmodel can detect new content
@@ -125,10 +136,12 @@ class JourneyService:
             progress.visited_sequences = visited
             progress.score += 1
 
-        if progress.score >= pack.tags_count:
-            progress.status = "completed"
-
         self.journey_progress_repo.add_progress(progress)
+        self.session.flush()
+
+        if pack.mode == "open" and self.is_complete(event.id):
+            self.journey_progress_repo.update_status(event.id)
+
         self.session.commit()
 
         return {
@@ -166,7 +179,23 @@ class JourneyService:
         if not tag:
             raise HTTPException(status_code=404, detail="Invalid Tag.")
 
-        event = self.events.lock_event(event_id)
+        event = self.events.get_by_pack_id(tag.pack_id)
+                    
+        if not event:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No event found.")
+        
+        event = self.events.lock_event(event.id)
+
+        if not event or event.status != "live":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
+        
+        pack = self.packs.get_pack(event.pack_id)
+
+        if pack.mode == "open" and self.is_complete(event.id):
+            raise HTTPException(
+                status_code=409,
+                detail="The round is completed, check the leaderboard.",
+            )
         
         if not event or event.status != "live":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
@@ -199,4 +228,13 @@ class JourneyService:
 
     def get_leaderboard(self, user: User, event_id: uuid.UUID):
         return self.journey_progress_repo.get_top_players(event_id)
-        
+
+    def is_complete(self, event_id: uuid.UUID) -> bool:
+        event_tags = self.event_tags.get_all_by_event_id(event_id)
+
+        clue_tags = [tag for tag in event_tags if tag.tag_type == "clue"]
+
+        return bool(clue_tags) and all(
+            (tag.content or {}).get("claimed_by")
+            for tag in clue_tags
+        )
