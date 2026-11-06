@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, desc
 from models import JourneyProgress
 import uuid
 from typing import List
@@ -17,4 +17,8 @@ class JourneyProgressRepository:
     
     def add_progress(self, new_progress: JourneyProgress) -> None:
         self.session.add(new_progress)
+
+    def get_top_players(self, event_id: uuid.UUID) -> None:
+        statement = select(JourneyProgress.user_hash, JourneyProgress.score).where(JourneyProgress.event_id == event_id).order_by(desc(JourneyProgress.score)).limit(10)
+        return self.session.exec(statement).mappings().all()
         

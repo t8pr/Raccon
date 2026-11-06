@@ -97,7 +97,7 @@ class JourneyService:
             progress.score += 1
 
         elif pack.mode == "open":
-            content = event_tag.content if event_tag and event_tag.content else {}
+            content = dict(event_tag.content or {}) #create a seperate dict so sqlmodel can detect new content
             
             claimed_by = content.get("claimed_by")
             if claimed_by:
@@ -191,3 +191,7 @@ class JourneyService:
             "status": "success", 
             "message": f"Trap {trap_type} set successfully on tag {tag.sequence_num}."
         }
+
+    def get_leaderboard(self, user: User, event_id: uuid.UUID):
+        return self.journey_progress_repo.get_top_players(event_id)
+        

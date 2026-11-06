@@ -31,3 +31,11 @@ def set_player_trap(
     current_user: User = Depends(get_current_user)
 ):
     return service.set_player_trap(current_user, **request.model_dump())
+
+@router.get("/leaderboard/{event_id}")
+def get_leaderboard(
+    event_id: uuid.UUID,
+    service: JourneyService = Depends(),
+    current_user: User = Depends(get_current_user)
+):
+    return service.get_leaderboard(current_user, event_id)
