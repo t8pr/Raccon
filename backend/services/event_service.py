@@ -93,7 +93,7 @@ class EventService:
     def validate_event_ownership(
         self, user: User, event_id: uuid.UUID, request
     ) -> tuple:
-        event = self.events.get_event(event_id)
+        event = self.events.lock_event(event_id)
         if not event:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
@@ -154,7 +154,7 @@ class EventService:
         }
 
     def update_event(self, user: User, event_id: uuid.UUID, request: dict) -> Event:
-        event = self.events.get_event(event_id)
+        event = self.events.lock_event(event_id)
         if not event:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
@@ -185,7 +185,7 @@ class EventService:
         return event
 
     def reset_event(self, user: User, event_id: uuid.UUID) -> dict:
-        event = self.events.get_event(event_id)
+        event = self.events.lock_event(event_id)
         if not event:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
             
@@ -199,7 +199,7 @@ class EventService:
         event_tags = self.event_tags.get_all_by_event_id(event.id)
         for et in event_tags:
             modified = False
-            content = et.content or {}
+            content = dict(et.content or {}) #create a new dict for sqlmodel to track
 
             if "claimed_by" in content:
                 del content["claimed_by"]

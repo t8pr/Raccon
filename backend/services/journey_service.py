@@ -33,6 +33,11 @@ class JourneyService:
 
         event = self.events.get_by_pack_id(tag.pack_id)
             
+        if not event:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No event found.")
+
+        event = self.events.lock_event(event.id)
+
         if not event or event.status != "live":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
 
@@ -161,7 +166,7 @@ class JourneyService:
         if not tag:
             raise HTTPException(status_code=404, detail="Invalid Tag.")
 
-        event = self.events.get_by_pack_id(tag.pack_id)
+        event = self.events.lock_event(event_id)
         
         if not event or event.status != "live":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
