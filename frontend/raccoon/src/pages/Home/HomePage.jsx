@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
-import { ChevronLeft, Nfc } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import AppNavbar from "../../components/layout/AppNavbar";
 import NfcCoil from "../../components/ui/NfcCoil";
 import { useAuth } from "../../context/AuthContext";
-import Dehem from "../../assets/avatars/Dehem.png";
+import HeroScanAnimation from "../../components/ui/HeroScanAnimation";
 import "../../styles/HomePage.css";
 
 const homeContent = {
@@ -88,15 +88,8 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="rc-home__art" aria-hidden="true">
-              <span className="rc-home__chip">
-                حصلتها!
-                <Nfc size={16} />
-              </span>
-              <div className="rc-home__tag">
-                <NfcCoil />
-              </div>
-              <img className="rc-home__dehem" src={Dehem} alt="" />
+            <div className="rc-home__art">
+              <HeroScanAnimation />
             </div>
           </article>
 
