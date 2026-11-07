@@ -75,14 +75,28 @@ class JourneyService:
         if progress.frozen_until and progress.frozen_until > datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="You are currently frozen and cannot scan tags."
+                detail={
+                "code": "freeze",
+                "message": "You are currently frozen and cannot scan tags.",
+                "frozen_until": progress.frozen_until.isoformat(),
+                "current_score": progress.score,
+                "tag_sequence": tag.sequence_num
+                }
             )
 
         if event_tag and event_tag.tag_type == "trap":
             content = event_tag.content or {}
             
             if tag.sequence_num in progress.visited_sequences:
-                raise HTTPException(status_code=400, detail="You already triggered this trap.")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                    "code": "already_scanned",
+                    "message": "You already triggered this trap.",
+                    "current_score": progress.score,
+                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    }
+                )
 
             visited = list(progress.visited_sequences)
             visited.append(tag.sequence_num)
@@ -119,9 +133,26 @@ class JourneyService:
 
         if pack.mode == "seq":
             if tag.sequence_num <= progress.current_sequence:
-                raise HTTPException(status_code=400, detail="You have already scanned this tag.")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                    "code": "already_scanned",
+                    "message": "You have already scanned this tag.",
+                    "content": event_tag.content,
+                    "current_score": progress.score,
+                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    }
+                )
             if tag.sequence_num != progress.current_sequence + 1:
-                raise HTTPException(status_code=400, detail=f"Skipped tag! You must scan tag {progress.current_sequence + 1} first.")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                    "code": "skipped_tag",
+                    "message": f"Skipped tag! You must scan tag {progress.current_sequence + 1} first.",
+                    "current_score": progress.score,
+                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    }
+                )
             
             progress.current_sequence = tag.sequence_num
             progress.score += 1
@@ -135,14 +166,38 @@ class JourneyService:
             claimed_by = content.get("claimed_by")
             if claimed_by:
                 if claimed_by == user.user_hash:
-                    raise HTTPException(status_code=400, detail="You already claimed this tag.")
+                    raise HTTPException(
+                        status_code=400,
+                        detail={
+                        "code": "already_scanned",
+                        "message": "You already claimed this tag.",
+                        "current_score": progress.score,
+                        "remaining_tags": self.get_remaining_tags(pack, progress)
+                        }
+                    )
                 
                 claimer = self.users.get_by_user_hash(claimed_by)
                 claimer_name = claimer.name if claimer else "Another player"
-                raise HTTPException(status_code=400, detail=f"Sorry, {claimer_name} claimed this tag before you!")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                    "code": "claimed_by_another_player",
+                    "message": f"Sorry, {claimer_name} claimed this tag before you!",
+                    "current_score": progress.score,
+                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    }
+                )
                 
             if tag.sequence_num in progress.visited_sequences:
-                raise HTTPException(status_code=400, detail="You already scanned this tag.")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                        "code": "already_scanned",
+                        "message": "You already claimed this tag.",
+                        "current_score": progress.score,
+                        "remaining_tags": self.get_remaining_tags(pack, progress)
+                        }
+                    )
 
             content["claimed_by"] = user.user_hash
             event_tag.content = content
