@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import "../../styles/DehmScan.css";
 
 /* DehmScan — «دهم يمسح القطعة» (5.6s loop, pauses off-screen, respects reduced motion) */
 export default function DehmScan({

@@ -17,3 +17,8 @@ axiom-py
 pydantic-settings
 scalar-fastapi
 resend==2.49.1
+python-multipart
+google-auth
+fastapi==0.111.1
+fastapi-pagination==0.15.15
+email-validator

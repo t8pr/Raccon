@@ -10,11 +10,16 @@ from api.packs.router import router as packs_router
 from api.events.router import router as events_router
 from api.journey.router import router as journey_router
 from scalar_fastapi import get_scalar_api_reference
+from core.logger import listener
+from api.nfc.router import router as nfc_router
+from fastapi_pagination import add_pagination
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     yield
+    if listener:
+        listener.stop()
 
 app = FastAPI(title="Raccon Event Platform", lifespan=lifespan)
 
@@ -25,11 +30,14 @@ app.include_router(admin_router)
 app.include_router(packs_router)
 app.include_router(events_router)
 app.include_router(journey_router)
+app.include_router(nfc_router)
 
 origins = [
     "https://react-learning.aalsalhi-eng.workers.dev",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
 ]
 
 app.add_middleware(
@@ -39,6 +47,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+add_pagination(app)
 
 @app.get("/")
 def root():

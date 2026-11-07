@@ -1,0 +1,467 @@
+/* Home page matches Figma new design */
+
+.rc-home-shell {
+  min-height: 100dvh;
+  background: var(--canvas);
+}
+
+.rc-home {
+  max-width: 1440px;
+  margin-inline: auto;
+  padding: var(--space-10) 48px 48px;
+  display: grid;
+  gap: var(--space-6);
+}
+
+/* ---------- bento: hero (right) + side column (left) ---------- */
+.rc-home__bento {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: var(--space-6);
+}
+
+.rc-home__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  align-items: center;
+  gap: var(--space-6);
+  padding: 48px 56px 40px 40px;
+  background: var(--surface);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
+.rc-home__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+  height: 100%;
+}
+
+.rc-home__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 56px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.rc-home__title span {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 40px;
+}
+
+.rc-home__lead {
+  margin: 0;
+  max-width: 440px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--ink-muted);
+}
+
+/* Outlined button — no offset shadow */
+.rc-home__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: auto;
+  min-height: 52px;
+  padding: 0 28px;
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.rc-home__cta:hover {
+  background: var(--surface-soft);
+}
+
+.rc-home__art {
+  position: relative;
+  width: 380px;
+  height: 420px;
+}
+
+.rc-home__tag {
+  position: absolute;
+  top: 70px;
+  left: 20px;
+  width: 300px;
+  height: 300px;
+  border: 10px solid var(--surface);
+  border-radius: 50%;
+  background: var(--mint);
+  overflow: hidden;
+}
+
+.rc-home__tag .nfc-coil {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.rc-home__dehem {
+  position: absolute;
+  top: 230px;
+  left: 228px;
+  width: 154px;
+  height: 154px;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  object-fit: contain;
+}
+
+.rc-home__chip {
+  position: absolute;
+  top: 40px;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ---------- side cards ---------- */
+.rc-home__side {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: var(--space-6);
+}
+
+.rc-home__side h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.rc-home__side p {
+  margin: var(--space-1) 0 0;
+  font-size: 14px;
+}
+
+.rc-home__quick {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-6) 28px;
+  border-radius: var(--radius-xl);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.rc-home__quick h2 {
+  color: var(--on-accent);
+}
+
+.rc-home__quick p {
+  color: var(--accent-soft);
+}
+
+.rc-home__feature {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding: 28px;
+  border-radius: var(--radius-xl);
+  background: var(--night);
+  color: var(--on-panel);
+}
+
+.rc-home__feature h2 {
+  color: var(--on-panel);
+}
+
+.rc-home__feature p {
+  color: var(--on-panel-muted);
+}
+
+.rc-home__feature-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rc-home__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.rc-home__mini-tag {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--night);
+  overflow: hidden;
+}
+
+.rc-home__mini-tag .nfc-coil {
+  width: 100%;
+  height: 100%;
+}
+
+/* ---------- cards ---------- */
+.rc-home__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.rc-home__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: 28px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.15s ease;
+}
+
+.rc-home__card:hover {
+  border-color: var(--mint);
+}
+
+.rc-home__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.rc-home__card h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1.3;
+}
+
+.rc-home__card p {
+  margin: 0;
+  font-size: 16px;
+  color: var(--accent);
+}
+
+.rc-home__cta:focus-visible,
+.rc-home__pill:focus-visible,
+.rc-home__card:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ---------- laptop → tablet ---------- */
+@media (max-width: 1199px) {
+  .rc-home {
+    padding-inline: var(--space-6);
+  }
+
+  .rc-home__bento {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rc-home__side {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+}
+
+/* ---------- phone (≈390) ---------- */
+@media (max-width: 767px) {
+  .rc-home {
+    padding: var(--space-4) var(--space-4) var(--space-8);
+    gap: var(--space-4);
+  }
+
+  .rc-home__bento,
+  .rc-home__side {
+    gap: var(--space-4);
+  }
+
+  .rc-home__side {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rc-home__hero {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    padding: var(--space-6) 20px 20px;
+    gap: var(--space-2);
+  }
+
+  .rc-home__copy {
+    display: contents; /* lets the CTA move under the illustration */
+  }
+
+  .rc-home__title,
+  .rc-home__lead {
+    justify-self: stretch;
+  }
+
+  .rc-home__title {
+    font-size: 36px;
+  }
+
+  .rc-home__title span {
+    font-size: 26px;
+  }
+
+  .rc-home__lead {
+    font-size: 15px;
+  }
+
+  .rc-home__art {
+    order: 1;
+    width: 274px;
+    height: 302px;
+  }
+
+  .rc-home__tag {
+    top: 50px;
+    left: 14px;
+    width: 216px;
+    height: 216px;
+    border-width: 8px;
+  }
+
+  .rc-home__dehem {
+    top: 166px;
+    left: 164px;
+    width: 110px;
+    height: 110px;
+  }
+
+  .rc-home__chip {
+    top: 24px;
+  }
+
+  .rc-home__cta {
+    order: 2;
+    justify-self: stretch;
+    justify-content: center;
+    margin-top: var(--space-2);
+  }
+
+  .rc-home__quick,
+  .rc-home__feature {
+    padding: 20px;
+  }
+
+  /* two squares side by side, title + arrow only */
+  .rc-home__cards {
+    gap: var(--space-3);
+  }
+
+  .rc-home__card {
+    aspect-ratio: 1 / 1;
+    padding: 18px;
+  }
+
+  .rc-home__card-head {
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: space-between;
+  }
+
+  .rc-home__card-head svg {
+    align-self: flex-end; /* bottom-left in RTL */
+  }
+
+  .rc-home__card h3 {
+    font-size: 20px;
+  }
+
+  .rc-home__card p {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-home__cta,
+  .rc-home__card {
+    transition: none;
+  }
+}
+
+
+/* ---------- admin home colours (Figma: Direction · admin · home) ---------- */
+/* "إنشاء تجربة جديدة": green card + mint button */
+.rc-home--admin .rc-home__quick {
+  background: var(--ink-muted);
+  color: var(--on-accent);
+}
+
+.rc-home--admin .rc-home__quick h2 {
+  color: var(--on-accent);
+}
+
+.rc-home--admin .rc-home__quick p {
+  color: var(--mint);
+}
+
+.rc-home--admin .rc-home__quick .rc-home__pill {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+/* "إدارة التجارب": dark violet card + lavender button */
+.rc-home--admin .rc-home__feature {
+  background: var(--panel-raised);
+}
+
+.rc-home--admin .rc-home__feature p {
+  color: var(--on-panel-muted);
+}
+
+.rc-home--admin .rc-home__feature .rc-home__pill {
+  background: var(--on-panel-muted);
+  color: var(--ink);
+}
+
+.rc-home--admin .rc-home__mini-tag {
+  display: none;
+}
+
+.rc-home--admin .rc-home__feature-row {
+  justify-content: flex-end; /* RTL: button on the left */
+}
+
+/* "تصفح المتجر": filled green button */
+.rc-home--admin .rc-home__cta {
+  border-color: var(--ink-muted);
+  background: var(--ink-muted);
+  color: var(--on-accent);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.rc-home--admin .rc-home__cta:hover {
+  border-color: var(--primary);
+  background: var(--primary);
+}

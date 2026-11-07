@@ -7,32 +7,63 @@ import {
   useLocation, // hooks give u the current link
 } from "react-router-dom";
 
-// Auth
+// Auth (Register / login)
 import RegisterPage from "../pages/auth/RegisterPage";
 import LoginPage from "../pages/auth/LoginPage";
+import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
 import { AuthProvider } from "../context/AuthContext";
-
+import ScanPage from "../pages/journey/ScanPage";
 // Home
 import HomePage from "../pages/Home/HomePage";
 import ProtectedRoute from "../pages/auth/ProtectedRoute";
+
+// Store Page
+import StorePage from "../pages/Store/StorePage";
+import PackagesPage from "../pages/Packages/PackagesPage";
+
+// Admin
+import AdminRoute from "../pages/Admin/AdminRoute";
+import AdminExperiencesPage from "../pages/Admin/Experiences/AdminExperiencesPage";
+import CreateExperiencePage from "../pages/Admin/Experiences/CreateExperiencePage";
+
+// Profile Page
+import ProfilePage from "../pages/Profile/ProfilePage";
+
+// Customization Page
+import CustomizationPage from "../pages/Customization/CustomizationPage";
+
+// ClaimPackage
+import ClaimPage from "../pages/Claim/ClaimPage";
 
 function AppContent() {
   const location = useLocation(); // work only insdie BrowserRouter and App create useLocation(}
 
   // Pages without Sidebar and Topbar
-  const isAuthPage =
-    location.pathname === "/register" || location.pathname === "/login";
+  const authPaths = ["/register", "/login", "/forgot-password", "/reset-password"];
+  const isAuthPage = authPaths.includes(location.pathname);
 
   return (
     <div>
       <main className={isAuthPage ? "" : "main-content"}>
         <Routes>
+          <Route
+            path="/scan"
+            element={
+              <ProtectedRoute>
+                <ScanPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Default Route */}
           <Route path="/" element={<Navigate to="/register" replace />} />{" "}
           {/* Element is the jsx file*/}
           {/* Authentication */}
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          {/* The email link opens /reset-password?token=... */}
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           {/*Home page*/}
           <Route
             path="/home"
@@ -42,7 +73,62 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
+          {/*Profile page*/}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <ProfilePage />
+              </ProtectedRoute>
+            }
+          />
+          {/*Store page*/}
+          <Route path="/store" element={<StorePage />} />
+          <Route
+            path="/packages"
+            element={
+              <ProtectedRoute>
+                <PackagesPage />
+              </ProtectedRoute>
+            }
+          />
+          {/*customization --> التخصيص */}
+          <Route
+            path="/customization"
+            element={
+              <ProtectedRoute>
+                <CustomizationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customization/:eventId"
+            element={
+              <ProtectedRoute>
+                <CustomizationPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/claim/:masterAuthHash" element={<ClaimPage />} />
+          {/* Admin › إدارة التجارب */}
+          <Route
+            path="/admin/experiences"
+            element={
+              <AdminRoute>
+                <AdminExperiencesPage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/experiences/new"
+            element={
+              <AdminRoute>
+                <CreateExperiencePage />
+              </AdminRoute>
+            }
+          />
         </Routes>
+        
       </main>
     </div>
   );

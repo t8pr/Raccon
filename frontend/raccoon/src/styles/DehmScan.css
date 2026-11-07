@@ -1,0 +1,438 @@
+/* rc-scan */
+
+.rc-scan {
+  --rc-navy: #1b1442;
+  --rc-purple: #4333a5;
+  --rc-mint: #c6ecdb;
+  --rc-ink-2: #b9b3e0;
+  --rc-dur: 5.6s;
+  position: relative;
+  width: 100%;
+  max-width: var(--rc-scan-max, 480px);
+  aspect-ratio: 3/2;
+  margin: 0;
+  container-type: inline-size;
+  font-family: "thmanyah sans", system-ui, Tahoma, sans-serif;
+}
+
+.rc-scan__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 24px;
+}
+
+.rc-scan__svg g {
+  transform-box: view-box;
+}
+
+.rc-scan__armReach {
+  transform-origin: 192px 174px;
+}
+
+.rc-scan__antenna {
+  transform-origin: 182px 125.6px;
+}
+
+.rc-scan__tag,
+.rc-scan__wave1,
+.rc-scan__wave2,
+.rc-scan__wave3 {
+  transform-origin: 274px 178px;
+}
+
+.rc-scan__armRest {
+  opacity: 0;
+}
+
+.rc-scan__wave1,
+.rc-scan__wave2,
+.rc-scan__wave3 {
+  opacity: 0.25;
+}
+
+/* rc-bubble */
+
+.rc-bubble {
+  position: absolute;
+  left: 40.83%;
+  top: 6.875%;
+  width: 50%;
+  height: 20%;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 0.6em;
+  padding: 0 0.9em;
+  border-radius: 1em;
+  font-size: 3.125cqw;
+  white-space: nowrap;
+  background: var(--rc-navy);
+  border: 1px solid var(--rc-purple);
+  color: #fff;
+  box-shadow: 0 0.6em 1.6em rgba(13, 10, 33, 0.35);
+  transform-origin: 24.6% 231%;
+}
+
+.rc-bubble::after {
+  content: "";
+  position: absolute;
+  left: calc(24.6% - 0.5em);
+  bottom: -0.7em;
+  border: 0.5em solid transparent;
+  border-top: 0.75em solid var(--rc-navy);
+  border-bottom: 0;
+}
+
+.rc-bubble__icon {
+  flex: 0 0 1.75em;
+  height: 1.75em;
+  border-radius: 50%;
+  background: var(--rc-mint);
+  color: var(--rc-navy);
+}
+
+.rc-bubble__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15em;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.rc-bubble__text strong {
+  font-size: 1em;
+  font-weight: 700;
+}
+
+.rc-bubble__text small {
+  font-size: 0.75em;
+  color: var(--rc-ink-2);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rc-scan__armRest {
+    animation: rc-arm-rest var(--rc-dur) infinite;
+  }
+
+  .rc-scan__armReach {
+    animation: rc-arm-reach var(--rc-dur) infinite;
+  }
+
+  .rc-scan__wave1 {
+    animation: rc-ripple-1 var(--rc-dur) infinite;
+  }
+
+  .rc-scan__wave2 {
+    animation: rc-ripple-2 var(--rc-dur) infinite;
+  }
+
+  .rc-scan__wave3 {
+    animation: rc-ripple-3 var(--rc-dur) infinite;
+  }
+
+  .rc-scan__tag {
+    animation: rc-tag var(--rc-dur) infinite;
+  }
+
+  .rc-scan__antenna {
+    animation: rc-antenna var(--rc-dur) ease-in-out infinite;
+  }
+
+  .rc-bubble {
+    animation: rc-pop var(--rc-dur) infinite;
+  }
+
+  .rc-scan.is-paused *,
+  .rc-scan.is-paused {
+    animation-play-state: paused;
+  }
+}
+
+@keyframes rc-arm-rest {
+  0%,
+  10.71% {
+    opacity: 1;
+  }
+
+  13.39%,
+  89.29% {
+    opacity: 0;
+  }
+
+  92.86%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes rc-arm-reach {
+  0% {
+    opacity: 0;
+    transform: rotate(55deg);
+  }
+
+  10.71% {
+    opacity: 0;
+    transform: rotate(55deg);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
+
+  13.39% {
+    opacity: 1;
+  }
+
+  19.64% {
+    opacity: 1;
+    transform: rotate(0) translateX(0);
+    animation-timing-function: ease-in-out;
+  }
+
+  21.07% {
+    transform: rotate(0) translateX(2px);
+  }
+
+  22.86% {
+    transform: rotate(0) translateX(0);
+  }
+
+  85.71% {
+    opacity: 1;
+    transform: rotate(0);
+    animation-timing-function: ease-in;
+  }
+
+  91.96%,
+  100% {
+    opacity: 0;
+    transform: rotate(55deg);
+  }
+}
+
+@keyframes rc-ripple-1 {
+  0%,
+  21.07% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  21.43% {
+    opacity: 1;
+    transform: scale(0.7);
+    animation-timing-function: ease-out;
+  }
+
+  30.89% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+
+  31.25% {
+    opacity: 1;
+    transform: scale(0.7);
+    animation-timing-function: ease-out;
+  }
+
+  43.75% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+
+  51.79% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  57.14%,
+  83.93% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+
+  89.29% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes rc-ripple-2 {
+  0%,
+  23.75% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  24.11% {
+    opacity: 1;
+    transform: scale(0.7);
+    animation-timing-function: ease-out;
+  }
+
+  33.57% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+
+  33.93% {
+    opacity: 1;
+    transform: scale(0.7);
+    animation-timing-function: ease-out;
+  }
+
+  46.43% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+
+  51.79% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  57.14%,
+  83.93% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+
+  89.29% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes rc-ripple-3 {
+  0%,
+  26.43% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+
+  26.79% {
+    opacity: 1;
+    transform: scale(0.7);
+    animation-timing-function: ease-out;
+  }
+
+  36.25% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+
+  36.61% {
+    opacity: 1;
+    transform: scale(0.7);
+    animation-timing-function: ease-out;
+  }
+
+  49.11% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+
+  51.79% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  57.14%,
+  83.93% {
+    opacity: 0.25;
+    transform: scale(1);
+  }
+
+  89.29% {
+    opacity: 0;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+}
+
+@keyframes rc-tag {
+  0%,
+  21.07% {
+    transform: scale(1);
+    animation-timing-function: ease-out;
+  }
+
+  23.21% {
+    transform: scale(1.14);
+  }
+
+  27.68%,
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes rc-antenna {
+  0%,
+  41.07% {
+    transform: rotate(0);
+  }
+
+  43.75% {
+    transform: rotate(-12deg);
+  }
+
+  46.43% {
+    transform: rotate(9deg);
+  }
+
+  49.11% {
+    transform: rotate(-5deg);
+  }
+
+  51.79%,
+  100% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes rc-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+
+  41.07% {
+    opacity: 0;
+    transform: scale(0.2);
+    animation-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  49.11%,
+  83.93% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  89.29% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+}
+
+.hero .rc-scan {
+  --rc-scan-max: 560px;
+}

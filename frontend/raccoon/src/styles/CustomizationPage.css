@@ -1,0 +1,902 @@
+/* ========================================
+   1. توزيع الصفحة
+======================================== */
+
+.customization-view {
+  min-height: 100dvh;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.customization-view .customization-space {
+  width: calc(100% - 48px);
+  max-width: 1248px;
+  margin-inline: auto;
+  padding-block: 32px 48px;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-areas:
+    "heading heading"
+    "editor tags";
+  align-items: start;
+  gap: 24px;
+}
+
+/* عنوان الباقة خارج الصناديق */
+
+.customization-view .customization-heading {
+  grid-area: heading;
+  min-width: 0;
+}
+
+.customization-view .customization-heading h1 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3vw, 44px);
+  font-weight: 900;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+/* صناديق الصفحة */
+
+.customization-view .customization-editor,
+.customization-view .Tag-Selector {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.customization-view .customization-editor {
+  grid-area: editor;
+
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+
+  padding: 32px;
+}
+
+.customization-view .Tag-Selector {
+  grid-area: tags;
+  padding: 24px;
+}
+
+/* رأس محرر القطعة */
+
+.customization-view .customization-editor__header {
+  position: relative;
+  min-height: 54px;
+  padding-inline-end: 170px;
+}
+
+.customization-view #tag-title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 36px;
+  font-weight: 900;
+  line-height: 1.5;
+}
+
+.customization-view .customization-editor__edits {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+}
+
+/* ========================================
+   2. تقدم تجهيز القطع
+======================================== */
+
+.customization-view .tag-progress__label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.customization-view .Tag-Selector__title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.customization-view .tag-progress__label strong {
+  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.customization-view .tag-progress {
+  display: block;
+  width: 100%;
+  height: 7px;
+  margin-block: 12px 26px;
+
+  overflow: hidden;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  accent-color: var(--ink-muted);
+}
+
+.customization-view .tag-progress::-webkit-progress-bar {
+  border-radius: 999px;
+  background: var(--accent-soft);
+}
+
+.customization-view .tag-progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--ink-muted);
+}
+
+.customization-view .tag-progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--ink-muted);
+}
+
+/* ========================================
+   3. ClassTag
+======================================== */
+
+.customization-view .class-tag-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px 10px;
+}
+
+.customization-view .class-tag {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+  color: var(--ink-muted);
+
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* غير محفوظة */
+
+.customization-view .class-tag__circle {
+  position: relative;
+
+  display: grid;
+  place-items: center;
+
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+
+  border: 1px dashed var(--line-strong);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-muted);
+
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* محفوظة وجاهزة */
+
+.customization-view .class-tag--configured .class-tag__circle {
+  border: 1px solid var(--mint);
+  background: var(--mint);
+  color: var(--ink);
+}
+
+/* الحالية: أولوية على لون الجاهزية */
+
+.customization-view .class-tag--current .class-tag__circle {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--surface);
+
+  outline: 4px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.customization-view .class-tag__label {
+  min-height: 15px;
+  color: var(--accent);
+  font-size: 10px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* مؤشر الفخ مستقل عن لون الدائرة */
+
+.customization-view .class-tag__trap {
+  position: absolute;
+  inset-block-start: -4px;
+  inset-inline-end: -3px;
+
+  display: grid;
+  place-items: center;
+
+  width: 20px;
+  height: 20px;
+
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: var(--night);
+  color: var(--surface);
+}
+
+.customization-view .class-tag__trap svg {
+  display: block;
+}
+
+.customization-view .class-tag:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 5px;
+  border-radius: 8px;
+}
+
+.customization-view .class-tag:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* ========================================
+   4. TagLegend
+======================================== */
+
+.customization-view .tag-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+
+  margin-top: 24px;
+  padding-top: 16px;
+
+  border-top: 1px solid var(--line);
+  color: var(--ink-muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.customization-view .tag-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.customization-view .tag-legend__dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.customization-view .tag-legend__dot--saved {
+  background: var(--mint);
+}
+
+.customization-view .tag-legend__dot--current {
+  background: var(--accent);
+}
+
+.customization-view .tag-legend__dot--empty {
+  border: 1px dashed var(--line-strong);
+  background: var(--surface);
+}
+
+.customization-view .tag-legend__dot--trap {
+  background: var(--night);
+}
+
+/* ========================================
+   5. أزرار الجولة داخل صندوق القطع
+======================================== */
+
+.customization-view .Tag-Selector .Round-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  min-width: 0;
+  margin-top: 20px;
+  padding: 20px 0 0;
+
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.customization-view .Round-settings h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.customization-view .Round-settings__content:empty {
+  display: none;
+}
+
+.customization-view .Round-settings__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.customization-view .Round-settings__actions .ui-button {
+  width: 100%;
+}
+
+.customization-view .customization-note {
+  margin: 0;
+  padding: 12px;
+
+  border-radius: 10px;
+  background: var(--canvas);
+  color: var(--ink-muted);
+
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+/* ========================================
+   6. HintField
+======================================== */
+
+.customization-view .hint-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.customization-view .hint-field__header,
+.customization-view .hint-field__footer {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.customization-view .hint-field__footer {
+  justify-content: space-between;
+}
+
+.customization-view .hint-field__label {
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.customization-view .hint-field__indicator,
+.customization-view .hint-field__counter,
+.customization-view .hint-field__note {
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.customization-view .hint-field__note {
+  margin: 0;
+}
+
+.customization-view .hint-field__counter {
+  flex-shrink: 0;
+  direction: ltr;
+  font-variant-numeric: tabular-nums;
+}
+
+.customization-view .hint-field__input {
+  width: 100%;
+  min-height: 140px;
+  padding: 16px;
+  resize: vertical;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.customization-view .hint-field__input::placeholder {
+  color: var(--ink-muted);
+  opacity: 1;
+}
+
+.customization-view .hint-field__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.customization-view .hint-field__input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+/* ========================================
+   7. رفع الصور — soon
+======================================== */
+
+.customization-view .ImageUploader {
+  display: grid;
+  place-items: center;
+
+  min-height: 100px;
+  padding: 20px;
+
+  border: 1px dashed var(--line-strong);
+  border-radius: 12px;
+  background: var(--canvas);
+  color: var(--ink-muted);
+
+  font-size: 14px;
+}
+
+/* ========================================
+   8. بطاقات أنواع الفخ
+======================================== */
+
+.customization-view .trap-field {
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  direction: rtl;
+  text-align: start;
+}
+
+.customization-view .trap-field legend {
+  margin-bottom: 12px;
+  padding: 0;
+
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.customization-view .trap-field legend span {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.customization-view .trap-field__options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.customization-view .trap-field__option {
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.customization-view .trap-field__option input {
+  position: absolute;
+  inset-block-start: 15px;
+  inset-inline-end: 12px;
+
+  width: 14px;
+  height: 14px;
+  margin: 0;
+
+  opacity: 1;
+  accent-color: var(--night);
+  cursor: pointer;
+}
+
+.customization-view .trap-field__option > .trap-field__option-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+
+  min-height: 92px;
+  padding: 12px;
+  padding-inline-end: 34px;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.customization-view .trap-field__option-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.customization-view .trap-field__option-heading strong {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.customization-view .trap-field__icon {
+  display: grid;
+  place-items: center;
+
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--ink-muted);
+}
+
+.customization-view .trap-field__option-card small {
+  color: var(--ink-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+/* البطاقة المحددة تبقى بيضاء */
+
+.customization-view
+  .trap-field__option
+  input:checked
+  + .trap-field__option-card {
+  border-color: var(--night);
+  box-shadow: inset 0 0 0 1px var(--night);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.customization-view
+  .trap-field__option
+  input:checked
+  + .trap-field__option-card
+  .trap-field__icon {
+  background: var(--night);
+  color: var(--surface);
+}
+
+.customization-view
+  .trap-field__option
+  input:focus-visible
+  + .trap-field__option-card {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.customization-view .trap-field:disabled {
+  opacity: 0.6;
+}
+
+.customization-view .trap-field:disabled .trap-field__option,
+.customization-view .trap-field:disabled input,
+.customization-view .trap-field:disabled button {
+  cursor: not-allowed;
+}
+
+/* ========================================
+   9. تفاصيل الفخ والمدة
+======================================== */
+
+.customization-view .trap-field__details {
+  margin-top: 14px;
+  padding: 18px;
+
+  border: 1px dashed var(--line-strong);
+  border-radius: 14px;
+  background: var(--canvas);
+}
+
+.customization-view .trap-field__details-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.customization-view .trap-field__details-grid--two {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, 2fr);
+}
+
+.customization-view .trap-field__panel {
+  min-width: 0;
+  padding: 20px;
+
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.customization-view .trap-field__panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 0 0 20px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.customization-view .trap-field__panel h3 svg {
+  flex-shrink: 0;
+}
+
+.customization-view .trap-field__panel > strong {
+  display: block;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.customization-view .trap-field__times {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.customization-view .trap-field__time {
+  min-width: 52px;
+  min-height: 34px;
+  padding: 5px 10px;
+
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+
+  cursor: pointer;
+}
+
+.customization-view .trap-field__time[aria-pressed="true"] {
+  border-color: var(--night);
+  background: var(--night);
+  color: var(--surface);
+}
+
+.customization-view .trap-field__custom-time {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  min-height: 34px;
+  padding: 4px 10px;
+
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--surface);
+  font-size: 11px;
+}
+
+.customization-view .trap-field__custom-time input {
+  width: 58px;
+  min-width: 0;
+  padding: 2px;
+
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  direction: ltr;
+}
+
+.customization-view .trap-field__custom-time input[aria-invalid="true"] {
+  outline: 2px solid var(--surface);
+  outline-offset: 2px;
+}
+
+.customization-view .trap-field__panel p {
+  margin: 24px 0 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.customization-view .trap-field__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+
+  margin: 0 0 14px;
+  padding: 12px;
+
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--ink);
+
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.customization-view .trap-field__notice svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.customization-view .trap-field__time:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.customization-view .trap-field__custom-time input:focus-visible {
+  outline: 2px solid var(--surface);
+  outline-offset: 2px;
+}
+
+/* ========================================
+   10. أزرار المحرر والرسائل
+======================================== */
+
+.customization-view .customization-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.customization-view .customization-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  z-index: 1000;
+  transform: translateX(-50%);
+
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 12px 20px;
+
+  border-radius: 8px;
+  background: var(--night);
+  color: var(--surface);
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.customization-view .customization-empty {
+  max-width: 1248px;
+  margin: 32px auto;
+  padding-inline: 24px;
+
+  color: var(--ink);
+  line-height: 1.8;
+}
+
+/* ========================================
+   11. الشاشات المتوسطة والجوال
+======================================== */
+
+@media (max-width: 1100px) and (min-width: 901px) {
+  .customization-view .trap-field__options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customization-view .trap-field__details-grid--two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .customization-view .customization-space {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "heading"
+      "tags"
+      "editor";
+  }
+}
+
+@media (max-width: 600px) {
+  .customization-view .customization-space {
+    width: calc(100% - 32px);
+    padding-block: 24px;
+    gap: 16px;
+  }
+
+  .customization-view .customization-editor,
+  .customization-view .Tag-Selector {
+    padding: 20px;
+  }
+
+  .customization-view .customization-editor {
+    gap: 24px;
+  }
+
+  .customization-view .customization-editor__header {
+    min-height: 0;
+    padding-inline-end: 0;
+  }
+
+  .customization-view #tag-title {
+    font-size: 30px;
+  }
+
+  .customization-view .customization-editor__edits {
+    position: static;
+    margin-top: 12px;
+  }
+
+  .customization-view .trap-field__options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .customization-view .trap-field__details {
+    padding: 12px;
+  }
+
+  .customization-view .trap-field__details-grid--two {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .customization-view .trap-field__panel {
+    padding: 16px;
+  }
+
+  .customization-view .hint-field__footer {
+    flex-wrap: wrap;
+  }
+
+  .customization-view .customization-editor__actions .ui-button {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .customization-view .class-tag--current .class-tag__circle,
+  .customization-view .trap-field__time[aria-pressed="true"] {
+    outline: 2px solid Highlight;
+  }
+}
