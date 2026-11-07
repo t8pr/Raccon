@@ -43,14 +43,27 @@ class JourneyService:
 
         pack = self.packs.get_pack(event.pack_id)
 
-        if pack.mode == "open" and self.is_complete(event.id):
-            raise HTTPException(
-                status_code=409,
-                detail="The round is completed, check the leaderboard.",
-            )
-
         event_tag = self.event_tags.get_exisiting_event_tag(event.id, tag.id)
+
         progress = self.journey_progress_repo.get_user_journey(event.id, user.user_hash)
+
+        if pack.mode == "open" and self.is_complete(event.id):
+            result = {
+                "status": "view_only",
+                "message": "The round has finished.",
+                "event_id": event.id,
+                "mode": pack.mode,
+                "tag_sequence": tag.sequence_num,
+                "tag_type": event_tag.tag_type if event_tag else None,
+                "content": event_tag.content if event_tag else None,
+                "current_score": progress.score if progress else 0,
+                "remaining_tags": pack.tags_count - len(progress.visited_sequences) if progress else pack.tags_count,
+                "frozen_until": progress.frozen_until if progress else None,
+                "event_finished": True,
+            }
+
+            self.session.rollback() #release event lock
+            return result
 
         if not progress:
             progress = JourneyProgress(event_id=event.id, user_hash=user.user_hash)
@@ -93,10 +106,14 @@ class JourneyService:
             return {
                 "status": "trap_triggered",
                 "message": message,
+                "event_id": event.id,
+                "mode": pack.mode,
                 "tag_sequence": tag.sequence_num,
                 "tag_type": "trap",
                 "content": content,
-                "current_score": progress.score
+                "current_score": progress.score,
+                "remaining_tags": self.get_remaining_tags(pack, progress),
+                "frozen_until": progress.frozen_until
             }
 
 
@@ -137,9 +154,14 @@ class JourneyService:
             progress.score += 1
 
         self.journey_progress_repo.add_progress(progress)
-        self.session.flush()
+        self.session.flush() #update progress but dont finalize transaction
 
-        if pack.mode == "open" and self.is_complete(event.id):
+        if pack.mode == "open":
+            event_finished = self.is_complete(event.id)
+        else:
+            event_finished = progress.status == "completed"
+
+        if pack.mode == "open" and event_finished:
             self.journey_progress_repo.update_status(event.id)
 
         self.session.commit()
@@ -147,10 +169,15 @@ class JourneyService:
         return {
             "status": "success",
             "message": f"Tag {tag.sequence_num} scanned successfully!",
+            "event_id": event.id,
+            "mode": pack.mode,
             "tag_sequence": tag.sequence_num,
             "tag_type": event_tag.tag_type if event_tag else None,
             "content": event_tag.content if event_tag else None,
-            "current_score": progress.score
+            "current_score": progress.score,
+            "remaining_tags": self.get_remaining_tags(pack, progress),
+            "frozen_until": progress.frozen_until,
+            "event_finished": event_finished
         }
     
     def get_progress(self, user: User, event_id: uuid.UUID):
@@ -194,14 +221,11 @@ class JourneyService:
         if pack.mode == "open" and self.is_complete(event.id):
             raise HTTPException(
                 status_code=409,
-                detail="The round is completed, check the leaderboard.",
+                detail="The round has finished. Traps cannot be changed.",
             )
-        
-        if not event or event.status != "live":
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
 
         event_tag = self.event_tags.get_exisiting_event_tag(event.id, tag.id)
-
+        
         if not event_tag or event_tag.tag_type != "trap":
             raise HTTPException(status_code=400, detail="This tag is not a trap.")
 
@@ -238,3 +262,9 @@ class JourneyService:
             (tag.content or {}).get("claimed_by")
             for tag in clue_tags
         )
+
+    def get_remaining_tags(self, pack, progress) -> int:
+        if pack.mode == "seq":
+            return pack.tags_count - progress.current_sequence
+
+        return pack.tags_count - len(progress.visited_sequences)

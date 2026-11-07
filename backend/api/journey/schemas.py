@@ -1,6 +1,9 @@
 from pydantic import BaseModel, model_validator
 from typing import Optional, Dict, Any, Literal
 from api.events.schemas import TagContent
+import uuid
+from datetime import datetime
+
 
 class TagScanRequest(BaseModel):
     tag_hash: str
@@ -13,6 +16,11 @@ class TagScanResponse(BaseModel):
     tag_type: Optional[str] = None
     content: Optional[TagContent] = None
     current_score: int = 0
+    event_id: uuid.UUID
+    mode: Literal["seq", "open"]
+    remaining_tags: int
+    frozen_until: datetime | None = None
+    event_finished: bool = False
 
 class SetTrapRequest(BaseModel):
     tag_hash: str
