@@ -1,14 +1,23 @@
-import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { scanTagData } from "../../api/journeyApi";
 import AppNavbar from "../../components/layout/AppNavbar";
-import InlineMessage from "../../components/ui/InlineMessage";
-import Button from "../../components/ui/Button";
 import { useAuth } from "../../context/AuthContext";
+import { getLeaderboard } from "../../api/journeyApi";
+import ChooseTrap from "../../components/journey/ChooseTrap";
+
+function TagContent({ content }) {
+  return (
+    <>
+      {content?.hint && <p>{content.hint}</p>}
+
+      {/* image */}
+    </>
+  );
+}
 
 export default function ScanPage() {
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const { accessToken } = useAuth();
   
   const tagHash = searchParams.get("tag");
@@ -17,8 +26,20 @@ export default function ScanPage() {
   const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [scanError, setScanError] = useState(null);
+  const scanRequest = useRef(null);
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [leaderboardError, setLeaderboardError] = useState("");
 
   useEffect(() => {
+    let active = true;
+
+    setIsLoading(true);
+    setScanResult(null);
+    setScanError(null);
+    setError("");
+
     async function executeAutoScan() {
       if (!tagHash || !userHash) {
         setError("رابط غير صالح أو بيانات مفقودة.");
@@ -26,73 +47,254 @@ export default function ScanPage() {
         return;
       }
 
+      if (!accessToken) return;
+
+      const previous = scanRequest.current;
+      if (
+        !previous ||
+        previous.tagHash !== tagHash ||
+        previous.userHash !== userHash ||
+        previous.accessToken !== accessToken
+      ) {
+        scanRequest.current = {
+          tagHash,
+          userHash,
+          accessToken,
+          promise: scanTagData(tagHash, userHash, accessToken),
+        };
+      }
+
       try {
-        const data = await scanTagData(tagHash, userHash, accessToken);
+        const data = await scanRequest.current.promise;
+        if (!active) return;
         setScanResult(data);
       } catch (err) {
-        setError(err.detail || "حدث خطأ أثناء المسح. الرجاء المحاولة مرة أخرى.");
+        if (!active) return;
+        const detail = err.detail;
+
+        setScanError(
+          typeof detail === "string"
+            ? { code: "unknown", message: detail }
+            : detail || {
+                code: "unknown",
+                message: "تعذر قراءة البطاقة.",
+              }
+        );
       } finally {
-        setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     }
 
     executeAutoScan();
+
+    return () => {
+      active = false;
+    };
   }, [tagHash, userHash, accessToken]);
 
-  return (
-    <div dir="rtl">
-      <AppNavbar />
-      <section className="home-page">
-        {isLoading ? (
-          <div style={{ textAlign: "center", marginTop: "50px" }}>
-            <h2>جاري قراءة البطاقة...</h2>
-          </div>
-        ) : error ? (
-          <div style={{ maxWidth: "500px", margin: "50px auto" }}>
-            <InlineMessage type="error" message={error} />
-            <div style={{ marginTop: "20px" }}>
-              <Button fullWidth onClick={() => navigate("/home")}>
-                العودة للرئيسية
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div style={{ maxWidth: "500px", margin: "50px auto", textAlign: "center" }}>
-            <InlineMessage type="success" message={scanResult.message} />
-            <h1 style={{ marginTop: "20px" }}>النقاط الحالية: {scanResult.current_score}</h1>
-            
-            {}
-            <div style={{ marginTop: "20px", padding: "20px", border: "2px dashed #4333A5", borderRadius: "12px", background: "#F4F2FB", textAlign: "right" }}>
-              <h3 style={{ color: "#1B1442", marginBottom: "15px", textAlign: "center" }}>
-                {scanResult.tag_type === "trap" ? "فخ" : "تلميح"}:
-              </h3>
-              
-              {scanResult.content && (
-                <div>
-                  {scanResult.tag_type === "clue" && (
-                    <>
-                      {scanResult.content.hint && <p style={{ fontSize: "18px" }}><strong>التلميح:</strong> {scanResult.content.hint}</p>}
-                      {scanResult.content.image && <img src={scanResult.content.image} alt="Clue" style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "10px" }} />}
-                    </>
-                  )}
-                  {scanResult.tag_type === "trap" && (
-                    <>
-                      {scanResult.content.boom && <p style={{ fontSize: "18px", color: "#c0392b" }}><strong>التأثير:</strong> خصم {scanResult.content.boom} نقاط</p>}
-                      {scanResult.content.freeze && <p style={{ fontSize: "18px", color: "#4333A5" }}><strong>التأثير:</strong> تجميد لمدة {scanResult.content.freeze} ثانية</p>}
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
+  const eventId = scanResult?.event_id;
 
-            <div style={{ marginTop: "30px" }}>
-              <Button fullWidth onClick={() => navigate("/home")}>
-                متابعة
-              </Button>
-            </div>
-          </div>
-        )}
-      </section>
-    </div>
-  );
+  useEffect(() => {
+    if (!eventId || !accessToken) return;
+
+    let active = true;
+
+    setLeaderboard([]);
+    setLeaderboardLoading(true);
+    setLeaderboardError("");
+
+    async function loadLeaderboard() {
+      try {
+        const players = await getLeaderboard(eventId, accessToken);
+
+        if (active) {
+          setLeaderboard(players);
+        }
+      } catch {
+        if (active) {
+          setLeaderboardError("تعذر تحميل المتصدرين.");
+        }
+      } finally {
+        if (active) {
+          setLeaderboardLoading(false);
+        }
+      }
+    }
+
+    loadLeaderboard();
+
+    return () => {
+      active = false;
+    };
+  }, [eventId, accessToken, scanResult]);
+
+  let view;
+
+  if (isLoading) {
+    view = <p>جاري قراءة البطاقة...</p>;
+  } else if (error) {
+    view = <p>{error}</p>;
+  } else if (scanError) {
+    switch (scanError.code) {
+      case "already_scanned":
+        view = (
+          <>
+            <p>حقتك من قبل!</p>
+            <TagContent content={scanError.content} />
+            <p>هذا تلميح القطعة مرة ثانية — نقاطك ما تغيّرت.</p>
+          </>
+        );
+        break;
+
+      case "claimed_by_another_player":
+        view = (
+          <>
+            <h2>سبقك غيرك!</h2>
+            <p>دوّر على قطعة ثانية بسرعة</p>
+          </>
+        );
+        break;
+
+      case "freeze":
+        view = (
+          <>
+            <h2>تجمدت!</h2>
+            <p>
+               لا تقدر تمسح حتى ينتهي العدّاد  
+              {" "}
+              {new Date(scanError.frozen_until).toLocaleTimeString("ar-SA")}
+            </p>
+          </>
+        );
+        break;
+
+      case "skipped_tag":
+        view = (
+          <>
+            <h2>تجاهلت تاق!</h2>
+            <p>{scanError.message}</p>
+          </>
+        );
+        break;
+
+      default:
+        view = <p>{scanError.message || "تعذر قراءة البطاقة."}</p>;
+    }
+  } else if (scanResult) {
+    const content = scanResult.content;
+
+    if (scanResult.status === "view_only") {
+      view = (
+        <>
+          <p>انتهت الجولة</p>
+          <h1>{scanResult.tag_sequence}</h1>
+          <TagContent content={content} />
+
+          {scanResult.tag_type === "trap" && (
+            <p>هذه بطاقة فخ. لن يتم تطبيق أي تأثير.</p>
+          )}
+        </>
+      );
+    } else if (scanResult.tag_type === "trap") {
+      if (scanResult.status === "trap_set" && content?.was_choose) {
+        view = (
+          <>
+            <h1>{scanResult.tag_sequence}</h1>
+            <h2>تم تفعيل الفخ!</h2>
+            <p>
+              {content.boom
+                ? "سيخصم الفخ نقطة من اللاعبين القادمين."
+                : `سيجمّد الفخ اللاعبين القادمين لمدة ${content.freeze} ثانية.`}
+            </p>
+            <p>نقاطك لم تتغير.</p>
+          </>
+        );
+      } else if (content?.choose) {
+        view = (
+          <>
+            <h1>{scanResult.tag_sequence}</h1>
+            <h2>اختر نوع الفخ</h2>
+            <ChooseTrap
+              key={`${tagHash}:${userHash}:${accessToken}`}
+              tagHash={tagHash}
+              userHash={userHash}
+              accessToken={accessToken}
+              onActivated={(result) => {
+                setScanResult((current) => current === scanResult ? {
+                  ...current,
+                  status: "trap_set",
+                  content: result.content,
+                } : current);
+              }}
+            />
+          </>
+        );
+      } else if (content?.boom) {
+        view = (
+          <>
+            <h1>{scanResult.tag_sequence}</h1>
+            <h2>بووم!</h2>
+            <p>-{content.boom}</p>
+            <p>نقاطك الحالية: {scanResult.current_score}</p>
+          </>
+        );
+      } else if (content?.freeze) {
+        view = (
+          <>
+            <h1>{scanResult.tag_sequence}</h1>
+            <h2>تجمدت!</h2>
+            <p>{content.freeze}</p>
+          </>
+        );
+      } else {
+        view = <p>Empty trap.</p>;
+      }
+    } else {
+      view = (
+        <>
+          <h1>{scanResult.tag_sequence}</h1>
+          <TagContent content={content} />
+
+          <p>نقاطك: {scanResult.current_score}</p>
+          <p>البطاقات المتبقية لك: {scanResult.remaining_tags}</p>
+
+          {scanResult.event_finished && <p>اكتملت الجولة!</p>}
+        </>
+      );
+    }
+  } else {
+    view = <p>لا توجد بيانات لعرضها.</p>;
+  }
+
+  return (
+  <div dir="rtl">
+    <AppNavbar />
+
+    <section className="home-page">
+      {view}
+
+      {eventId && (
+        <section>
+          <h2>المتصدرون</h2>
+
+          {leaderboardLoading ? (
+            <p>جاري تحميل المتصدرين...</p>
+          ) : leaderboardError ? (
+            <p>{leaderboardError}</p>
+          ) : leaderboard.length === 0 ? (
+            <p>لا يوجد مشاركون بعد.</p>
+          ) : (
+            <ol>
+              {leaderboard.map((player) => (
+                <li key={player.user_hash}>
+                  {player.name} — {player.score}
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
+    </section>
+  </div>
+);
 }

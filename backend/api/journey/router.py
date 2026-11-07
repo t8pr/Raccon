@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from services.journey_service import JourneyService
 from api.auth.dependencies import get_current_user
-from api.journey.schemas import TagScanRequest, TagScanResponse, SetTrapRequest
+from api.journey.schemas import TagScanRequest, TagScanResponse, SetTrapRequest, LeaderboardResponse
 from models import User
 import uuid
 
@@ -32,7 +32,7 @@ def set_player_trap(
 ):
     return service.set_player_trap(current_user, **request.model_dump())
 
-@router.get("/leaderboard/{event_id}")
+@router.get("/leaderboard/{event_id}", response_model=list[LeaderboardResponse])
 def get_leaderboard(
     event_id: uuid.UUID,
     service: JourneyService = Depends(),

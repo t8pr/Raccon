@@ -35,3 +35,9 @@ class SetTrapRequest(BaseModel):
         if self.trap_type == "freeze" and (self.trap_value <= 0 or self.trap_value > 180):
             raise ValueError("Freeze duration must be between 1 and 180 seconds.")
         return self
+
+class LeaderboardResponse(BaseModel):
+    user_hash: str
+    name: str
+    avatar_id: int
+    score: int

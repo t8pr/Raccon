@@ -87,20 +87,23 @@ class JourneyService:
         if event_tag and event_tag.tag_type == "trap":
             content = event_tag.content or {}
             
-            if tag.sequence_num in progress.visited_sequences:
+            already_visited = tag.sequence_num in progress.visited_sequences
+            if already_visited and not content.get("choose"):
                 raise HTTPException(
                     status_code=400, 
                     detail={
                     "code": "already_scanned",
                     "message": "You already triggered this trap.",
+                    "content": content,
                     "current_score": progress.score,
                     "remaining_tags": self.get_remaining_tags(pack, progress)
                     }
                 )
 
-            visited = list(progress.visited_sequences)
-            visited.append(tag.sequence_num)
-            progress.visited_sequences = visited
+            if not already_visited:
+                visited = list(progress.visited_sequences)
+                visited.append(tag.sequence_num)
+                progress.visited_sequences = visited
             
             if content.get("boom"):
                 progress.score = max(0, progress.score - content.get("boom"))
@@ -112,13 +115,16 @@ class JourneyService:
                 progress.frozen_until = datetime.now(timezone.utc) + timedelta(seconds=freeze_seconds)
                 message = f"Freeze! You are frozen for {freeze_seconds} seconds."
                 
+            elif content.get("choose"):
+                message = "Choose which trap to activate."
+
             else:
                 message = "You found an empty trap."
 
             self.journey_progress_repo.add_progress(progress)
             self.session.commit()
             return {
-                "status": "trap_triggered",
+                "status": "choose_required" if content.get("choose") else "trap_triggered",
                 "message": message,
                 "event_id": event.id,
                 "mode": pack.mode,
@@ -302,7 +308,8 @@ class JourneyService:
 
         return {
             "status": "success", 
-            "message": f"Trap {trap_type} set successfully on tag {tag.sequence_num}."
+            "message": f"Trap {trap_type} set successfully on tag {tag.sequence_num}.",
+            "content": new_content,
         }
 
     def get_leaderboard(self, user: User, event_id: uuid.UUID):
