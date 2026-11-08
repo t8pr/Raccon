@@ -10,6 +10,7 @@ import uuid
 from typing import List
 from core.config import settings
 from models.journey_progress import JourneyProgress
+from repositories.journey_progress_repo import JourneyProgressRepository
 
 class EventService:
     def __init__(self, session: Session = Depends(get_session)):
@@ -18,6 +19,7 @@ class EventService:
         self.packs = PackRepository(session)
         self.tags = TagRepository(session)
         self.event_tags = EventTagRepository(session)
+        self.journey_progress_repo = JourneyProgressRepository(session)
 
     def get_event_details(self, user: User, event_id: uuid.UUID) -> dict:
         event = self.events.get_event(event_id)
@@ -93,7 +95,7 @@ class EventService:
     def validate_event_ownership(
         self, user: User, event_id: uuid.UUID, request
     ) -> tuple:
-        event = self.events.get_event(event_id)
+        event = self.events.lock_event(event_id)
         if not event:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
@@ -135,6 +137,12 @@ class EventService:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST, "Edits are allowed in paused events only."
             )
+
+        if (pack.mode == "open" and self.journey_progress_repo.has_participants(event.id)):
+            raise HTTPException(
+                status_code=409,
+                detail="Reseting open hunt event is required.",
+            )
             
         if event.edit_count >= settings.MAX_EDIT_LIMIT:
             raise HTTPException(
@@ -154,7 +162,7 @@ class EventService:
         }
 
     def update_event(self, user: User, event_id: uuid.UUID, request: dict) -> Event:
-        event = self.events.get_event(event_id)
+        event = self.events.lock_event(event_id)
         if not event:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
@@ -185,7 +193,7 @@ class EventService:
         return event
 
     def reset_event(self, user: User, event_id: uuid.UUID) -> dict:
-        event = self.events.get_event(event_id)
+        event = self.events.lock_event(event_id)
         if not event:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
             
@@ -199,7 +207,7 @@ class EventService:
         event_tags = self.event_tags.get_all_by_event_id(event.id)
         for et in event_tags:
             modified = False
-            content = et.content or {}
+            content = dict(et.content or {}) #create a new dict for sqlmodel to track
 
             if "claimed_by" in content:
                 del content["claimed_by"]

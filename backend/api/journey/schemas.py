@@ -1,6 +1,9 @@
 from pydantic import BaseModel, model_validator
 from typing import Optional, Dict, Any, Literal
 from api.events.schemas import TagContent
+import uuid
+from datetime import datetime
+
 
 class TagScanRequest(BaseModel):
     tag_hash: str
@@ -13,6 +16,11 @@ class TagScanResponse(BaseModel):
     tag_type: Optional[str] = None
     content: Optional[TagContent] = None
     current_score: int = 0
+    event_id: uuid.UUID
+    mode: Literal["seq", "open"]
+    remaining_tags: int
+    frozen_until: datetime | None = None
+    event_finished: bool = False
 
 class SetTrapRequest(BaseModel):
     tag_hash: str
@@ -27,3 +35,9 @@ class SetTrapRequest(BaseModel):
         if self.trap_type == "freeze" and (self.trap_value <= 0 or self.trap_value > 180):
             raise ValueError("Freeze duration must be between 1 and 180 seconds.")
         return self
+
+class LeaderboardResponse(BaseModel):
+    user_hash: str
+    name: str
+    avatar_id: int
+    score: int

@@ -3,15 +3,14 @@ import { apiRequest } from "./apiClient";
 const API_URL = process.env.REACT_APP_API_URL;
 
 // call this for leadboard data 
-export function getJourneyProgress(eventId, accessToken, { signal } = {}) {
+export function getLeaderboard(eventId, accessToken) {
   return apiRequest(
-    `/journey/progress/${encodeURIComponent(eventId)}`,
+    `/journey/leaderboard/${encodeURIComponent(eventId)}`,
     {
       method: "GET",
       headers: { Authorization: `Bearer ${accessToken}` },
-      signal,
     },
-    "تعذر تحميل تقدم الجولة.",
+    "تعذر تحميل لوحةالمتصدرين.",
   );
 }
 

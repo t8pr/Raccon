@@ -33,12 +33,37 @@ class JourneyService:
 
         event = self.events.get_by_pack_id(tag.pack_id)
             
+        if not event:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No event found.")
+
+        event = self.events.lock_event(event.id)
+
         if not event or event.status != "live":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
 
         pack = self.packs.get_pack(event.pack_id)
+
         event_tag = self.event_tags.get_exisiting_event_tag(event.id, tag.id)
+
         progress = self.journey_progress_repo.get_user_journey(event.id, user.user_hash)
+
+        if pack.mode == "open" and self.is_complete(event.id):
+            result = {
+                "status": "view_only",
+                "message": "The round has finished.",
+                "event_id": event.id,
+                "mode": pack.mode,
+                "tag_sequence": tag.sequence_num,
+                "tag_type": event_tag.tag_type if event_tag else None,
+                "content": event_tag.content if event_tag else None,
+                "current_score": progress.score if progress else 0,
+                "remaining_tags": pack.tags_count - len(progress.visited_sequences) if progress else pack.tags_count,
+                "frozen_until": progress.frozen_until if progress else None,
+                "event_finished": True,
+            }
+
+            self.session.rollback() #release event lock
+            return result
 
         if not progress:
             progress = JourneyProgress(event_id=event.id, user_hash=user.user_hash)
@@ -50,18 +75,35 @@ class JourneyService:
         if progress.frozen_until and progress.frozen_until > datetime.now(timezone.utc):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, 
-                detail="You are currently frozen and cannot scan tags."
+                detail={
+                "code": "freeze",
+                "message": "You are currently frozen and cannot scan tags.",
+                "frozen_until": progress.frozen_until.isoformat(),
+                "current_score": progress.score,
+                "tag_sequence": tag.sequence_num
+                }
             )
 
         if event_tag and event_tag.tag_type == "trap":
             content = event_tag.content or {}
             
-            if tag.sequence_num in progress.visited_sequences:
-                raise HTTPException(status_code=400, detail="You already triggered this trap.")
+            already_visited = tag.sequence_num in progress.visited_sequences
+            if already_visited and not content.get("choose"):
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                    "code": "already_scanned",
+                    "message": "You already triggered this trap.",
+                    "content": content,
+                    "current_score": progress.score,
+                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    }
+                )
 
-            visited = list(progress.visited_sequences)
-            visited.append(tag.sequence_num)
-            progress.visited_sequences = visited
+            if not already_visited:
+                visited = list(progress.visited_sequences)
+                visited.append(tag.sequence_num)
+                progress.visited_sequences = visited
             
             if content.get("boom"):
                 progress.score = max(0, progress.score - content.get("boom"))
@@ -73,43 +115,95 @@ class JourneyService:
                 progress.frozen_until = datetime.now(timezone.utc) + timedelta(seconds=freeze_seconds)
                 message = f"Freeze! You are frozen for {freeze_seconds} seconds."
                 
+            elif content.get("choose"):
+                message = "Choose which trap to activate."
+
             else:
                 message = "You found an empty trap."
 
             self.journey_progress_repo.add_progress(progress)
             self.session.commit()
             return {
-                "status": "trap_triggered",
+                "status": "choose_required" if content.get("choose") else "trap_triggered",
                 "message": message,
+                "event_id": event.id,
+                "mode": pack.mode,
                 "tag_sequence": tag.sequence_num,
                 "tag_type": "trap",
-                "content": content
+                "content": content,
+                "current_score": progress.score,
+                "remaining_tags": self.get_remaining_tags(pack, progress),
+                "frozen_until": progress.frozen_until
             }
 
 
         if pack.mode == "seq":
             if tag.sequence_num <= progress.current_sequence:
-                raise HTTPException(status_code=400, detail="You have already scanned this tag.")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                    "code": "already_scanned",
+                    "message": "You have already scanned this tag.",
+                    "content": event_tag.content,
+                    "current_score": progress.score,
+                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    }
+                )
             if tag.sequence_num != progress.current_sequence + 1:
-                raise HTTPException(status_code=400, detail=f"Skipped tag! You must scan tag {progress.current_sequence + 1} first.")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                    "code": "skipped_tag",
+                    "message": f"Skipped tag! You must scan tag {progress.current_sequence + 1} first.",
+                    "current_score": progress.score,
+                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    }
+                )
             
             progress.current_sequence = tag.sequence_num
             progress.score += 1
 
+            if progress.score >= pack.tags_count:
+                progress.status = "completed"
+
         elif pack.mode == "open":
-            content = event_tag.content if event_tag and event_tag.content else {}
+            content = dict(event_tag.content or {}) #create a seperate dict so sqlmodel can detect new content
             
             claimed_by = content.get("claimed_by")
             if claimed_by:
                 if claimed_by == user.user_hash:
-                    raise HTTPException(status_code=400, detail="You already claimed this tag.")
+                    raise HTTPException(
+                        status_code=400,
+                        detail={
+                        "code": "already_scanned",
+                        "message": "You already claimed this tag.",
+                        "current_score": progress.score,
+                        "remaining_tags": self.get_remaining_tags(pack, progress)
+                        }
+                    )
                 
                 claimer = self.users.get_by_user_hash(claimed_by)
                 claimer_name = claimer.name if claimer else "Another player"
-                raise HTTPException(status_code=400, detail=f"Sorry, {claimer_name} claimed this tag before you!")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                    "code": "claimed_by_another_player",
+                    "message": f"Sorry, {claimer_name} claimed this tag before you!",
+                    "current_score": progress.score,
+                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    }
+                )
                 
             if tag.sequence_num in progress.visited_sequences:
-                raise HTTPException(status_code=400, detail="You already scanned this tag.")
+                raise HTTPException(
+                    status_code=400, 
+                    detail={
+                        "code": "already_scanned",
+                        "message": "You already claimed this tag.",
+                        "current_score": progress.score,
+                        "remaining_tags": self.get_remaining_tags(pack, progress)
+                        }
+                    )
 
             content["claimed_by"] = user.user_hash
             event_tag.content = content
@@ -120,19 +214,31 @@ class JourneyService:
             progress.visited_sequences = visited
             progress.score += 1
 
-        if progress.score >= pack.tags_count:
-            progress.status = "completed"
-
         self.journey_progress_repo.add_progress(progress)
+        self.session.flush() #update progress but dont finalize transaction
+
+        if pack.mode == "open":
+            event_finished = self.is_complete(event.id)
+        else:
+            event_finished = progress.status == "completed"
+
+        if pack.mode == "open" and event_finished:
+            self.journey_progress_repo.update_status(event.id)
+
         self.session.commit()
 
         return {
             "status": "success",
             "message": f"Tag {tag.sequence_num} scanned successfully!",
+            "event_id": event.id,
+            "mode": pack.mode,
             "tag_sequence": tag.sequence_num,
             "tag_type": event_tag.tag_type if event_tag else None,
             "content": event_tag.content if event_tag else None,
-            "current_score": progress.score
+            "current_score": progress.score,
+            "remaining_tags": self.get_remaining_tags(pack, progress),
+            "frozen_until": progress.frozen_until,
+            "event_finished": event_finished
         }
     
     def get_progress(self, user: User, event_id: uuid.UUID):
@@ -162,12 +268,25 @@ class JourneyService:
             raise HTTPException(status_code=404, detail="Invalid Tag.")
 
         event = self.events.get_by_pack_id(tag.pack_id)
+                    
+        if not event:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No event found.")
         
+        event = self.events.lock_event(event.id)
+
         if not event or event.status != "live":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
+        
+        pack = self.packs.get_pack(event.pack_id)
+
+        if pack.mode == "open" and self.is_complete(event.id):
+            raise HTTPException(
+                status_code=409,
+                detail="The round has finished. Traps cannot be changed.",
+            )
 
         event_tag = self.event_tags.get_exisiting_event_tag(event.id, tag.id)
-
+        
         if not event_tag or event_tag.tag_type != "trap":
             raise HTTPException(status_code=400, detail="This tag is not a trap.")
 
@@ -189,5 +308,25 @@ class JourneyService:
 
         return {
             "status": "success", 
-            "message": f"Trap {trap_type} set successfully on tag {tag.sequence_num}."
+            "message": f"Trap {trap_type} set successfully on tag {tag.sequence_num}.",
+            "content": new_content,
         }
+
+    def get_leaderboard(self, user: User, event_id: uuid.UUID):
+        return self.journey_progress_repo.get_top_players(event_id)
+
+    def is_complete(self, event_id: uuid.UUID) -> bool:
+        event_tags = self.event_tags.get_all_by_event_id(event_id)
+
+        clue_tags = [tag for tag in event_tags if tag.tag_type == "clue"]
+
+        return bool(clue_tags) and all(
+            (tag.content or {}).get("claimed_by")
+            for tag in clue_tags
+        )
+
+    def get_remaining_tags(self, pack, progress) -> int:
+        if pack.mode == "seq":
+            return pack.tags_count - progress.current_sequence
+
+        return pack.tags_count - len(progress.visited_sequences)
