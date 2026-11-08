@@ -113,3 +113,25 @@ export async function SaveTagEdits(eventId, accessToken, tagsConfig) {
 
   return data;
 }
+
+export async function uploadHintImage(file, accessToken) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_URL}/events/upload-image`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error(data.detail || "تعذر رفع الصورة.");
+    error.status = response.status;
+    throw error;
+  }
+  
+  return data;
+}

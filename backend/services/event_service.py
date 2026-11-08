@@ -11,6 +11,7 @@ from typing import List
 from core.config import settings
 from models.journey_progress import JourneyProgress
 from repositories.journey_progress_repo import JourneyProgressRepository
+from services.storage_service import StorageService
 
 class EventService:
     def __init__(self, session: Session = Depends(get_session)):
@@ -20,6 +21,7 @@ class EventService:
         self.tags = TagRepository(session)
         self.event_tags = EventTagRepository(session)
         self.journey_progress_repo = JourneyProgressRepository(session)
+        self.storage_service = StorageService()
 
     def get_event_details(self, user: User, event_id: uuid.UUID) -> dict:
         event = self.events.get_event(event_id)
@@ -66,7 +68,7 @@ class EventService:
             "max_edits": settings.MAX_EDIT_LIMIT,
         }
 
-    def configure_tag(self, pack: Pack, event: Event, request) -> None:
+    def configure_tag(self, pack: Pack, event: Event, request, storage_service: StorageService) -> None:
         has_trap = any(tag.tag_type == "trap" for tag in request.tags_config)
         if has_trap and pack.mode != "open":
             raise HTTPException(
@@ -79,11 +81,27 @@ class EventService:
                 event.id, tag_data.tag_id
             )
 
+            new_image = tag_data.content.image if tag_data.tag_type == "clue" and hasattr(tag_data.content, 'image') else None
+            
             if existing_tag:
+                old_content = existing_tag.content or {}
+                old_image = old_content.get("image")
+                
+                if old_image and old_image != new_image:
+                    storage_service.delete_image(old_image)
+                    
+                if new_image and "temp/" in new_image:
+                    new_image = storage_service.promote_image(new_image)
+                    tag_data.content.image = new_image
+
                 existing_tag.tag_type = tag_data.tag_type
                 existing_tag.content = tag_data.content.model_dump(exclude_none=True)
                 self.event_tags.add_event_tag(existing_tag)
             else:
+                if new_image and "temp/" in new_image:
+                    new_image = storage_service.promote_image(new_image)
+                    tag_data.content.image = new_image
+
                 new_event_tag = EventTag(
                     event_id=event.id,
                     tag_id=tag_data.tag_id,
@@ -127,7 +145,7 @@ class EventService:
                 "You can't setup a saved/live event, use the edit option.",
             )
         
-        self.configure_tag(pack, event, request)
+        self.configure_tag(pack, event, request, self.storage_service)
         self.session.commit()
 
     def edit_event(self, user: User, event_id: uuid.UUID, request) -> dict:
@@ -150,7 +168,7 @@ class EventService:
                 detail="You have reached the maximum edit limit.",
             )
             
-        self.configure_tag(pack, event, request)
+        self.configure_tag(pack, event, request, self.storage_service)
         event.edit_count += 1
         self.events.add_event(event)
         self.session.commit()

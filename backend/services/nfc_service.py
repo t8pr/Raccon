@@ -34,6 +34,6 @@ class NfcService:
             return response
 
         injected_hash = user.user_hash
-        redirect_url = f"{settings.FRONTEND_URL}/scan?tag={tag_hash}&user={injected_hash}"
+        redirect_url = f"{settings.FRONTEND_URL}/scan?tag={tag_hash}&sig={injected_hash}"
         
         return RedirectResponse(url=redirect_url)

@@ -17,6 +17,7 @@ import { SaveTagSetup } from "../../api/events/eventsApi";
 import { UpdateEventStatus } from "../../api/events/eventsApi";
 import { SaveTagEdits } from "../../api/events/eventsApi";
 import { useAuth } from "../../context/AuthContext";
+import ImageUploader from "../../components/ui/ImageUploader";
 
 function getTrapType(tag) {
   if (tag.tag_type !== "trap") return "none";
@@ -34,6 +35,7 @@ export default function CustomizationPage() {
 
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [hint, setHint] = useState(null);
+  const [image, setImage] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -100,6 +102,8 @@ export default function CustomizationPage() {
 
     const savedHint = selectedTag?.content?.hint ?? "";
     const displayedHint = hint ?? savedHint;
+    const savedImage = selectedTag?.content?.image ?? "";
+    const displayedImage = image ?? savedImage;
     const supportsTraps = eventData.mode === "open";
 
     let savedTrap = "none";
@@ -121,6 +125,7 @@ export default function CustomizationPage() {
     const displayedFreezeSeconds = freezeSeconds ?? savedFreezeSeconds;
 
     const hintHasChanges = displayedHint !== savedHint;
+    const imageHasChanges = displayedImage !== savedImage;
 
     const trapHasChanges =
       displayedTrap !== savedTrap ||
@@ -128,8 +133,7 @@ export default function CustomizationPage() {
         Number(displayedFreezeSeconds) !== Number(savedFreezeSeconds));
 
     const isTrapSelected = supportsTraps && displayedTrap !== "none";
-
-    const hasChanges = trapHasChanges || (!isTrapSelected && hintHasChanges);
+    const hasChanges = trapHasChanges || (!isTrapSelected && (hintHasChanges || imageHasChanges));
 
     const duration = Number(displayedFreezeSeconds);
 
@@ -215,6 +219,10 @@ export default function CustomizationPage() {
         tagContent = {
           hint: displayedHint,
         };
+        if (displayedImage) {
+          tagContent.image = displayedImage;
+        }
+      } else if (displayedTrap === "boom") {
 
         if (selectedTag.content?.image != null) {
           tagContent.image = selectedTag.content.image;
@@ -250,6 +258,7 @@ export default function CustomizationPage() {
 
         await eventQuery.refetch(); /*get new saved data*/
         setHint(null);
+        setImage(null);
         setTrap(null);
         setFreezeSeconds(null);
 
@@ -263,11 +272,6 @@ export default function CustomizationPage() {
       }
     }
 
-    function handleResetHint() {
-      if (isSaving || isStarting) return;
-
-      setHint(null);
-    }
 
     function handleSelectTag(tag) {
       if (isSaving) return;
@@ -285,6 +289,7 @@ export default function CustomizationPage() {
 
       setSelectedTagId(tag.tag_id);
       setHint(null);
+      setImage(null);
       setTrap(null);
       setFreezeSeconds(null);
     }
@@ -334,7 +339,11 @@ export default function CustomizationPage() {
               disabled={isSaving || !canCustomize || isStarting}
             />
             {/* image uplaadre component*/}
-            <div className="ImageUploader">soon</div>
+            <ImageUploader
+              value={displayedImage}
+              onChange={setImage}
+              disabled={isSaving || !canCustomize || isStarting}
+            />
 
             {supportsTraps && (
               <TrapField

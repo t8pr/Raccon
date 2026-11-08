@@ -9,9 +9,15 @@ import ChooseTrap from "../../components/journey/ChooseTrap";
 function TagContent({ content }) {
   return (
     <>
-      {content?.hint && <p>{content.hint}</p>}
+      {content?.hint && <p style={{ fontSize: "18px" }}><strong>التلميح:</strong> {content.hint}</p>}
 
-      {/* image */}
+      {content?.image && (
+        <img 
+          src={content.image} 
+          alt="تلميح" 
+          style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "10px" }} 
+        />
+      )}
     </>
   );
 }
@@ -21,7 +27,7 @@ export default function ScanPage() {
   const { accessToken } = useAuth();
   
   const tagHash = searchParams.get("tag");
-  const userHash = searchParams.get("user");
+  const userHash = searchParams.get("sig");
   
   const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState("");

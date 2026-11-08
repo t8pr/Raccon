@@ -21,14 +21,14 @@ export default function ProtectedRoute({ children }) {
 
   if (!accessToken || !user) {
     const tag = searchParams.get("tag");
-    const userParam = searchParams.get("user");
-
     if (location.pathname === "/scan" && tag) {
-      if (userParam) {
-         return <Navigate to={`/login?redirect_tag=${tag}&redirect_user=${userParam}`} replace />;
+      const sigParam = searchParams.get("sig"); 
+      if (sigParam) {
+        return <Navigate to={`/login?redirect_tag=${tag}&redirect_sig=${sigParam}`} replace />;
       }
       return <Navigate to={`/login?redirect_tag=${tag}`} replace />;
     }
+    
     return <Navigate to="/login" replace />;
   }
 
