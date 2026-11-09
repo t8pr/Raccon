@@ -22,12 +22,12 @@ export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
 
   const [session, setSession] = useState(() =>
-    createSession(localStorage.getItem(TOKEN_KEY)),
+    createSession(sessionStorage.getItem(TOKEN_KEY)),
   );
 
   const [accountDeleted, setAccountDeleted] = useState(false);
 
-  const accessToken = localStorage.getItem(TOKEN_KEY);
+  const accessToken = session.token;
   const profileKey = ["profile", accessToken];
 
   const profileQuery = useQuery({
@@ -48,20 +48,20 @@ export function AuthProvider({ children }) {
     Boolean(accessToken) && profileQuery.isPending && !accountDeleted;
 
   const restoreError =
-      accessToken &&
-      !accountDeleted &&
-      !unauthorized &&
-      profileQuery.isError &&
-      !profileQuery.data
-        ? "تعذر التحقق من جلسة الدخول. حاول مرة أخرى."
-        : "";
+    accessToken &&
+    !accountDeleted &&
+    !unauthorized &&
+    profileQuery.isError &&
+    !profileQuery.data
+      ? "تعذر التحقق من جلسة الدخول. حاول مرة أخرى."
+      : "";
 
   const clearSession = useCallback(() => {
-      localStorage.removeItem(TOKEN_KEY);
-      void queryClient.cancelQueries({ queryKey: ["profile"] });
-      queryClient.removeQueries({ queryKey: ["profile"] });
-      setAccountDeleted(false);
-      setSession(createSession(null));
+    sessionStorage.removeItem(TOKEN_KEY);
+    void queryClient.cancelQueries({ queryKey: ["profile"] });
+    queryClient.removeQueries({ queryKey: ["profile"] });
+    setAccountDeleted(false);
+    setSession(createSession(null));
   }, [queryClient]);
 
   useEffect(() => {
@@ -80,9 +80,8 @@ export function AuthProvider({ children }) {
       queryKey: ["profile"],
     });
 
-    localStorage.setItem(TOKEN_KEY, token);
-    queryClient.setQueryData(["profile", nextSession.key], userData);
-
+    sessionStorage.setItem(TOKEN_KEY, token);
+    queryClient.setQueryData(["profile", token], userData);
     setAccountDeleted(false);
     setSession(nextSession);
   }
@@ -96,7 +95,8 @@ export function AuthProvider({ children }) {
   }
 
   async function markAccountDeleted() {
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    setSession(createSession(null));
     setAccountDeleted(true);
     await queryClient.cancelQueries({
       queryKey: profileKey,
