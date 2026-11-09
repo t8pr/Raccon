@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from services.event_service import EventService
 from models.user import User
 from api.auth.dependencies import get_current_user
 from api.events.schemas import EventBase, EventDetailResponse, EventTagConfigView, EventUpdateRequest, EventCreateRequest, EventResponse, EventSetupRequest
 import uuid
 from typing import List
+from services.storage_service import StorageService
 
 
 router = APIRouter(prefix="/events", tags=["Events"])
@@ -59,3 +60,12 @@ def list_my_events(
     current_user: User = Depends(get_current_user)
 ):
     return service.list_my_events(current_user)
+
+@router.post("/upload-image")
+def upload_hint_image(
+    file: UploadFile = File(...),
+    service: StorageService = Depends(),
+    current_user: User = Depends(get_current_user)
+):
+    image_url = service.upload_image(file)
+    return {"status": "success", "url": image_url}

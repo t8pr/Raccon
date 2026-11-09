@@ -16,10 +16,9 @@ export default function LoginPage() {
 
   const [searchParams] = useSearchParams();
   const redirectTag = searchParams.get("redirect_tag");
-  const redirectUser = searchParams.get("redirect_user");
+  const redirectSig = searchParams.get("redirect_sig");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  // shown once after a successful password reset (sent from ResetPasswordPage)
   const [notice, setNotice] = useState(
     location.state?.passwordReset
       ? "تم تغيير كلمة المرور. ادخل بكلمة المرور الجديدة."
@@ -30,16 +29,20 @@ export default function LoginPage() {
   useEffect(() => {
     if (!isRestoring && accessToken && user) {
       if (redirectTag) {
-        const hashToUse = redirectUser ? redirectUser : user.user_hash;
-        navigate(`/scan?tag=${redirectTag}&user=${hashToUse}`, {
-          replace: true,
-        });
+        const hashToUse = redirectSig || user.user_hash;
+        navigate(
+          `/scan?${new URLSearchParams({
+            tag: redirectTag,
+            sig: hashToUse,
+          }).toString()}`,
+          { replace: true },
+        );
       } else {
         navigate("/home", { replace: true });
       }
     }
-  }, [isRestoring, accessToken, user, redirectTag, redirectUser, navigate]);
-
+  }, [isRestoring, accessToken, user, redirectTag, redirectSig, navigate]);
+  
   async function handleLogin(credentials) {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -61,12 +64,12 @@ export default function LoginPage() {
       const returnTo = takeClaimReturn();
 
       if (redirectTag) {
-        const hashToUse = redirectUser || userData.user_hash;
+        const hashToUse = redirectSig || userData.user_hash;
 
         navigate(
           `/scan?${new URLSearchParams({
             tag: redirectTag,
-            user: hashToUse,
+            sig: hashToUse,
           }).toString()}`,
           { replace: true },
         );

@@ -22,3 +22,6 @@ google-auth
 fastapi==0.111.1
 fastapi-pagination==0.15.15
 email-validator
+boto3==1.34.14
+pillow==10.2.0
+python-multipart==0.0.9
