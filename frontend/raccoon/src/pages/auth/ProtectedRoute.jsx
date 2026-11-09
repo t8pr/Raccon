@@ -7,14 +7,20 @@ export default function ProtectedRoute({ children }) {
   const [searchParams] = useSearchParams();
 
   if (isRestoring) {
-    return <p dir="rtl" role="status">جاري التحميل...</p>;
+    return (
+      <p dir="rtl" role="status">
+        جاري التحميل...
+      </p>
+    );
   }
 
   if (restoreError) {
     return (
       <div dir="rtl" role="alert">
         <p>{restoreError}</p>
-        <button type="button" onClick={() => window.location.reload()}>إعادة المحاولة</button>
+        <button type="button" onClick={() => window.location.reload()}>
+          إعادة المحاولة
+        </button>
       </div>
     );
   }
@@ -25,7 +31,12 @@ export default function ProtectedRoute({ children }) {
 
     if (location.pathname === "/scan" && tag) {
       if (userParam) {
-         return <Navigate to={`/login?redirect_tag=${tag}&redirect_user=${userParam}`} replace />;
+        return (
+          <Navigate
+            to={`/login?redirect_tag=${tag}&redirect_user=${userParam}`}
+            replace
+          />
+        );
       }
       return <Navigate to={`/login?redirect_tag=${tag}`} replace />;
     }
