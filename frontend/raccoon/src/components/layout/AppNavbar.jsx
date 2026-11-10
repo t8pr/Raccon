@@ -7,14 +7,13 @@ import { logoutUser } from "../../api/auth/authApi";
 import Mark from "../../assets/Mark.png";
 import { avatarImages } from "../ui/avatarImages";
 
-// Each role sees its own pages 
+// Each role sees its own pages
 // "disabled" = page not built yet → shown as «قريبًا» instead of a dead link (cheated from Laila)
 const navigationByRole = {
   user: [
     { label: "الرئيسية", to: "/home", end: true },
     { label: "التجارب", to: "/packages" },
     { label: "المتجر", to: "/store" },
-    { label: "طلب خاص", to: "/special-request", disabled: true },
   ],
   admin: [
     { label: "الرئيسية", to: "/home", end: true },
