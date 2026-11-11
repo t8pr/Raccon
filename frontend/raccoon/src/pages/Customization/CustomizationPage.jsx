@@ -313,6 +313,8 @@ export default function CustomizationPage() {
       if (action === "saveAll") {
         // The bulk confirmation already includes the remaining-edit warning.
         handleSavedTag(true, true);
+      } else if (action === "stopRound") {
+        handleRoundStatusChange();
       } else if (
         action === "edit" &&
         canStartEditing &&
@@ -366,11 +368,19 @@ export default function CustomizationPage() {
 
         <ConfirmDialog
           open={confirmation !== null}
-          title={confirmation === "saveAll" ? "حفظ جميع القطع" : "تعديل الباقة"}
+          title={
+            confirmation === "saveAll"
+              ? "حفظ جميع القطع"
+              : confirmation === "stopRound"
+                ? "إيقاف الجولة"
+                : "تعديل الباقة"
+          }
           description={
             confirmation === "saveAll"
               ? `هل أنت متأكد من حفظ جميع القطع، بما فيها الفارغة؟ سيتم حفظ تغييرات القطعة الحالية مع إعدادات بقية القطع.${eventData.status === "paused" ? ` سيُستهلك تعديل واحد عند نجاح الحفظ. التعديلات المتاحة: ${eventData.edits_remaining}.${eventData.edits_remaining === 1 ? " هذا آخر تعديل متاح." : ""}` : ""}`
-              : `هل أنت متأكد أنك تريد تعديل الباقة؟ عدد التعديلات المتاحة: ${eventData.edits_remaining}. يُحتسب التعديل عند الحفظ.`
+              : confirmation === "stopRound"
+                ? "هل أنت متأكد أنك تريد إيقاف الجولة؟"
+                : `هل أنت متأكد أنك تريد تعديل الباقة؟ عدد التعديلات المتاحة: ${eventData.edits_remaining} يُحتسب التعديل عند الحفظ`
           }
           onConfirm={confirmAction}
           onCancel={() => setConfirmation(null)}
@@ -541,7 +551,14 @@ export default function CustomizationPage() {
 
               <div className="Round-settings__actions">
                 <Button
-                  onClick={handleRoundStatusChange}
+                  onClick={() => {
+                    if (!canChangeRoundStatus) return;
+                    if (isLive) {
+                      setConfirmation("stopRound");
+                    } else {
+                      handleRoundStatusChange();
+                    }
+                  }}
                   loading={isStarting}
                   disabled={!canChangeRoundStatus}
                   variant={isLive ? "danger" : "primary"}
@@ -572,7 +589,7 @@ export default function CustomizationPage() {
 
               {!isLive && !allTagsReady && (
                 <p className="customization-note">
-                  احفظ جميع القطع لتتمكن من بدء الجولة، حتى القطع الفارغة.
+                  احفظ جميع القطع لتتمكن من بدء الجولة، حتى القطع الفارغة
                 </p>
               )}
 

@@ -203,6 +203,10 @@ video {
   background: var(--primary);
   color: var(--on-primary);
 }
+.ui-button--danger {
+  background: var(--danger);
+  color: #fff;
+}
 
 .ui-button--accent {
   background: var(--accent);
