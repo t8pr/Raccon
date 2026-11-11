@@ -1,4 +1,11 @@
-import { Ban, Snowflake, Bomb, Dices, Info } from "lucide-react";
+import {
+  Ban,
+  Snowflake,
+  Bomb,
+  Dices,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 const trapOptions = [
   { value: "none", label: "بدون فخ", description: "قطعة عادية", Icon: Ban },
   {
@@ -11,7 +18,7 @@ const trapOptions = [
   {
     value: "choose",
     label: "اختار فخ",
-    description: "اللاعب يختار تجميد أو بوم",
+    description: " أختار تجميد أو بووم أثناء الجولة",
     Icon: Dices,
   },
 ];
@@ -39,8 +46,10 @@ export default function TrapField({
     duration >= 1 &&
     duration <= 180;
 
-  const showFreeze = value === "freeze" || value === "choose";
-  const showBoom = value === "boom" || value === "choose";
+  function stepDuration(amount) {
+    const current = validDuration ? duration : 1;
+    onFreezeSecondsChange(Math.min(180, Math.max(1, current + amount)));
+  }
 
   return (
     <fieldset className="trap-field" disabled={disabled}>
@@ -78,78 +87,76 @@ export default function TrapField({
         })}
       </div>
 
-      {value !== "none" && (
+      {value === "freeze" && (
         <div className="trap-field__details">
-          {value === "choose" && (
-            <p className="trap-field__notice">
-              <Info size={16} aria-hidden="true" />
-              اللاعب يختار تجميد أو بوم أثناء اللعب.
-            </p>
-          )}
+          <div className="trap-field__panel">
+            <div className="trap-field__duration-heading">
+              <h3>
+                <Snowflake size={16} aria-hidden="true" />
+                مدة التجميد
+              </h3>
+              <p id="freeze-duration-help">
+                اللاعب اللي يمسح القطعة ما يقدر يمسح أي قطعة ثانية لين يخلص
+                الوقت.
+              </p>
+            </div>
 
-          <div
-            className={`trap-field__details-grid ${
-              value === "choose" ? "trap-field__details-grid--two" : ""
-            }`}
-          >
-            {showBoom && (
-              <div className="trap-field__panel">
-                <h3>
-                  <Bomb size={16} aria-hidden="true" />
-                  بووم
-                </h3>
+            <div className="trap-field__times">
+              {durations.map((seconds) => (
+                <button
+                  key={seconds}
+                  type="button"
+                  className="trap-field__time"
+                  aria-pressed={duration === seconds}
+                  onClick={() => onFreezeSecondsChange(seconds)}
+                >
+                  {formatDuration(seconds)}
+                </button>
+              ))}
 
-                <strong>−1 نقطة</strong>
-
-                <p>يخسر اللاعب نقطة واحدة.</p>
-              </div>
-            )}
-
-            {showFreeze && (
-              <div className="trap-field__panel">
-                <h3>
-                  <Snowflake size={16} aria-hidden="true" />
-                  مدة التجميد
-                </h3>
-
-                <div className="trap-field__times">
-                  {durations.map((seconds) => (
-                    <button
-                      key={seconds}
-                      type="button"
-                      className="trap-field__time"
-                      aria-pressed={duration === seconds}
-                      onClick={() => onFreezeSecondsChange(seconds)}
-                    >
-                      {formatDuration(seconds)}
-                    </button>
-                  ))}
-
-                  <label className="trap-field__custom-time">
-                    <span>ثانية</span>
-
-                    <input
-                      type="number"
-                      min="1"
-                      max="180"
-                      step="1"
-                      value={freezeSeconds ?? ""}
-                      onChange={(event) =>
-                        onFreezeSecondsChange(event.target.value)
-                      }
-                      aria-label="مدة التجميد بالثواني"
-                      aria-invalid={!validDuration}
-                      aria-describedby="freeze-duration-help"
-                    />
-                  </label>
+              <div className="trap-field__duration-control">
+                <div className="trap-field__stepper" dir="ltr">
+                  <button
+                    type="button"
+                    aria-label="تقليل مدة التجميد ثانية واحدة"
+                    disabled={disabled || (validDuration && duration <= 1)}
+                    onClick={() => stepDuration(-1)}
+                  >
+                    <ChevronDown size={20} aria-hidden="true" />
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    max="180"
+                    step="1"
+                    value={freezeSeconds ?? ""}
+                    onChange={(event) =>
+                      onFreezeSecondsChange(event.target.value)
+                    }
+                    aria-label="مدة التجميد بالثواني"
+                    aria-invalid={!validDuration}
+                    aria-describedby={`freeze-duration-help${validDuration ? "" : " freeze-duration-error"}`}
+                  />
+                  <button
+                    type="button"
+                    aria-label="زيادة مدة التجميد ثانية واحدة"
+                    disabled={disabled || (validDuration && duration >= 180)}
+                    onClick={() => stepDuration(1)}
+                  >
+                    <ChevronUp size={20} aria-hidden="true" />
+                  </button>
                 </div>
-
-                <p id="freeze-duration-help">
-                  {validDuration
-                    ? "اللاعب اللي يمسح القطعة ما يقدر يمسح أي قطعة ثانية لين يخلص الوقت."
-                    : "أدخل عددًا صحيحًا من 1 إلى 180 ثانية."}
-                </p>
+                <span className="trap-field__duration-unit">ثانية</span>
               </div>
+            </div>
+            {!validDuration && (
+              <p
+                id="freeze-duration-error"
+                role="alert"
+                className="trap-field__duration-error"
+              >
+                أدخل عددًا صحيحًا من 1 إلى 180 ثانية.
+              </p>
             )}
           </div>
         </div>

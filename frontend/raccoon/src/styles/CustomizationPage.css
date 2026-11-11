@@ -663,6 +663,7 @@
 }
 
 .customization-view .trap-field__times {
+  --duration-control-height: 36px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -671,8 +672,10 @@
 
 .customization-view .trap-field__time {
   min-width: 52px;
-  min-height: 34px;
-  padding: 5px 10px;
+  height: var(--duration-control-height);
+  min-height: var(--duration-control-height);
+  box-sizing: border-box;
+  padding: 0 10px;
 
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -694,79 +697,112 @@
   color: var(--surface);
 }
 
-.customization-view .trap-field__custom-time {
+.customization-view .trap-field__duration-heading {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-
-  min-height: 34px;
-  padding: 4px 10px;
-
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--surface);
-  font-size: 11px;
+  gap: 8px 20px;
+  margin-bottom: 20px;
 }
 
-.customization-view .trap-field__custom-time input {
-  width: 58px;
-  min-width: 0;
-  padding: 2px;
-
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: inherit;
-
-  font: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  text-align: center;
-  direction: ltr;
+.customization-view .trap-field__duration-heading h3 {
+  flex-shrink: 0;
+  margin: 0;
 }
 
-.customization-view .trap-field__custom-time input[aria-invalid="true"] {
-  outline: 2px solid var(--surface);
-  outline-offset: 2px;
-}
-
-.customization-view .trap-field__panel p {
-  margin: 24px 0 0;
+.customization-view .trap-field__duration-heading p {
+  flex: 1 1 280px;
+  margin: 0;
   color: var(--ink-muted);
   font-size: 12px;
   line-height: 1.8;
 }
 
-.customization-view .trap-field__notice {
-  display: flex;
-  align-items: flex-start;
+.customization-view .trap-field__duration-control {
+  display: inline-flex;
+  align-items: center;
   gap: 8px;
+}
 
-  margin: 0 0 14px;
-  padding: 12px;
+.customization-view .trap-field__stepper {
+  display: inline-flex;
+  align-items: center;
+  height: var(--duration-control-height);
+  box-sizing: border-box;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+}
 
-  border-radius: 8px;
-  background: var(--accent-soft);
+.customization-view .trap-field__stepper button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: #a020f0;
+  color: #fff;
+  cursor: pointer;
+}
+
+.customization-view .trap-field__stepper button:hover:not(:disabled) {
+  background: #8613d0;
+}
+
+.customization-view .trap-field__stepper button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.customization-view .trap-field__stepper input {
+  width: 40px;
+  min-width: 0;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
   color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
 
+.customization-view .trap-field__stepper input::-webkit-inner-spin-button,
+.customization-view .trap-field__stepper input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.customization-view .trap-field__duration-unit {
+  color: var(--ink-muted);
   font-size: 12px;
-  line-height: 1.8;
 }
 
-.customization-view .trap-field__notice svg {
-  flex-shrink: 0;
-  margin-top: 3px;
+.customization-view .trap-field__stepper input[aria-invalid="true"] {
+  outline: 2px solid var(--danger);
 }
 
-.customization-view .trap-field__time:focus-visible {
+.customization-view .trap-field__duration-error {
+  margin: 12px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.customization-view .trap-field__time:focus-visible,
+.customization-view .trap-field__stepper button:focus-visible,
+.customization-view .trap-field__stepper input:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
-}
-
-.customization-view .trap-field__custom-time input:focus-visible {
-  outline: 2px solid var(--surface);
-  outline-offset: 2px;
 }
 
 /* ========================================
@@ -899,4 +935,49 @@
   .customization-view .trap-field__time[aria-pressed="true"] {
     outline: 2px solid Highlight;
   }
+}
+
+/* Image selection: one icon action and a concise file-size hint. */
+.customization-view .hint-image-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.customization-view .hint-image-picker__button {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.customization-view .hint-image-picker__button:hover:not(:disabled) {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+.customization-view .hint-image-picker__button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.customization-view .hint-image-picker__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.customization-view .hint-image-picker__limit {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.8;
 }
