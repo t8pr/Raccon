@@ -5,17 +5,29 @@ import AppNavbar from "../../components/layout/AppNavbar";
 import { useAuth } from "../../context/AuthContext";
 import { getLeaderboard } from "../../api/journeyApi";
 import ChooseTrap from "../../components/journey/ChooseTrap";
+import FreezeView from "../../components/journey/FreezeView";
+
+import {
+  StatusHero,
+  NotLiveHero,
+  BoomHero,
+} from "../../components/journey/ScanUI";
+import { ClaimedHero, MentoCharacter } from "../../components/journey/ScanUI";
 
 function TagContent({ content }) {
   return (
     <>
-      {content?.hint && <p style={{ fontSize: "18px" }}><strong>التلميح:</strong> {content.hint}</p>}
+      {content?.hint && (
+        <p style={{ fontSize: "18px" }}>
+          <strong>التلميح:</strong> {content.hint}
+        </p>
+      )}
 
       {content?.image && (
-        <img 
-          src={content.image} 
-          alt="تلميح" 
-          style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "10px" }} 
+        <img
+          src={content.image}
+          alt="تلميح"
+          style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "10px" }}
         />
       )}
     </>
@@ -25,10 +37,10 @@ function TagContent({ content }) {
 export default function ScanPage() {
   const [searchParams] = useSearchParams();
   const { accessToken } = useAuth();
-  
+
   const tagHash = searchParams.get("tag");
   const userHash = searchParams.get("sig");
-  
+
   const [scanResult, setScanResult] = useState(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +96,7 @@ export default function ScanPage() {
             : detail || {
                 code: "unknown",
                 message: "تعذر قراءة البطاقة.",
-              }
+              },
         );
       } finally {
         if (active) setIsLoading(false);
@@ -163,28 +175,43 @@ export default function ScanPage() {
 
       case "freeze":
         view = (
-          <>
-            <h2>تجمدت!</h2>
-            <p>
-               لا تقدر تمسح حتى ينتهي العدّاد  
-              {" "}
-              {new Date(scanError.frozen_until).toLocaleTimeString("ar-SA")}
-            </p>
-          </>
+          <FreezeView
+            tagNumber={scanError.tag_sequence}
+            currentScore={scanError.current_score}
+            remainingTags={scanError.remaining_tags}
+            frozenUntil={scanError.frozen_until}
+          />
         );
         break;
 
-      case "skipped_tag":
+      case "skipped_tag": {
+        const expectedTag = scanError.message?.match(/\d+/)?.[0] ?? "?";
         view = (
           <>
+            <StatusHero number={expectedTag} />
             <h2>تجاهلت تاق!</h2>
-            <p>{scanError.message}</p>
+            <p>لازم تسكّن التاق رقم {expectedTag} أول</p>
           </>
         );
         break;
+      }
 
       default:
-        view = <p>{scanError.message || "تعذر قراءة البطاقة."}</p>;
+        if (scanError.message === "This event is not live.") {
+          view = (
+            <div className="scan-status">
+              <NotLiveHero />
+              <h2 className="scan-status__title">الجولة مو شغّالة الحين</h2>
+              <p className="scan-status__desc">
+                صاحب اللعبة ما شغّلها أو وقّفها مؤقتًا. امسح القطعة مرة ثانية
+                لما تشتغل.
+              </p>
+            </div>
+          );
+        } else {
+          view = <p>{scanError.message || "تعذر قراءة البطاقة."}</p>;
+        }
+        break;
     }
   } else if (scanResult) {
     const content = scanResult.content;
@@ -217,55 +244,77 @@ export default function ScanPage() {
         );
       } else if (content?.choose) {
         view = (
-          <>
-            <h1>{scanResult.tag_sequence}</h1>
-            <h2>اختر نوع الفخ</h2>
-            <ChooseTrap
-              key={`${tagHash}:${userHash}:${accessToken}`}
-              tagHash={tagHash}
-              userHash={userHash}
-              accessToken={accessToken}
-              onActivated={(result) => {
-                setScanResult((current) => current === scanResult ? {
-                  ...current,
-                  status: "trap_set",
-                  content: result.content,
-                } : current);
-              }}
-            />
-          </>
+          <ChooseTrap
+            key={`${tagHash}:${userHash}:${accessToken}`}
+            tagHash={tagHash}
+            userHash={userHash}
+            accessToken={accessToken}
+            tagNumber={scanResult.tag_sequence}
+            currentScore={scanResult.current_score}
+            remainingTags={scanResult.remaining_tags}
+            onActivated={(result) => {
+              setScanResult((current) =>
+                current === scanResult
+                  ? {
+                      ...current,
+                      status: "trap_set",
+                      content: result.content,
+                    }
+                  : current,
+              );
+            }}
+          />
         );
       } else if (content?.boom) {
         view = (
-          <>
-            <h1>{scanResult.tag_sequence}</h1>
-            <h2>بووم!</h2>
-            <p>-{content.boom}</p>
-            <p>نقاطك الحالية: {scanResult.current_score}</p>
-          </>
+          <div className="scan-status scan-status--boom">
+            <div className="scan-status__chips">
+              <span className="scan-chip">
+                نقاطك {scanResult.current_score}
+              </span>
+              <span className="scan-chip">
+                باقي {scanResult.remaining_tags} قطع
+              </span>
+            </div>
+            <BoomHero lost={content.boom} />
+          </div>
         );
       } else if (content?.freeze) {
         view = (
-          <>
-            <h1>{scanResult.tag_sequence}</h1>
-            <h2>تجمدت!</h2>
-            <p>{content.freeze}</p>
-          </>
+          <FreezeView
+            tagNumber={scanResult.tag_sequence}
+            currentScore={scanResult.current_score}
+            remainingTags={scanResult.remaining_tags}
+            freezeSeconds={content.freeze}
+          />
         );
       } else {
         view = <p>Empty trap.</p>;
       }
     } else {
+      const progress = scanResult.current_score ?? 0;
+      const total = progress + (scanResult.remaining_tags ?? 0);
       view = (
-        <>
-          <h1>{scanResult.tag_sequence}</h1>
-          <TagContent content={content} />
+        <div className="scan-status scan-status--claimed">
+          <div className="scan-status__chips">
+            <span className="scan-chip">نقاطك {scanResult.current_score}</span>
+            <span className="scan-chip">
+              باقي {scanResult.remaining_tags} قطع
+            </span>
+          </div>
 
-          <p>نقاطك: {scanResult.current_score}</p>
-          <p>البطاقات المتبقية لك: {scanResult.remaining_tags}</p>
+          <ClaimedHero tagNumber={progress} />
 
-          {scanResult.event_finished && <p>اكتملت الجولة!</p>}
-        </>
+          <MentoCharacter />
+
+          <div className="scan-status__piece-pill">
+            القطعة {progress} من {total}
+          </div>
+
+          {scanResult.event_finished && (
+            <p className="scan-status__desc">اكتملت الجولة!</p>
+          )}
+        </div>
       );
     }
   } else {
@@ -273,34 +322,34 @@ export default function ScanPage() {
   }
 
   return (
-  <div dir="rtl">
-    <AppNavbar />
+    <div dir="rtl">
+      <AppNavbar />
 
-    <section className="home-page">
-      {view}
+      <section className="home-page">
+        {view}
 
-      {eventId && (
-        <section>
-          <h2>المتصدرون</h2>
+        {eventId && (
+          <section>
+            <h2>المتصدرون</h2>
 
-          {leaderboardLoading ? (
-            <p>جاري تحميل المتصدرين...</p>
-          ) : leaderboardError ? (
-            <p>{leaderboardError}</p>
-          ) : leaderboard.length === 0 ? (
-            <p>لا يوجد مشاركون بعد.</p>
-          ) : (
-            <ol>
-              {leaderboard.map((player) => (
-                <li key={player.user_hash}>
-                  {player.name} — {player.score}
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
-      )}
-    </section>
-  </div>
-);
+            {leaderboardLoading ? (
+              <p>جاري تحميل المتصدرين...</p>
+            ) : leaderboardError ? (
+              <p>{leaderboardError}</p>
+            ) : leaderboard.length === 0 ? (
+              <p>لا يوجد مشاركون بعد.</p>
+            ) : (
+              <ol>
+                {leaderboard.map((player) => (
+                  <li key={player.user_hash}>
+                    {player.name} — {player.score}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+        )}
+      </section>
+    </div>
+  );
 }

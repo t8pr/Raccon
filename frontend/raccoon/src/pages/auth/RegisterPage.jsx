@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import AuthLayout from "../../components/layout/AuthLayout";
 import AuthPromo from "../../components/layout/AuthPromo";
-import DehmScan from "../../components/ui/DehmScan";
 import RegisterForm from "../../components/auth/RegisterForm";
 
 import { registerUser, loginUser } from "../../api/auth/authApi";
@@ -81,7 +80,7 @@ export default function RegisterPage() {
       } else if (error.status === 422) {
         if (typeof error.detail === "string") {
           setFieldErrors({
-            email: "تعذر التحقق من البريد الإلكتروني."
+            email: "تعذر التحقق من البريد الإلكتروني.",
           });
         } else {
           const errors = {};
@@ -138,7 +137,7 @@ export default function RegisterPage() {
   return (
     <AuthLayout
       variant="register"
-      promo={<AuthPromo scene={<DehmScan />} mobileTitle="أنشى حسابك" />}
+      promo={<AuthPromo mobileTitle="أنشى حسابك" variant="register" />}
     >
       <RegisterForm
         onRegister={handleRegister}

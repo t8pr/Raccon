@@ -3233,7 +3233,6 @@ video {
 }
 .auth-page--register .auth-layout {
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 38.888889%);
 }
 .auth-page--register .auth-layout__form {
   min-height: 0;
@@ -3308,12 +3307,9 @@ video {
   }
 }
 @media (max-width: 767px) {
-  .auth-page--register .auth-layout__promo {
-    display: none;
-  }
   .auth-page--register .auth-layout__form {
-    margin-top: 0;
-    padding: 12px 20px;
+    margin-top: -8px;
+    padding: 8px 24px 10px;
   }
   .auth-page--register .register-form__title {
     font-size: 32px;
@@ -3897,4 +3893,516 @@ input[type="password"]::-ms-clear {
 .check-login .ui-button {
   width: 100%;
   max-width: 320px;
+}
+
+.auth-promo.auth-promo--v2 .auth-promo__scene {
+  background: var(--surface, #fff);
+}
+
+.auth-promo--v2 .auth-scan-animation {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  direction: ltr;
+}
+
+.auth-promo--v2 .auth-scan-animation-poster,
+.auth-promo--v2 .auth-scan-animation-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-promo--v2 .auth-scan-animation-player svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-promo--v2 .auth-scan-animation-toggle {
+  position: absolute;
+  inset-inline-end: 8px;
+  inset-block-end: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface, #fff);
+  color: var(--night);
+  cursor: pointer;
+}
+
+.auth-promo--v2 .auth-scan-animation-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .auth-promo--v2 .auth-scan-animation-toggle {
+    inset-inline-end: 3px;
+    inset-block-end: 3px;
+    width: 26px;
+    height: 26px;
+  }
+}
+/* ========================
+   ScanPage status screens
+   ======================== */
+
+.status-hero {
+  display: flex;
+  justify-content: center;
+}
+
+.status-hero svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.status-hero__img {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  display: block;
+}
+
+.scan-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center; /* ← هذا الي يمركز عمودياً */
+  text-align: center;
+  padding: 1.5rem;
+  gap: 1rem;
+  height: 100%;
+  width: 100%;
+  margin-inline: auto;
+}
+
+.scan-status__title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.scan-status__desc {
+  margin: 0;
+  max-width: 420px;
+  line-height: 1.6;
+  color: var(--ink, #0d0a21);
+}
+
+/* ====== fixed + لا سكرول — موبايل وديسكتوب ====== */
+.home-page:has(.scan-status) {
+  position: fixed;
+  inset: 72px 0 0 0; /* 72px = ارتفاع AppNavbar */
+  max-width: none; /* يلغي max-width: 1200px من .home-page الأساسي */
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+/* موبايل */
+@media (max-width: 767px) {
+  .scan-status {
+    gap: 0.75rem;
+  }
+  .status-hero__img {
+    max-width: 240px;
+  }
+}
+
+/* ديسكتوب */
+@media (min-width: 768px) {
+  .status-hero__img {
+    max-width: 320px;
+  }
+}
+/* امنع سكرول الصفحة كلها لما صفحة الحالة ظاهرة */
+body:has(.scan-status),
+html:has(.scan-status) {
+  overflow: hidden;
+  height: 100%;
+}
+
+/* ======== Claimed state ======== */
+
+.scan-status--claimed {
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+}
+
+.scan-status__chips {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 320px;
+  gap: 0.75rem;
+}
+
+.scan-chip {
+  background: #ecebf6;
+  color: #1b1442;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.claimed-hero {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 260px;
+}
+
+.claimed-hero__bg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.claimed-hero__number {
+  position: absolute;
+  top: 55.7%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(32px, 9vw, 48px);
+  font-weight: 900;
+  color: #0d0a21;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.mento-character {
+  width: 100%;
+  max-width: 140px;
+  height: auto;
+  display: block;
+  margin-top: -1rem;
+}
+
+.scan-status__piece-pill {
+  background: #281f63;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .claimed-hero {
+    max-width: 220px;
+  }
+  .mento-character {
+    max-width: 120px;
+  }
+}
+
+@media (min-width: 768px) {
+  .claimed-hero {
+    max-width: 300px;
+  }
+  .mento-character {
+    max-width: 160px;
+  }
+}
+
+/* ======== Choose-trap state ======== */
+
+.scan-status--trap {
+  gap: 0.6rem;
+  padding: 0.75rem 1.25rem;
+  justify-content: center;
+}
+
+.trap-title {
+  margin: 0;
+  font-family: var(--font-display, system-ui);
+  font-weight: 900;
+  font-size: clamp(28px, 7.5vw, 38px);
+  color: #4333a5;
+  text-shadow:
+    1px 1px 0 #0d0a21,
+    2px 2px 0 #0d0a21;
+  letter-spacing: 1px;
+  line-height: 1.1;
+}
+
+.trap-hero {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 220px;
+  margin-top: -0.25rem;
+}
+
+.trap-hero__bg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.trap-hero__number {
+  position: absolute;
+  top: 55.7%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(32px, 9vw, 48px);
+  font-weight: 900;
+  color: #0d0a21;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.trap-dice {
+  width: 100%;
+  max-width: 110px;
+  margin-top: -1rem;
+  height: auto;
+  display: block;
+}
+
+.trap-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 320px;
+}
+
+.trap-action {
+  flex: 1;
+  border: 2px solid #0d0a21;
+  border-radius: 14px;
+  padding: 0.65rem 0.5rem;
+  font-weight: 800;
+  font-size: 15px;
+  cursor: pointer;
+  transition:
+    transform 0.1s ease,
+    box-shadow 0.1s ease,
+    background 0.1s ease;
+  font-family: inherit;
+}
+
+.trap-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.trap-action--boom {
+  background: #695cb7;
+  color: white;
+  box-shadow: 0 3px 0 #0d0a21;
+}
+
+.trap-action--freeze {
+  background: #c6ecdb;
+  color: #0d0a21;
+  box-shadow: 0 3px 0 #0d0a21;
+}
+
+.trap-action:not(:disabled):active,
+.trap-action.is-selected {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0d0a21;
+}
+
+.trap-pill {
+  background: #281f63;
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  max-width: 320px;
+}
+
+.trap-error {
+  margin: 0;
+  color: #c0392b;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ======== Freeze state ======== */
+.scan-status--freeze {
+  gap: 0.6rem;
+  padding: 0.75rem 1.25rem;
+  justify-content: center;
+}
+
+.freeze-title {
+  margin: 0;
+  font-family: var(--font-display, system-ui);
+  font-weight: 900;
+  font-size: clamp(28px, 7.5vw, 38px);
+  color: #4333a5;
+  text-shadow:
+    1px 1px 0 #0d0a21,
+    2px 2px 0 #0d0a21;
+  line-height: 1.1;
+}
+
+.freeze-hero {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 220px;
+}
+
+.freeze-hero__bg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.freeze-hero__number {
+  position: absolute;
+  top: 55.7%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(32px, 9vw, 48px);
+  font-weight: 900;
+  color: #0d0a21;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  letter-spacing: -1px;
+  line-height: 1;
+}
+
+.freeze-hero__timer {
+  position: absolute;
+  top: 25%;
+  right: -10%;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #b4addb;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1b1442;
+  font-weight: 900;
+  font-size: 14px;
+  font-family: system-ui, "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.freeze-character {
+  width: 100%;
+  max-width: 160px;
+  height: auto;
+  display: block;
+  margin-top: -0.5rem;
+}
+
+.freeze-pill {
+  background: #281f63;
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  max-width: 320px;
+}
+
+/* موبايل */
+@media (max-width: 767px) {
+  .freeze-hero {
+    max-width: 200px;
+  }
+  .freeze-character {
+    max-width: 140px;
+  }
+  .freeze-hero__timer {
+    width: 60px;
+    height: 60px;
+    font-size: 13px;
+  }
+}
+
+/* ديسكتوب — عمود مركزي بعرض محدود */
+@media (min-width: 768px) {
+  .scan-status--freeze {
+    max-width: 480px;
+    margin-inline: auto;
+  }
+  .freeze-hero {
+    max-width: 240px;
+  }
+  .freeze-character {
+    max-width: 170px;
+  }
+}
+
+@media (max-width: 767px) {
+  .trap-hero {
+    max-width: 220px;
+  }
+  .trap-dice {
+    max-width: 120px;
+    margin-top: -1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .trap-hero {
+    max-width: 280px;
+  }
+  .trap-dice {
+    max-width: 160px;
+  }
+
+  .scan-status--trap {
+    max-width: 480px;
+    margin-inline: auto;
+  }
+  .trap-hero {
+    max-width: 260px;
+  }
+  .trap-dice {
+    max-width: 140px;
+  }
+}
+
+.scan-status--boom {
+  justify-content: center;
+}
+
+.boom-hero {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 280px;
+}
+
+.boom-hero__bg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.boom-hero__value {
+  position: absolute;
+  top: 55.7%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(36px, 10vw, 54px);
+  font-weight: 900;
+  color: #0d0a21;
+  font-family: system-ui, "Segoe UI", sans-serif;
 }

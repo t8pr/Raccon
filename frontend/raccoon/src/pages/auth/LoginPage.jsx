@@ -6,7 +6,6 @@ import AuthLayout from "../../components/layout/AuthLayout";
 import AuthPromo from "../../components/layout/AuthPromo";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
-import DehmScan from "../../components/ui/DehmScan";
 import { takeClaimReturn } from "../../utils/claimReturn";
 import Button from "../../components/ui/Button";
 
@@ -99,8 +98,7 @@ export default function LoginPage() {
     <AuthLayout
       promo={
         <AuthPromo
-          scene={<DehmScan />}
-          mobileTitle="هلا بالكحيلان حياك الله من جديد"
+          mobileTitle="هلا حياك الله من جديد"
           mobileSubTitle=""
           variant="login"
         />
