@@ -106,7 +106,10 @@ class JourneyService:
                 progress.visited_sequences = visited
             
             if content.get("boom"):
-                progress.score = max(0, progress.score - content.get("boom"))
+                new_score = max(0, progress.score - content["boom"])
+                if new_score != progress.score:
+                    progress.score = new_score
+                    progress.scanned_at = datetime.now(timezone.utc)
                 message = "Boom! You hit a trap and lost points."
                 
             elif content.get("freeze"):
@@ -162,6 +165,7 @@ class JourneyService:
             
             progress.current_sequence = tag.sequence_num
             progress.score += 1
+            progress.scanned_at = datetime.now(timezone.utc)
 
             if progress.score >= pack.tags_count:
                 progress.status = "completed"
@@ -213,6 +217,7 @@ class JourneyService:
             visited.append(tag.sequence_num)
             progress.visited_sequences = visited
             progress.score += 1
+            progress.scanned_at = datetime.now(timezone.utc)
 
         self.journey_progress_repo.add_progress(progress)
         self.session.flush() #update progress but dont finalize transaction
