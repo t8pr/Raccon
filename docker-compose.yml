@@ -11,6 +11,8 @@ services:
     volumes:
       - ./backend:/app
     restart: always
+    environment:
+      REDIS_URL: redis://redis:6379/0
 
   frontend:
     build: ./frontend/raccoon
@@ -25,4 +27,8 @@ services:
     volumes:
       - ./frontend/raccoon:/app
       - /app/node_modules
+    restart: always
+
+  redis:
+    image: redis:7-alpine
     restart: always

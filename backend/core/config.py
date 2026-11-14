@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     R2_ACCOUNT_ID: str = ""
     R2_BUCKET_NAME: str = ""
     R2_PUBLIC_URL: str = ""
+    REDIS_URL: str = "" #compose supplies the value locally, will be changed to prod URL later
     model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
 
 settings = Settings()

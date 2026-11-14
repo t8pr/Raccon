@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from core.database import init_db
+from core.logger import logger
 from api.auth.router import router as auth_router
 from api.users.router import router as users_router 
 from api.health.router import router as health_router
@@ -13,13 +14,43 @@ from scalar_fastapi import get_scalar_api_reference
 from core.logger import listener
 from api.nfc.router import router as nfc_router
 from fastapi_pagination import add_pagination
+from redis.asyncio import Redis
+from redis.exceptions import RedisError
+from core.config import settings
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    yield
-    if listener:
-        listener.stop()
+    app.state.redis = None
+    redis_client = None
+
+    try:
+        try:
+            if settings.REDIS_URL:
+                redis_client = Redis.from_url(
+                    settings.REDIS_URL,
+                    decode_responses=True,
+                    socket_connect_timeout=2,
+                    socket_timeout=2,
+                )
+
+                app.state.redis = redis_client
+                await redis_client.ping()
+
+        except RedisError:
+            logger.exception("Redis is not configured, live updates are unavailable.")
+
+        yield
+    finally:
+        if redis_client is not None:
+            try:
+                await redis_client.aclose()
+            except (RedisError, OSError):
+                logger.exception("Error closing Redis connection.")
+
+        if listener:
+            listener.stop()
 
 app = FastAPI(title="Raccon Event Platform", lifespan=lifespan)
 

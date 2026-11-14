@@ -1,8 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Column
+from sqlalchemy import Column, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
 
 class JourneyProgress(SQLModel, table=True):
@@ -16,3 +16,4 @@ class JourneyProgress(SQLModel, table=True):
     status: str = Field(default="active") 
     frozen_until: Optional[datetime] = Field(default=None) 
     visited_sequences: List[int] = Field(default_factory=list, sa_column=Column(JSONB))
+    scanned_at: Optional[datetime] = Field(default_factory=lambda: datetime.now(timezone.utc), sa_column=Column(DateTime(timezone=True), nullable=True))
