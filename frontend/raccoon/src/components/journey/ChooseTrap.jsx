@@ -1,29 +1,42 @@
 import { useRef, useState } from "react";
 import { setPlayerTrap } from "../../api/journeyApi";
+import {
+  FREEZE_DEFAULT_SECONDS,
+  isValidFreezeSeconds,
+} from "../../utils/trapRules";
+import Button from "../ui/Button";
+import InlineMessage from "../ui/InlineMessage";
+import ScanLayout from "./ScanLayout";
+import TrapPicker from "./TrapPicker";
+import { BombBadge, FreezeBadge } from "./ScanBadges";
 
-const FREEZE_SECONDS = 60;
-
+// قطعة فخ من نوع «اختر»: اللاعب يحدد النوع ومدة التجميد ثم يزرع الفخ.
+// shell: الخصائص المشتركة لـ ScanLayout (اسم الجولة، المتصدرون) تأتي من ScanPage.
 export default function ChooseTrap({
+  shell,
   tagHash,
   userHash,
   accessToken,
-  tagNumber,
   currentScore,
   remainingTags,
   onActivated,
 }) {
+  const [type, setType] = useState("freeze");
+  const [seconds, setSeconds] = useState(FREEZE_DEFAULT_SECONDS);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [selected, setSelected] = useState(null);
   const inFlight = useRef(false);
 
-  async function activate(trapType) {
-    if (inFlight.current) return;
+  const isFreeze = type === "freeze";
+  const canSubmit = !isFreeze || isValidFreezeSeconds(seconds);
 
-    const value = trapType === "boom" ? 1 : FREEZE_SECONDS;
+  async function activate() {
+    if (inFlight.current || !canSubmit) return;
+
+    // بووم قيمته ثابتة 1، والتجميد بعدد الثواني المختار
+    const value = isFreeze ? Number(seconds) : 1;
 
     inFlight.current = true;
-    setSelected(trapType);
     setSubmitting(true);
     setError("");
     try {
@@ -31,7 +44,7 @@ export default function ChooseTrap({
         tagHash,
         userHash,
         accessToken,
-        trapType,
+        type,
         value,
       );
       onActivated(result);
@@ -41,75 +54,42 @@ export default function ChooseTrap({
           ? err.detail
           : err.detail?.message || "تعذر تفعيل الفخ.",
       );
-      setSelected(null);
     } finally {
       inFlight.current = false;
       setSubmitting(false);
     }
   }
 
-  const formatted = String(tagNumber ?? "").padStart(2, "0");
-
   return (
-    <div className="scan-status scan-status--trap">
-      <div className="scan-status__chips">
-        <span className="scan-chip">نقاطك {currentScore ?? 0}</span>
-        <span className="scan-chip">باقي {remainingTags ?? 0} قطع</span>
-      </div>
-
-      <h2 className="trap-title">اختر الفخ!</h2>
-
-      <div className="trap-hero">
-        <img
-          src="/choose-trap-hero.svg"
-          alt=""
-          className="trap-hero__bg"
-          aria-hidden="true"
-        />
-        <span className="trap-hero__number">{formatted}</span>
-      </div>
-
-      <img
-        src="/choose-trap-dice.svg"
-        alt=""
-        className="trap-dice"
-        aria-hidden="true"
+    <ScanLayout
+      {...shell}
+      title="اختر الفخ!"
+      badge={isFreeze ? <FreezeBadge /> : <BombBadge />}
+      pill="الفخ يصيب أول واحد يمسحها بعدك"
+      score={currentScore}
+      remaining={remainingTags}
+      actions={
+        <Button
+          variant="primary"
+          loading={submitting}
+          disabled={!canSubmit}
+          onClick={activate}
+        >
+          {isFreeze
+            ? `ازرع فخ التجميد · ${canSubmit ? Number(seconds) : "—"} ث`
+            : "ازرع فخ بووم"}
+        </Button>
+      }
+    >
+      <TrapPicker
+        type={type}
+        onTypeChange={setType}
+        seconds={seconds}
+        onSecondsChange={setSeconds}
+        disabled={submitting}
       />
 
-      <div className="trap-actions">
-        <button
-          type="button"
-          className={`trap-action trap-action--boom${
-            selected === "boom" ? " is-selected" : ""
-          }`}
-          onClick={() => activate("boom")}
-          disabled={submitting}
-        >
-          بووم
-        </button>
-        <button
-          type="button"
-          className={`trap-action trap-action--freeze${
-            selected === "freeze" ? " is-selected" : ""
-          }`}
-          onClick={() => activate("freeze")}
-          disabled={submitting}
-        >
-          تجميد {FREEZE_SECONDS}ث
-        </button>
-      </div>
-
-      <div className="trap-pill">
-        {submitting
-          ? "جاري تفعيل الفخ..."
-          : "الفخ يصيب أول واحد يمسحها بعدك"}
-      </div>
-
-      {error && (
-        <p className="trap-error" role="alert">
-          {error}
-        </p>
-      )}
-    </div>
+      {error && <InlineMessage type="error" message={error} />}
+    </ScanLayout>
   );
 }

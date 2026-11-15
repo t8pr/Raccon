@@ -17,6 +17,8 @@ import { SaveTagSetup } from "../../api/events/eventsApi";
 import { UpdateEventStatus } from "../../api/events/eventsApi";
 import { uploadHintImage } from "../../api/events/eventsApi";
 import { SaveTagEdits } from "../../api/events/eventsApi";
+import { ResetEvent } from "../../api/events/eventsApi";
+
 import { useAuth } from "../../context/AuthContext";
 import ImageUploader from "../../components/ui/ImageUploader";
 import ConfirmDialog from "../../components/ui/ConfirmDialog/ConfirmDialog";
@@ -307,7 +309,7 @@ export default function CustomizationPage() {
       }
     }
 
-    function confirmAction() {
+    async function confirmAction() {
       const action = confirmation;
       setConfirmation(null);
       if (action === "saveAll") {
@@ -323,6 +325,19 @@ export default function CustomizationPage() {
         !isStarting &&
         !isPreparingImage
       ) {
+        if (eventData.mode === "open") {
+          try {
+            setIsSaving(true);
+            await ResetEvent(eventId, accessToken);
+            await eventQuery.refetch();
+          } catch (error) {
+            setSaveError(error.message || "تعذر إعادة تعيين الجولة.");
+            setIsSaving(false);
+            return;
+          } finally {
+            setIsSaving(false);
+          }
+        }
         setIsEditing(true);
       }
     }

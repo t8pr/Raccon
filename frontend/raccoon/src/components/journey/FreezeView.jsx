@@ -1,26 +1,28 @@
 import { useEffect, useState } from "react";
+import Button from "../ui/Button";
+import ScanLayout from "./ScanLayout";
+import InfoCard, { ProgressBar } from "./InfoCard";
+import { FreezeBadge, UnlockBadge } from "./ScanBadges";
 
-function computeRemaining({ frozenUntil, freezeSeconds }) {
-  if (frozenUntil) {
-    const end = new Date(frozenUntil).getTime();
-    return Math.max(0, Math.ceil((end - Date.now()) / 1000));
-  }
-  if (typeof freezeSeconds === "number") return Math.max(0, freezeSeconds);
-  return 0;
+function secondsUntil(endTime) {
+  return Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
 }
 
-function formatMMSS(total) {
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+function formatClock(total) {
+  const minutes = Math.floor(total / 60);
+  const seconds = String(total % 60).padStart(2, "0");
+  return `${minutes}:${seconds}`;
 }
 
+// فخ التجميد: عدّاد حي، وعند انتهائه تتحول الشاشة إلى «انفكّ التجميد!».
+// frozenUntil (وقت الانتهاء من الخادم) له الأولوية، وإلا نحسب من freezeSeconds.
 export default function FreezeView({
-  tagNumber,
+  shell,
   currentScore,
   remainingTags,
   frozenUntil,
   freezeSeconds,
+  onContinue,
 }) {
   const [endTime] = useState(() => {
     if (frozenUntil) return new Date(frozenUntil).getTime();
@@ -30,54 +32,63 @@ export default function FreezeView({
     return Date.now();
   });
 
-  const [remaining, setRemaining] = useState(() =>
-    computeRemaining({ frozenUntil: new Date(endTime).toISOString() }),
+  const [remaining, setRemaining] = useState(() => secondsUntil(endTime));
+
+  // المدة الكاملة للشريط: من الخادم إن عُرفت، وإلا ما بقي لحظة فتح الشاشة
+  const [total] = useState(() =>
+    typeof freezeSeconds === "number" && freezeSeconds > 0
+      ? freezeSeconds
+      : secondsUntil(endTime),
   );
 
   useEffect(() => {
-    const tick = () => {
-      const r = Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
-      setRemaining(r);
-    };
+    const tick = () => setRemaining(secondsUntil(endTime));
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [endTime]);
 
-  const formatted = String(tagNumber ?? "").padStart(2, "0");
+  if (remaining <= 0) {
+    return (
+      <ScanLayout
+        {...shell}
+        title="انفكّ التجميد!"
+        badge={<UnlockBadge />}
+        pill="تقدر تمسح الحين"
+        score={currentScore}
+        remaining={remainingTags}
+        actions={<Button onClick={onContinue}>كمّل البحث</Button>}
+      >
+        <InfoCard title="رجعت للعب!" text="أي قطعة تمسحها من الحين تنحسب لك." />
+      </ScanLayout>
+    );
+  }
 
   return (
-    <div className="scan-status scan-status--freeze">
-      <div className="scan-status__chips">
-        <span className="scan-chip">نقاطك {currentScore ?? 0}</span>
-        <span className="scan-chip">باقي {remainingTags ?? 0} قطع</span>
-      </div>
-
-      <h2 className="freeze-title">تجمّدت!</h2>
-
-      <div className="freeze-hero">
-        <img
-          src="/freeze-hero.svg"
-          alt=""
-          className="freeze-hero__bg"
-          aria-hidden="true"
+    <ScanLayout
+      {...shell}
+      title="تجمّدت!"
+      badge={<FreezeBadge seconds={remaining} />}
+      pill="ما تقدر تمسح لين يخلص العدّاد"
+      score={currentScore}
+      remaining={remainingTags}
+      actions={
+        <Button variant="accent" disabled>
+          كمّل اللعب بعد <bdi>{formatClock(remaining)}</bdi>
+        </Button>
+      }
+    >
+      <InfoCard
+        label="العدّاد"
+        title={`باقي ${remaining} ثانية من ${total}`}
+        text="أي قطعة تمسحها الحين ما تنحسب، ارجع لها بعد العدّاد."
+      >
+        <ProgressBar
+          value={Math.max(0, total - remaining)}
+          max={total}
+          label="الوقت المنقضي من التجميد"
         />
-        <span className="freeze-hero__number">{formatted}</span>
-        <span className="freeze-hero__timer">{formatMMSS(remaining)}</span>
-      </div>
-
-      <img
-        src="/freeze-character.svg"
-        alt=""
-        className="freeze-character"
-        aria-hidden="true"
-      />
-
-      <div className="freeze-pill">
-        {remaining > 0
-          ? "ما تقدر تمسح لين يخلص العدّاد"
-          : "خلص التجميد! تقدر تمسح الحين"}
-      </div>
-    </div>
+      </InfoCard>
+    </ScanLayout>
   );
 }

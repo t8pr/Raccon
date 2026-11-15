@@ -1,0 +1,103 @@
+.root {
+  --stepper-button: 32px;
+  --stepper-input: 48px;
+  --stepper-font: 15px;
+}
+
+/* شاشة اللاعب: أهداف لمس 44px */
+.lg {
+  --stepper-button: 44px;
+  --stepper-input: 64px;
+  --stepper-font: 20px;
+}
+
+.row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+}
+
+.button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 var(--stepper-button);
+  width: var(--stepper-button);
+  height: var(--stepper-button);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--panel-raised);
+}
+
+.button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.input {
+  width: var(--stepper-input);
+  min-width: 0;
+  height: var(--stepper-button);
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--stepper-font);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.input::-webkit-inner-spin-button,
+.input::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.input[aria-invalid="true"] {
+  outline: 2px solid var(--danger);
+}
+
+.button:focus-visible,
+.input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.unit {
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.error {
+  margin: 10px 0 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}
