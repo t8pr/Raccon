@@ -50,11 +50,46 @@ export default function ExperiencePackCard({
   status = "available",
   updatedAt,
   editTo,
+  loading = false,
+  disabled = false,
   onBuy, // store: makes "شراء" a real button
 }) {
   const isStore = variant === "store";
   const tone = mode === "open" ? "open" : "seq";
   const modeLabel = MODE_LABEL[mode] ?? MODE_LABEL.sequential;
+
+  if (isStore)
+    return (
+      <article
+        className={`pack-card pack-card--${tone} pack-card--store`}
+        aria-label={`${modeLabel} · ${pieces} قطعة`}
+        aria-busy={loading}
+      >
+        <NfcCoil bare line="var(--surface)" className="pack-card__coil" />
+        <span className="pack-card__mode">
+          <i aria-hidden="true" />
+          {modeLabel}
+        </span>
+        <div className="pack-card__pieces">
+          <p className="pack-card__overline">عدد القطع</p>
+          <p className="pack-card__number">{pieces}</p>
+        </div>
+        <button
+          type="button"
+          className="pack-card__buy"
+          onClick={onBuy}
+          disabled={disabled || loading || !onBuy}
+        >
+          {loading ? (
+            "جاري التحويل للدفع..."
+          ) : (
+            <>
+              اشترِ · <Price value={price} />
+            </>
+          )}
+        </button>
+      </article>
+    );
 
   return (
     <article className={`pack-card pack-card--${tone} pack-card--${variant}`}>
@@ -109,14 +144,14 @@ export default function ExperiencePackCard({
 
         {/* ⋯ = admin actions only; hidden on the real store */}
         {!onBuy && (
-        <button
-          type="button"
-          className="pack-card__more"
-          aria-label={title ? `خيارات «${title}»` : "خيارات"}
-          disabled={isStore}
-        >
-          <MoreHorizontal size={18} aria-hidden="true" />
-        </button>
+          <button
+            type="button"
+            className="pack-card__more"
+            aria-label={title ? `خيارات «${title}»` : "خيارات"}
+            disabled={isStore}
+          >
+            <MoreHorizontal size={18} aria-hidden="true" />
+          </button>
         )}
       </div>
     </article>
