@@ -6,8 +6,8 @@ import AuthLayout from "../../components/layout/AuthLayout";
 import AuthPromo from "../../components/layout/AuthPromo";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import LoginForm from "../../components/auth/LoginForm";
-import DehmScan from "../../components/ui/DehmScan";
 import { takeClaimReturn } from "../../utils/claimReturn";
+import Button from "../../components/ui/Button";
 
 export default function LoginPage() {
   const { signIn, user, accessToken, isRestoring } = useAuth();
@@ -24,6 +24,7 @@ export default function LoginPage() {
       ? "تم تغيير كلمة المرور. ادخل بكلمة المرور الجديدة."
       : "",
   );
+  const [showForm, setShowForm] = useState(!redirectTag);
   const [serverError, setServerError] = useState("");
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function LoginPage() {
       }
     }
   }, [isRestoring, accessToken, user, redirectTag, redirectSig, navigate]);
-  
+
   async function handleLogin(credentials) {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -97,21 +98,49 @@ export default function LoginPage() {
     <AuthLayout
       promo={
         <AuthPromo
-          scene={<DehmScan />}
-          mobileTitle="هلا بالكحيلان حياك الله من جديد"
+          mobileTitle="هلا حياك الله من جديد"
           mobileSubTitle=""
           variant="login"
         />
       }
     >
       <div className="login-page">
-        <LoginForm
-          onLogin={handleLogin}
-          isSubmitting={isSubmitting}
-          serverError={serverError}
-          notice={notice}
-          onEdit={() => setServerError("")}
-        />
+        {!showForm && redirectTag ? (
+          <div dir="rtl" className="check-login">
+            <h1>سجّل دخولك عشان تكمّل</h1>
+            <p>بعد الدخول نرجعك لنفس القطعة ونحسبها لك</p>
+
+            <Button
+              variant="primary"
+              fullWidth
+              onClick={() => setShowForm(true)}
+            >
+              سجّل الدخول
+            </Button>
+
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() => {
+                const params = new URLSearchParams({
+                  redirect_tag: redirectTag,
+                });
+                if (redirectSig) params.set("redirect_sig", redirectSig);
+                navigate(`/register?${params.toString()}`);
+              }}
+            >
+              أنشئ حساب جديد
+            </Button>
+          </div>
+        ) : (
+          <LoginForm
+            onLogin={handleLogin}
+            isSubmitting={isSubmitting}
+            serverError={serverError}
+            notice={notice}
+            onEdit={() => setServerError("")}
+          />
+        )}
       </div>
     </AuthLayout>
   );

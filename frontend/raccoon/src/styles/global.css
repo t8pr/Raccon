@@ -25,6 +25,7 @@
   --accent-soft: #ecebf6;
   --on-accent: #ffffff;
   --on-accent-soft: #362984;
+  --gold: #f7cf4a; /* الإكليل، الكأس، فتيل القنبلة */
   /* ===== Primary Button ===== */
   --primary: #448266;
   --on-primary: #ecebf6;
@@ -2330,6 +2331,7 @@ video {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
+  margin-top: auto;
 }
 
 .owned-package__actions .ui-button {
@@ -3233,7 +3235,6 @@ video {
 }
 .auth-page--register .auth-layout {
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 38.888889%);
 }
 .auth-page--register .auth-layout__form {
   min-height: 0;
@@ -3308,12 +3309,9 @@ video {
   }
 }
 @media (max-width: 767px) {
-  .auth-page--register .auth-layout__promo {
-    display: none;
-  }
   .auth-page--register .auth-layout__form {
-    margin-top: 0;
-    padding: 12px 20px;
+    margin-top: -8px;
+    padding: 8px 24px 10px;
   }
   .auth-page--register .register-form__title {
     font-size: 32px;
@@ -3867,4 +3865,114 @@ input[type="password"]::-ms-clear {
   grid-column: 1 / -1;
   width: 100%;
   flex: 1;
+}
+.check-login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 0;
+  text-align: center;
+  min-height: 60vh;
+  width: 100%;
+}
+
+.check-login h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  width: 100%;
+}
+
+.check-login p {
+  color: var(--ink);
+  opacity: 0.7;
+  margin: 0 0 8px;
+  width: 100%;
+}
+
+.check-login .ui-button {
+  width: 100%;
+  max-width: 320px;
+}
+
+.auth-promo.auth-promo--v2 .auth-promo__scene {
+  background: var(--surface, #fff);
+}
+
+.auth-promo--v2 .auth-scan-animation {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  direction: ltr;
+}
+
+.auth-promo--v2 .auth-scan-animation-poster,
+.auth-promo--v2 .auth-scan-animation-player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-promo--v2 .auth-scan-animation-player svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.auth-promo--v2 .auth-scan-animation-toggle {
+  position: absolute;
+  inset-inline-end: 8px;
+  inset-block-end: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--surface, #fff);
+  color: var(--night);
+  cursor: pointer;
+}
+
+.auth-promo--v2 .auth-scan-animation-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .auth-promo--v2 .auth-scan-animation-toggle {
+    inset-inline-end: 3px;
+    inset-block-end: 3px;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+/* rac-navbar — وضع العنوان (شاشات المسح): الشعار، اسم الجولة، الحساب في صف واحد */
+
+.rac-navbar__title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--on-panel);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .rac-navbar--titled {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+  }
+
+  .rac-navbar--titled .rac-navbar__account {
+    grid-column: auto;
+    grid-row: auto;
+  }
 }

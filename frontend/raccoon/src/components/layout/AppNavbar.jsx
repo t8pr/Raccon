@@ -23,7 +23,8 @@ const navigationByRole = {
   ],
 };
 
-export default function AppNavbar() {
+// title اختياري: شاشات المسح تمرّر اسم الجولة فيظهر بدل روابط التنقل
+export default function AppNavbar({ title }) {
   const { accessToken, user, clearSession } = useAuth();
   const navigate = useNavigate();
   const [logoutError, setLogoutError] = useState("");
@@ -57,6 +58,7 @@ export default function AppNavbar() {
       <Navbar
         logo={Mark}
         items={navigationItems}
+        title={title}
         account={
           <ProfileMenu
             accountPath="/profile" // in profile icon if press حسابي  will Route u in profile page

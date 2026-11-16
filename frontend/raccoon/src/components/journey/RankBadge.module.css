@@ -1,0 +1,47 @@
+.badge {
+  position: relative;
+  display: block;
+  width: 52px;
+  height: 41px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.badge img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.badge:hover,
+.badge[aria-expanded="true"] {
+  transform: translateY(-2px);
+}
+
+.badge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* الرقم يجلس في الفتحة العليا بين الغصنين */
+.number {
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  font-family: var(--font-display);
+  font-size: 19px;
+  line-height: 22px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge {
+    transition: none;
+  }
+}

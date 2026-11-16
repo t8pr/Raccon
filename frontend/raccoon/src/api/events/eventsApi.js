@@ -132,6 +132,26 @@ export async function uploadHintImage(file, accessToken) {
     error.status = response.status;
     throw error;
   }
-  
+
+  return data;
+}
+
+export async function ResetEvent(eventId, accessToken) {
+  const response = await fetch(`${API_URL}/events/${eventId}/reset`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error(data?.detail || "تعذر إعادة تعيين الجولة.");
+    error.status = response.status;
+    throw error;
+  }
+
   return data;
 }

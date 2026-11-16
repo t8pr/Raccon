@@ -1,0 +1,101 @@
+/* محتويات الدائرة. المقاسات هنا بنسبة من قطر الدائرة (--sc-circle من ScanLayout)
+   حتى تصغر مع الدائرة في الشاشات القصيرة. */
+
+.number {
+  padding-top: 0.1em;
+}
+
+.muted {
+  color: var(--on-panel-muted);
+}
+
+.mint {
+  color: var(--mint);
+}
+
+.mark {
+  display: block;
+  width: 65%;
+  height: auto;
+}
+
+/* ---------- القنبلة ---------- */
+.bomb {
+  position: relative;
+  display: block;
+  width: 76%;
+  aspect-ratio: 1;
+  margin: -6% -5% 0 0;
+  color: var(--mint);
+}
+
+.bombIcon {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.fuse {
+  stroke: var(--gold);
+}
+
+.bombValue {
+  position: absolute;
+  top: 58%;
+  left: 42%;
+  padding-top: 0.12em;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-size: 0.62em;
+  line-height: 1;
+  color: var(--ink);
+}
+
+/* ---------- التجميد ---------- */
+.freeze {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.freeze img {
+  display: block;
+  width: calc(var(--sc-circle, 120px) * 0.45);
+  height: auto;
+}
+
+.freezeSeconds {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--on-panel-muted);
+}
+
+.freezeSeconds b {
+  font-weight: 700;
+  color: var(--on-panel);
+}
+
+/* ---------- الكأس + عدد القطع ---------- */
+.cup {
+  display: block;
+  width: 52%;
+  height: auto;
+  color: var(--gold);
+}
+
+.count {
+  position: absolute;
+  top: -6px;
+  right: -30px;
+  padding: 5px 12px 3px;
+  border: 3px solid var(--canvas);
+  border-radius: var(--radius-pill);
+  background: var(--mint);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
