@@ -1,6 +1,7 @@
 from sqlmodel import Session, delete
 from fastapi import Depends, HTTPException, status
 from core.database import get_session
+from api.events.schemas import MyEventResponse
 from repositories.pack_repo import PackRepository
 from repositories.event_repo import EventRepository
 from repositories.tag_repo import TagRepository
@@ -247,7 +248,7 @@ class EventService:
         return {"status": "success", "message": "Event has been perfectly reset to its initial state."}
 
     
-    def list_my_events(self, user: User) -> List[Event] | None:
+    def list_my_events(self, user: User) -> List[MyEventResponse] | None:
         packs = self.packs.get_by_owner_id(user.id)
         pack_ids = [p.id for p in packs]
 
@@ -255,4 +256,24 @@ class EventService:
             return []
 
         events = self.events.get_all_events(pack_ids)
-        return events
+        
+        pack_map = {pack.id: pack for pack in packs}
+
+        results = []
+
+        for event in events:
+            pack = pack_map[event.pack_id]
+            
+            results.append(
+                MyEventResponse(
+                        id = event.id,
+                        pack_id = pack.id,
+                        mode = pack.mode,
+                        tags_count = pack.tags_count,
+                        title = event.title,
+                        status = event.status,
+                        edit_count = event.edit_count
+                )
+            )
+        return results
+

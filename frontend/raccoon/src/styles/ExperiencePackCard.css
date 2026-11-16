@@ -250,3 +250,57 @@ button.pack-card__action:hover {
     transition: none;
   }
 }
+
+/* Store reference: mode chip, centered quantity, full-width checkout action. */
+.pack-card--store {
+  outline: 1.5px solid transparent;
+  outline-offset: -1.5px;
+  transition:
+    outline-color 0.15s,
+    box-shadow 0.15s;
+}
+.pack-card--store .pack-card__coil {
+  left: auto;
+  right: -120px;
+}
+.pack-card--store .pack-card__mode {
+  justify-self: end;
+  flex-direction: row-reverse;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  padding: 8px 16px;
+  color: var(--card-strong);
+  font-weight: 700;
+}
+.pack-card__buy {
+  min-height: 56px;
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--card-strong) 12%, transparent);
+  color: var(--card-strong);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pack-card__buy:focus-visible {
+  outline: 3px solid var(--card-strong);
+  outline-offset: 3px;
+}
+.pack-card__buy:disabled {
+  cursor: default;
+}
+.pack-card--store[aria-busy="true"] .pack-card__buy {
+  background: transparent;
+}
+@media (hover: hover) {
+  .pack-card--store:has(.pack-card__buy:not(:disabled)):hover {
+    outline-color: var(--card-strong);
+    box-shadow: 0 12px 24px rgb(24 19 60 / 12%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pack-card--store {
+    transition: none;
+  }
+}

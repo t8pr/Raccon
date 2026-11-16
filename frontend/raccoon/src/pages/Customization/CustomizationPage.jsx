@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import "../../styles/CustomizationPage.css";
 
+import { Pencil, Check, X } from "lucide-react";
+import { RenameEvent } from "../../api/events/eventsApi";
 import AppNavbar from "../../components/layout/AppNavbar";
 import Button from "../../components/ui/Button";
 import HintField from "../../components/ui/HintField";
@@ -35,7 +37,60 @@ function getTrapType(tag) {
 
 export default function CustomizationPage() {
   const { eventId } = useParams();
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
+
+  const queryClient = useQueryClient();
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const nameSaveLock = useRef(false);
+  const nameEditButton = useRef(null);
+
+  function cancelNameEdit() {
+    if (nameSaveLock.current) return;
+    setEditingName(false);
+    setNameError("");
+    requestAnimationFrame(() => nameEditButton.current?.focus());
+  }
+
+  async function saveName(event) {
+    event.preventDefault();
+    if (nameSaveLock.current) return;
+    const title = draftName.trim();
+    if (!title || title.length > 20) {
+      setNameError("اكتب اسمًا من حرف إلى 20 حرفًا.");
+      return;
+    }
+    nameSaveLock.current = true;
+    setSavingName(true);
+    setNameError("");
+    try {
+      const updated = await RenameEvent(eventId, accessToken, title);
+      const nextTitle = updated?.title ?? title;
+      const key = ["event", eventId, accessToken];
+      await queryClient.cancelQueries({ queryKey: key, exact: true });
+      // Change only the title; preserve tag data and unsaved customization fields.
+      queryClient.setQueryData(key, (current) =>
+        current ? { ...current, title: nextTitle } : current,
+      );
+      queryClient.setQueryData(["my-events", user?.id], (current) =>
+        current?.map((item) =>
+          String(item.id) === String(eventId)
+            ? { ...item, title: nextTitle }
+            : item,
+        ),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["my-events", user?.id] });
+      setEditingName(false);
+      requestAnimationFrame(() => nameEditButton.current?.focus());
+    } catch {
+      setNameError("تعذر حفظ الاسم. حاول مرة أخرى.");
+    } finally {
+      nameSaveLock.current = false;
+      setSavingName(false);
+    }
+  }
 
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [hint, setHint] = useState(null);
@@ -403,7 +458,76 @@ export default function CustomizationPage() {
 
         <div className="customization-space">
           <header className="customization-heading">
-            <h1>تخصيص {eventData.title}</h1>
+            {editingName ? (
+              <form
+                className="event-name-row"
+                onSubmit={saveName}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    cancelNameEdit();
+                  }
+                }}
+              >
+                <input
+                  className="event-name-input"
+                  aria-label="اسم التجربة"
+                  value={draftName}
+                  onChange={(event) => setDraftName(event.target.value)}
+                  maxLength={20}
+                  disabled={savingName}
+                  autoFocus
+                  dir="auto"
+                  aria-invalid={Boolean(nameError)}
+                  aria-describedby={nameError ? "event-name-error" : undefined}
+                />
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="event-name-action"
+                  loading={savingName}
+                  aria-label="حفظ الاسم"
+                  title="حفظ الاسم"
+                >
+                  <Check size={20} aria-hidden="true" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="event-name-action"
+                  disabled={savingName}
+                  aria-label="إلغاء تعديل الاسم"
+                  title="إلغاء تعديل الاسم"
+                  onClick={cancelNameEdit}
+                >
+                  <X size={20} aria-hidden="true" />
+                </Button>
+              </form>
+            ) : (
+              <div className="event-name-row">
+                <h1>
+                  <bdi>{eventData.title?.trim() || "بدون اسم"}</bdi>
+                </h1>
+                <button
+                  ref={nameEditButton}
+                  type="button"
+                  className="ui-button ui-button--outline event-name-action"
+                  aria-label="تعديل اسم التجربة"
+                  title="تعديل اسم التجربة"
+                  onClick={() => {
+                    setDraftName(eventData.title || "");
+                    setNameError("");
+                    setEditingName(true);
+                  }}
+                >
+                  <Pencil size={20} aria-hidden="true" />
+                </button>
+              </div>
+            )}
+            {nameError && (
+              <p id="event-name-error" role="alert">
+                {nameError}
+              </p>
+            )}
           </header>
 
           <section className="customization-editor">
