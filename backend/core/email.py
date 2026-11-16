@@ -2,12 +2,11 @@ import resend
 from core.config import settings
 from core.logger import logger
 
-FRONTEND_URL = "https://react-learning.aalsalhi-eng.workers.dev"
-SENDER = "raccon@resend.dev" # will be updated soon
+SENDER = "Raccon <raccon@raccon.app>" # will be updated soon
 
 def send_password_reset_email(to_email: str, token:str) -> None:
     resend.api_key = settings.RESEND_API_KEY
-    link= f"{FRONTEND_URL}/reset-password?token={token}"
+    link = f"{settings.FRONTEND_URL.rstrip('/')}/reset-password?token={token}"
     try:
         resend.Emails.send({
             "from": SENDER,
