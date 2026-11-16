@@ -1,14 +1,13 @@
 from fastapi import APIRouter, Depends
 from services.admin_service import AdminService
 from models.user import User
-from api.admin.schemas import PackGenerateRequest, PackGenerateResponse, FactoryPackResponse
+from api.admin.schemas import PackGenerateRequest, PackGenerateResponse, FactoryPackResponse, AdminPackDetailResponse
 from api.packs.schemas import PackResponse
 from api.users.schemas import UserResponse
 from api.auth.dependencies import get_current_admin
 import uuid
 from typing import List
 from fastapi_pagination import Page
-
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -47,6 +46,13 @@ def get_packs(
 ):
     return service.get_packs(admin_user)
 
+@router.get("/packs/details/{master_auth_hash}", response_model=AdminPackDetailResponse)
+def get_pack_details_by_auth(
+    master_auth_hash: str,
+    service: AdminService = Depends(),
+    admin_user: User = Depends(get_current_admin)
+):
+    return service.get_pack_by_master_auth(admin_user, master_auth_hash)
 
 @router.get("/users", response_model=Page[UserResponse])
 def get_users(
