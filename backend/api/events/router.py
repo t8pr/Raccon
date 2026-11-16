@@ -3,7 +3,7 @@ from services.event_service import EventService
 from core.leaderboard_broadcast import broadcast_latest_leaderboard
 from models.user import User
 from api.auth.dependencies import get_current_user
-from api.events.schemas import EventBase, EventDetailResponse, EventTagConfigView, EventUpdateRequest, EventCreateRequest, EventResponse, EventSetupRequest
+from api.events.schemas import EventBase, EventDetailResponse, EventTagConfigView, EventUpdateRequest, EventCreateRequest, EventResponse, EventSetupRequest, MyEventResponse
 import uuid
 from typing import List
 from services.storage_service import StorageService
@@ -64,7 +64,7 @@ def reset_event(
     )
 
     return result
-@router.get("", response_model=List[EventBase])
+@router.get("", response_model=List[MyEventResponse])
 def list_my_events(
     service: EventService = Depends(),
     current_user: User = Depends(get_current_user)
