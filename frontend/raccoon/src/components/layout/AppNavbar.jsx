@@ -19,7 +19,7 @@ const navigationByRole = {
     { label: "الرئيسية", to: "/home", end: true },
     { label: "إدارة التجارب", to: "/admin/experiences" },
     { label: "إدارة المستخدمين", to: "/admin/users", disabled: true },
-    { label: "المتجر", to: "/store" },
+    { label: "إدارة المتجر", to: "/admin/store" },
   ],
 };
 
