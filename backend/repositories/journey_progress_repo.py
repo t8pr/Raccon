@@ -30,6 +30,7 @@ class JourneyProgressRepository:
         .where(JourneyProgress.event_id == event_id)
         .order_by(
             JourneyProgress.score.desc(),
+            JourneyProgress.scanned_at.asc(),
             User.name.asc(),
             JourneyProgress.user_hash.asc(),
             ).limit(10)

@@ -1,0 +1,92 @@
+.card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink-muted);
+}
+
+.aside {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding-top: 3px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--on-accent-soft);
+  font-family: var(--font-display);
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* ---------- سطر توضيح بلا بطاقة ---------- */
+.note {
+  max-width: 320px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.7;
+  text-align: center;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.noteLarge {
+  font-size: 16px;
+}
+
+.note strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ---------- شريط التقدّم ---------- */
+.progress {
+  height: 8px;
+  margin-block: 8px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  overflow: hidden;
+}
+
+.progress i {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  transition: width 1s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress i {
+    transition: none;
+  }
+}

@@ -1,4 +1,5 @@
-import { Ban, Snowflake, Bomb, Dices, Info } from "lucide-react";
+import { Ban, Snowflake, Bomb, Dices } from "lucide-react";
+import DurationStepper from "./DurationStepper/DurationStepper";
 const trapOptions = [
   { value: "none", label: "بدون فخ", description: "قطعة عادية", Icon: Ban },
   {
@@ -11,19 +12,11 @@ const trapOptions = [
   {
     value: "choose",
     label: "اختار فخ",
-    description: "اللاعب يختار تجميد أو بوم",
+    description: " أختار تجميد أو بووم أثناء الجولة",
     Icon: Dices,
   },
 ];
 
-const durations = [60, 90, 120, 150, 180];
-
-function formatDuration(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  const remaining = String(seconds % 60).padStart(2, "0");
-
-  return `${minutes}:${remaining}`;
-}
 export default function TrapField({
   value,
   onValueChange,
@@ -31,17 +24,6 @@ export default function TrapField({
   onFreezeSecondsChange,
   disabled = false,
 }) {
-  const duration = Number(freezeSeconds);
-
-  const validDuration =
-    String(freezeSeconds).trim() !== "" &&
-    Number.isInteger(duration) &&
-    duration >= 1 &&
-    duration <= 180;
-
-  const showFreeze = value === "freeze" || value === "choose";
-  const showBoom = value === "boom" || value === "choose";
-
   return (
     <fieldset className="trap-field" disabled={disabled}>
       <legend>
@@ -78,79 +60,27 @@ export default function TrapField({
         })}
       </div>
 
-      {value !== "none" && (
+      {value === "freeze" && (
         <div className="trap-field__details">
-          {value === "choose" && (
-            <p className="trap-field__notice">
-              <Info size={16} aria-hidden="true" />
-              اللاعب يختار تجميد أو بوم أثناء اللعب.
-            </p>
-          )}
+          <div className="trap-field__panel">
+            <div className="trap-field__duration-heading">
+              <h3>
+                <Snowflake size={16} aria-hidden="true" />
+                مدة التجميد
+              </h3>
+              <p id="freeze-duration-help">
+                اللاعب اللي يمسح القطعة ما يقدر يمسح أي قطعة ثانية لين يخلص
+                الوقت.
+              </p>
+            </div>
 
-          <div
-            className={`trap-field__details-grid ${
-              value === "choose" ? "trap-field__details-grid--two" : ""
-            }`}
-          >
-            {showBoom && (
-              <div className="trap-field__panel">
-                <h3>
-                  <Bomb size={16} aria-hidden="true" />
-                  بووم
-                </h3>
-
-                <strong>−1 نقطة</strong>
-
-                <p>يخسر اللاعب نقطة واحدة.</p>
-              </div>
-            )}
-
-            {showFreeze && (
-              <div className="trap-field__panel">
-                <h3>
-                  <Snowflake size={16} aria-hidden="true" />
-                  مدة التجميد
-                </h3>
-
-                <div className="trap-field__times">
-                  {durations.map((seconds) => (
-                    <button
-                      key={seconds}
-                      type="button"
-                      className="trap-field__time"
-                      aria-pressed={duration === seconds}
-                      onClick={() => onFreezeSecondsChange(seconds)}
-                    >
-                      {formatDuration(seconds)}
-                    </button>
-                  ))}
-
-                  <label className="trap-field__custom-time">
-                    <span>ثانية</span>
-
-                    <input
-                      type="number"
-                      min="1"
-                      max="180"
-                      step="1"
-                      value={freezeSeconds ?? ""}
-                      onChange={(event) =>
-                        onFreezeSecondsChange(event.target.value)
-                      }
-                      aria-label="مدة التجميد بالثواني"
-                      aria-invalid={!validDuration}
-                      aria-describedby="freeze-duration-help"
-                    />
-                  </label>
-                </div>
-
-                <p id="freeze-duration-help">
-                  {validDuration
-                    ? "اللاعب اللي يمسح القطعة ما يقدر يمسح أي قطعة ثانية لين يخلص الوقت."
-                    : "أدخل عددًا صحيحًا من 1 إلى 180 ثانية."}
-                </p>
-              </div>
-            )}
+            {/* العدّاد فقط: المالك يختار أي مدة من 1 إلى 180 ثانية */}
+            <DurationStepper
+              value={freezeSeconds}
+              onChange={onFreezeSecondsChange}
+              disabled={disabled}
+              describedBy="freeze-duration-help"
+            />
           </div>
         </div>
       )}

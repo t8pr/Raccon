@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import "../../styles/CustomizationPage.css";
 
+import { Pencil, Check, X } from "lucide-react";
+import { RenameEvent } from "../../api/events/eventsApi";
 import AppNavbar from "../../components/layout/AppNavbar";
 import Button from "../../components/ui/Button";
 import HintField from "../../components/ui/HintField";
@@ -15,9 +17,13 @@ import TagLegend from "../../components/ui/TagLegend";
 import { GetEventDetails } from "../../api/events/eventsApi";
 import { SaveTagSetup } from "../../api/events/eventsApi";
 import { UpdateEventStatus } from "../../api/events/eventsApi";
+import { uploadHintImage } from "../../api/events/eventsApi";
 import { SaveTagEdits } from "../../api/events/eventsApi";
+import { ResetEvent } from "../../api/events/eventsApi";
+
 import { useAuth } from "../../context/AuthContext";
 import ImageUploader from "../../components/ui/ImageUploader";
+import ConfirmDialog from "../../components/ui/ConfirmDialog/ConfirmDialog";
 
 function getTrapType(tag) {
   if (tag.tag_type !== "trap") return "none";
@@ -31,11 +37,65 @@ function getTrapType(tag) {
 
 export default function CustomizationPage() {
   const { eventId } = useParams();
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
+
+  const queryClient = useQueryClient();
+  const [editingName, setEditingName] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [savingName, setSavingName] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const nameSaveLock = useRef(false);
+  const nameEditButton = useRef(null);
+
+  function cancelNameEdit() {
+    if (nameSaveLock.current) return;
+    setEditingName(false);
+    setNameError("");
+    requestAnimationFrame(() => nameEditButton.current?.focus());
+  }
+
+  async function saveName(event) {
+    event.preventDefault();
+    if (nameSaveLock.current) return;
+    const title = draftName.trim();
+    if (!title || title.length > 20) {
+      setNameError("اكتب اسمًا من حرف إلى 20 حرفًا.");
+      return;
+    }
+    nameSaveLock.current = true;
+    setSavingName(true);
+    setNameError("");
+    try {
+      const updated = await RenameEvent(eventId, accessToken, title);
+      const nextTitle = updated?.title ?? title;
+      const key = ["event", eventId, accessToken];
+      await queryClient.cancelQueries({ queryKey: key, exact: true });
+      // Change only the title; preserve tag data and unsaved customization fields.
+      queryClient.setQueryData(key, (current) =>
+        current ? { ...current, title: nextTitle } : current,
+      );
+      queryClient.setQueryData(["my-events", user?.id], (current) =>
+        current?.map((item) =>
+          String(item.id) === String(eventId)
+            ? { ...item, title: nextTitle }
+            : item,
+        ),
+      );
+      void queryClient.invalidateQueries({ queryKey: ["my-events", user?.id] });
+      setEditingName(false);
+      requestAnimationFrame(() => nameEditButton.current?.focus());
+    } catch {
+      setNameError("تعذر حفظ الاسم. حاول مرة أخرى.");
+    } finally {
+      nameSaveLock.current = false;
+      setSavingName(false);
+    }
+  }
 
   const [selectedTagId, setSelectedTagId] = useState(null);
   const [hint, setHint] = useState(null);
   const [image, setImage] = useState(null);
+  const [isPreparingImage, setIsPreparingImage] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -45,6 +105,8 @@ export default function CustomizationPage() {
   const [trap, setTrap] = useState(null);
   const [freezeSeconds, setFreezeSeconds] = useState(null);
   const [showLastEditWarning, setShowLastEditWarning] = useState(false);
+  const [confirmation, setConfirmation] = useState(null);
+  const savingRef = useRef(false);
 
   useEffect(() => {
     if (!saveSuccess) return;
@@ -133,7 +195,9 @@ export default function CustomizationPage() {
         Number(displayedFreezeSeconds) !== Number(savedFreezeSeconds));
 
     const isTrapSelected = supportsTraps && displayedTrap !== "none";
-    const hasChanges = trapHasChanges || (!isTrapSelected && (hintHasChanges || imageHasChanges));
+    const hasChanges =
+      trapHasChanges ||
+      (!isTrapSelected && (hintHasChanges || imageHasChanges));
 
     const duration = Number(displayedFreezeSeconds);
 
@@ -148,7 +212,17 @@ export default function CustomizationPage() {
       Boolean(selectedTag) &&
       canCustomize &&
       freezeIsValid &&
+      !isPreparingImage &&
       (hasChanges || !selectedTag.is_configured);
+
+    const canSaveAllTags =
+      eventData.tags.length > 0 &&
+      canCustomize &&
+      freezeIsValid &&
+      !isPreparingImage &&
+      !isSaving &&
+      !isStarting &&
+      !eventQuery.isFetching;
 
     const canStartRound =
       (eventData.status === "draft" || eventData.status === "paused") &&
@@ -157,7 +231,8 @@ export default function CustomizationPage() {
       !hasChanges &&
       !isEditing &&
       !isSaving &&
-      !isStarting;
+      !isStarting &&
+      !isPreparingImage;
 
     const isLive = eventData.status === "live";
 
@@ -183,11 +258,13 @@ export default function CustomizationPage() {
       }
     }
 
-    async function handleSavedTag(lastEditConfirmed = false) {
+    async function handleSavedTag(lastEditConfirmed = false, saveAll = false) {
       if (
         !canCustomize ||
         !selectedTag ||
-        !hasChanges ||
+        !(saveAll ? canSaveAllTags : canSaveTag) ||
+        savingRef.current ||
+        isPreparingImage ||
         isSaving ||
         isStarting
       ) {
@@ -208,44 +285,53 @@ export default function CustomizationPage() {
 
       setShowLastEditWarning(false);
 
+      savingRef.current = true;
       setIsSaving(true);
       setSaveError("");
 
-      const isTrap = supportsTraps && displayedTrap !== "none";
+      try {
+        const isTrap = supportsTraps && displayedTrap !== "none";
+        let tagContent;
 
-      let tagContent;
-
-      if (!isTrap) {
-        tagContent = {
-          hint: displayedHint,
-        };
-        if (displayedImage) {
-          tagContent.image = displayedImage;
+        if (!isTrap) {
+          let imageUrl = displayedImage;
+          if (imageUrl instanceof Blob) {
+            const uploaded = await uploadHintImage(imageUrl, accessToken);
+            if (typeof uploaded.url !== "string" || !uploaded.url) {
+              throw new Error("لم يرجع الخادم رابط الصورة. حاول مرة أخرى.");
+            }
+            imageUrl = uploaded.url;
+            // Retain the uploaded URL if saving fails, so retry does not re-upload.
+            setImage(imageUrl);
+          }
+          tagContent = { hint: displayedHint };
+          if (imageUrl) tagContent.image = imageUrl;
+        } else if (displayedTrap === "boom") {
+          tagContent = { boom: 1 };
+        } else if (displayedTrap === "freeze") {
+          tagContent = { freeze: Number(displayedFreezeSeconds) };
+        } else {
+          tagContent = { choose: true };
         }
-      } else if (displayedTrap === "boom") {
 
-        if (selectedTag.content?.image != null) {
-          tagContent.image = selectedTag.content.image;
-        }
-      } else if (displayedTrap === "boom") {
-        tagContent = { boom: 1 };
-      } else if (displayedTrap === "freeze") {
-        tagContent = {
-          freeze: Number(displayedFreezeSeconds),
-        };
-      } else {
-        tagContent = { choose: true };
-      }
-
-      const tagsConfig = [
-        {
+        const selectedConfig = {
           tag_id: selectedTag.tag_id,
           tag_type: isTrap ? "trap" : "clue",
           content: tagContent,
-        },
-      ];
+        };
+        // Preserve other tags' saved configuration; unconfigured tags become empty clues.
+        const tagsConfig = saveAll
+          ? eventData.tags.map((tag) =>
+              tag.tag_id === selectedTag.tag_id
+                ? selectedConfig
+                : {
+                    tag_id: tag.tag_id,
+                    tag_type: tag.tag_type || "clue",
+                    content: tag.content ? { ...tag.content } : { hint: "" },
+                  },
+            )
+          : [selectedConfig];
 
-      try {
         if (eventData.status === "draft") {
           await SaveTagSetup(eventId, accessToken, tagsConfig);
         } else if (eventData.status === "paused") {
@@ -263,18 +349,56 @@ export default function CustomizationPage() {
         setFreezeSeconds(null);
 
         setSaveSuccess(
-          `انحفظت القطعة ${String(selectedTag.sequence_num).padStart(2, "0")} بنجاح`,
+          saveAll
+            ? `تم حفظ جميع القطع (${eventData.tags.length}) بنجاح.`
+            : `انحفظت القطعة ${String(selectedTag.sequence_num).padStart(2, "0")} بنجاح`,
         );
       } catch (error) {
-        setSaveError(error.message || "تعذر حفظ القطعة.");
+        setSaveError(
+          error.message ||
+            (saveAll ? "تعذر حفظ جميع القطع." : "تعذر حفظ القطعة."),
+        );
       } finally {
+        savingRef.current = false;
         setIsSaving(false);
       }
     }
 
+    async function confirmAction() {
+      const action = confirmation;
+      setConfirmation(null);
+      if (action === "saveAll") {
+        // The bulk confirmation already includes the remaining-edit warning.
+        handleSavedTag(true, true);
+      } else if (action === "stopRound") {
+        handleRoundStatusChange();
+      } else if (
+        action === "edit" &&
+        canStartEditing &&
+        !isEditing &&
+        !isSaving &&
+        !isStarting &&
+        !isPreparingImage
+      ) {
+        if (eventData.mode === "open") {
+          try {
+            setIsSaving(true);
+            await ResetEvent(eventId, accessToken);
+            await eventQuery.refetch();
+          } catch (error) {
+            setSaveError(error.message || "تعذر إعادة تعيين الجولة.");
+            setIsSaving(false);
+            return;
+          } finally {
+            setIsSaving(false);
+          }
+        }
+        setIsEditing(true);
+      }
+    }
 
     function handleSelectTag(tag) {
-      if (isSaving) return;
+      if (isSaving || isStarting || isPreparingImage) return;
       if (tag.tag_id === selectedTag?.tag_id) return;
 
       if (hasChanges) {
@@ -312,9 +436,98 @@ export default function CustomizationPage() {
           </div>
         )}
 
+        <ConfirmDialog
+          open={confirmation !== null}
+          title={
+            confirmation === "saveAll"
+              ? "حفظ جميع القطع"
+              : confirmation === "stopRound"
+                ? "إيقاف الجولة"
+                : "تعديل الباقة"
+          }
+          description={
+            confirmation === "saveAll"
+              ? `هل أنت متأكد من حفظ جميع القطع، بما فيها الفارغة؟ سيتم حفظ تغييرات القطعة الحالية مع إعدادات بقية القطع.${eventData.status === "paused" ? ` سيُستهلك تعديل واحد عند نجاح الحفظ. التعديلات المتاحة: ${eventData.edits_remaining}.${eventData.edits_remaining === 1 ? " هذا آخر تعديل متاح." : ""}` : ""}`
+              : confirmation === "stopRound"
+                ? "هل أنت متأكد أنك تريد إيقاف الجولة؟"
+                : `هل أنت متأكد أنك تريد تعديل الباقة؟ عدد التعديلات المتاحة: ${eventData.edits_remaining} يُحتسب التعديل عند الحفظ`
+          }
+          onConfirm={confirmAction}
+          onCancel={() => setConfirmation(null)}
+        />
+
         <div className="customization-space">
           <header className="customization-heading">
-            <h1>تخصيص {eventData.title}</h1>
+            {editingName ? (
+              <form
+                className="event-name-row"
+                onSubmit={saveName}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") {
+                    event.preventDefault();
+                    cancelNameEdit();
+                  }
+                }}
+              >
+                <input
+                  className="event-name-input"
+                  aria-label="اسم التجربة"
+                  value={draftName}
+                  onChange={(event) => setDraftName(event.target.value)}
+                  maxLength={20}
+                  disabled={savingName}
+                  autoFocus
+                  dir="auto"
+                  aria-invalid={Boolean(nameError)}
+                  aria-describedby={nameError ? "event-name-error" : undefined}
+                />
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="event-name-action"
+                  loading={savingName}
+                  aria-label="حفظ الاسم"
+                  title="حفظ الاسم"
+                >
+                  <Check size={20} aria-hidden="true" />
+                </Button>
+                <Button
+                  variant="outline"
+                  className="event-name-action"
+                  disabled={savingName}
+                  aria-label="إلغاء تعديل الاسم"
+                  title="إلغاء تعديل الاسم"
+                  onClick={cancelNameEdit}
+                >
+                  <X size={20} aria-hidden="true" />
+                </Button>
+              </form>
+            ) : (
+              <div className="event-name-row">
+                <h1>
+                  <bdi>{eventData.title?.trim() || "بدون اسم"}</bdi>
+                </h1>
+                <button
+                  ref={nameEditButton}
+                  type="button"
+                  className="ui-button ui-button--outline event-name-action"
+                  aria-label="تعديل اسم التجربة"
+                  title="تعديل اسم التجربة"
+                  onClick={() => {
+                    setDraftName(eventData.title || "");
+                    setNameError("");
+                    setEditingName(true);
+                  }}
+                >
+                  <Pencil size={20} aria-hidden="true" />
+                </button>
+              </div>
+            )}
+            {nameError && (
+              <p id="event-name-error" role="alert">
+                {nameError}
+              </p>
+            )}
           </header>
 
           <section className="customization-editor">
@@ -336,13 +549,19 @@ export default function CustomizationPage() {
             <HintField
               text={displayedHint}
               onTextChange={setHint}
-              disabled={isSaving || !canCustomize || isStarting}
+              disabled={
+                isSaving || !canCustomize || isStarting || isPreparingImage
+              }
             />
             {/* image uplaadre component*/}
             <ImageUploader
+              key={`${eventId}:${selectedTag.tag_id}`}
+              onBusyChange={setIsPreparingImage}
               value={displayedImage}
               onChange={setImage}
-              disabled={isSaving || !canCustomize || isStarting}
+              disabled={
+                isSaving || !canCustomize || isStarting || isPreparingImage
+              }
             />
 
             {supportsTraps && (
@@ -351,7 +570,9 @@ export default function CustomizationPage() {
                 onValueChange={setTrap}
                 freezeSeconds={displayedFreezeSeconds}
                 onFreezeSecondsChange={setFreezeSeconds}
-                disabled={isSaving || isStarting || !canCustomize}
+                disabled={
+                  isSaving || isStarting || !canCustomize || isPreparingImage
+                }
               />
             )}
 
@@ -364,9 +585,40 @@ export default function CustomizationPage() {
                 احفظ القطعة
               </Button>
 
-              <Button variant="outline" disabled>
-                معاينة
+              <Button
+                variant="outline"
+                disabled={!canSaveAllTags || showLastEditWarning}
+                onClick={() => setConfirmation("saveAll")}
+              >
+                حفظ جميع القطع
               </Button>
+
+              {isEditing && (
+                <Button
+                  variant="outline"
+                  disabled={isSaving || isStarting || isPreparingImage}
+                  onClick={() => {
+                    if (
+                      savingRef.current ||
+                      isSaving ||
+                      isStarting ||
+                      isPreparingImage
+                    )
+                      return;
+                    setHint(null);
+                    setImage(null);
+                    setTrap(null);
+                    setFreezeSeconds(null);
+                    setShowLastEditWarning(false);
+                    setConfirmation(null);
+                    setSaveError("");
+                    setSaveSuccess("");
+                    setIsEditing(false);
+                  }}
+                >
+                  إلغاء التعديل
+                </Button>
+              )}
             </div>
 
             {showLastEditWarning && (
@@ -425,7 +677,7 @@ export default function CustomizationPage() {
                     (hasChanges || !tag.is_configured)
                   }
                   trapType={getTrapType(tag)}
-                  disabled={isSaving || isStarting}
+                  disabled={isSaving || isStarting || isPreparingImage}
                   onClick={() => handleSelectTag(tag)}
                 />
               ))}
@@ -438,7 +690,14 @@ export default function CustomizationPage() {
 
               <div className="Round-settings__actions">
                 <Button
-                  onClick={handleRoundStatusChange}
+                  onClick={() => {
+                    if (!canChangeRoundStatus) return;
+                    if (isLive) {
+                      setConfirmation("stopRound");
+                    } else {
+                      handleRoundStatusChange();
+                    }
+                  }}
                   loading={isStarting}
                   disabled={!canChangeRoundStatus}
                   variant={isLive ? "danger" : "primary"}
@@ -457,7 +716,7 @@ export default function CustomizationPage() {
                       return;
                     }
 
-                    setIsEditing(true);
+                    setConfirmation("edit");
                   }}
                   disabled={
                     !canStartEditing || isEditing || isSaving || isStarting
@@ -469,7 +728,7 @@ export default function CustomizationPage() {
 
               {!isLive && !allTagsReady && (
                 <p className="customization-note">
-                  احفظ جميع القطع لتتمكن من بدء الجولة، حتى القطع الفارغة.
+                  احفظ جميع القطع لتتمكن من بدء الجولة، حتى القطع الفارغة
                 </p>
               )}
 

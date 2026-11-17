@@ -83,3 +83,11 @@ class EventDetailResponse(EventBase):
     edits_remaining: int
     max_edits: int
 
+class MyEventResponse(BaseModel):
+    id: uuid.UUID
+    pack_id: uuid.UUID
+    mode: str
+    tags_count: int
+    title: str
+    status: str
+    edit_count: int

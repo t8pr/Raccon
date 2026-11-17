@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, BackgroundTasks, Request
 from services.event_service import EventService
+from core.leaderboard_broadcast import broadcast_latest_leaderboard
 from models.user import User
 from api.auth.dependencies import get_current_user
-from api.events.schemas import EventBase, EventDetailResponse, EventTagConfigView, EventUpdateRequest, EventCreateRequest, EventResponse, EventSetupRequest
+from api.events.schemas import EventBase, EventDetailResponse, EventTagConfigView, EventUpdateRequest, EventCreateRequest, EventResponse, EventSetupRequest, MyEventResponse
 import uuid
 from typing import List
 from services.storage_service import StorageService
@@ -49,12 +50,21 @@ def update_event(
 @router.post("/{event_id}/reset")
 def reset_event(
     event_id: uuid.UUID,
+    request: Request,
+    background_tasks: BackgroundTasks,
     service: EventService = Depends(),
     current_user: User = Depends(get_current_user)
 ):
-    return service.reset_event(current_user, event_id)
+    result = service.reset_event(current_user, event_id)
+    
+    background_tasks.add_task(
+        broadcast_latest_leaderboard,
+        request.app.state.redis,
+        event_id,
+    )
 
-@router.get("", response_model=List[EventBase])
+    return result
+@router.get("", response_model=List[MyEventResponse])
 def list_my_events(
     service: EventService = Depends(),
     current_user: User = Depends(get_current_user)

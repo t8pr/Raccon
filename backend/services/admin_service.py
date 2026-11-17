@@ -132,3 +132,32 @@ class AdminService:
         self.session.commit()
             
         return {"message": "Pack deleted successfully"}
+
+    def get_pack_by_master_auth(self, admin_user: User, master_auth_hash: str) -> dict:
+        pack = self.packs.get_by_master_auth(master_auth_hash)
+        
+        if not pack:
+            raise HTTPException(status_code=404, detail="Pack not found with this master auth hash.")
+        
+        response_data = {
+            "pack_id": pack.id,
+            "mode": pack.mode,
+            "tags_count": pack.tags_count,
+            "master_auth_hash": pack.master_auth_hash,
+            "is_claimed": pack.owner_id is not None,
+            "owner_id": pack.owner_id,
+            "owner_name": None,
+            "owner_username": None,
+            "owner_email": None,
+            "owner_phone": None
+        }
+        
+        if pack.owner_id:
+            owner = self.users.get_by_id(pack.owner_id)
+            if owner:
+                response_data["owner_name"] = owner.name
+                response_data["owner_username"] = owner.username
+                response_data["owner_email"] = owner.email
+                response_data["owner_phone"] = owner.phone_number
+                
+        return response_data

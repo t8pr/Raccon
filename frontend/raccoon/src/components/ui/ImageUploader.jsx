@@ -1,44 +1,71 @@
-import { useState, useRef } from "react";
-import imageCompression from "browser-image-compression";
-import { uploadHintImage } from "../../api/events/eventsApi";
-import { useAuth } from "../../context/AuthContext";
+import { useState, useRef, useEffect } from "react";
+import { prepareHintImage } from "../../utils/prepareHintImage";
 import { ImagePlus, Trash2, Loader2 } from "lucide-react";
 import Button from "./Button";
 
-export default function ImageUploader({ value, onChange, disabled }) {
-  const { accessToken } = useAuth();
-  const [isUploading, setIsUploading] = useState(false);
+// value is a saved URL, a prepared local File, or an empty string.
+// This component never uploads. The page uploads only when Save is pressed.
+export default function ImageUploader({
+  value,
+  onChange,
+  disabled,
+  onBusyChange,
+}) {
+  const [isPreparing, setIsPreparing] = useState(false);
+  const [preview, setPreview] = useState("");
   const [error, setError] = useState("");
   const fileInputRef = useRef(null);
+  const controllerRef = useRef(null);
+
+  useEffect(() => {
+    if (!(value instanceof Blob)) {
+      setPreview(typeof value === "string" ? value : "");
+      return;
+    }
+    const url = URL.createObjectURL(value);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [value]);
+
+  useEffect(
+    () => () => {
+      controllerRef.current?.abort();
+      onBusyChange?.(false);
+    },
+    [onBusyChange],
+  );
 
   async function handleFileChange(event) {
-    const file = event.target.files[0];
-    if (!file) return;
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || disabled || controllerRef.current) return;
 
-    setIsUploading(true);
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    setIsPreparing(true);
+    onBusyChange?.(true);
     setError("");
-
-    const options = {
-      maxSizeMB: 0.2, // 200 KB
-      maxWidthOrHeight: 1200, 
-      useWebWorker: true,
-      fileType: "image/webp",
-    };
-
     try {
-      const compressedFile = await imageCompression(file, options);
-      const data = await uploadHintImage(compressedFile, accessToken);
-      
-      onChange(data.url);
+      const prepared = await prepareHintImage(file, {
+        signal: controller.signal,
+      });
+      if (!controller.signal.aborted) onChange(prepared);
     } catch (err) {
-      setError(err.message || "فشل رفع الصورة. تأكد من حجمها وحاول مجدداً.");
+      if (!controller.signal.aborted) {
+        setError(err.message || "تعذر تجهيز الصورة. حاول بصورة أخرى.");
+      }
     } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (!controller.signal.aborted) {
+        controllerRef.current = null;
+        setIsPreparing(false);
+        onBusyChange?.(false);
+      }
     }
   }
 
   function handleRemove() {
+    if (disabled || controllerRef.current) return;
+    setError("");
     onChange("");
   }
 
@@ -47,57 +74,97 @@ export default function ImageUploader({ value, onChange, disabled }) {
       <div className="hint-field__header">
         <label className="hint-field__label">صورة التلميح (اختياري)</label>
       </div>
-      
-      <div 
-        className="ImageUploader" 
-        style={{ 
-          position: "relative", 
-          overflow: "hidden", 
-          display: "flex", 
-          flexDirection: "column", 
-          gap: "12px", 
+
+      <div
+        className="ImageUploader"
+        style={{
+          position: "relative",
+          overflow: "hidden",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
           minHeight: value ? "auto" : "100px",
-          border: error ? "1px dashed var(--danger)" : undefined
+          border: error ? "1px dashed var(--danger)" : undefined,
         }}
       >
-        {isUploading ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
+        {isPreparing ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
             <Loader2 size={24} className="ui-button__spinner" />
-            <span>جاري ضغط ورفع الصورة...</span>
+            <span>جاري فحص وتجهيز الصورة...</span>
           </div>
         ) : value ? (
-          <div style={{ position: "relative", width: "100%", textAlign: "center" }}>
-            <img 
-              src={value} 
-              alt="تلميح" 
-              style={{ maxWidth: "100%", maxHeight: "250px", borderRadius: "8px", objectFit: "contain" }} 
+          <div
+            style={{ position: "relative", width: "100%", textAlign: "center" }}
+          >
+            <img
+              src={preview || undefined}
+              alt="تلميح"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "250px",
+                borderRadius: "8px",
+                objectFit: "contain",
+              }}
             />
             <div style={{ marginTop: "12px" }}>
-              <Button variant="outline" onClick={handleRemove} disabled={disabled}>
+              <Button
+                variant="outline"
+                onClick={handleRemove}
+                disabled={disabled}
+              >
                 <Trash2 size={16} aria-hidden="true" /> إزالة الصورة
+              </Button>
+              <Button
+                variant="outline"
+                disabled={disabled || isPreparing}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                استبدال الصورة
               </Button>
             </div>
           </div>
         ) : (
-          <div 
-            style={{ textAlign: "center", cursor: disabled ? "not-allowed" : "pointer" }} 
-            onClick={() => !disabled && fileInputRef.current?.click()}
-          >
-            <ImagePlus size={32} style={{ opacity: 0.5, marginBottom: "8px" }} />
-            <p style={{ margin: 0 }}>اضغط هنا لاختيار صورة</p>
-            <p style={{ fontSize: "12px", opacity: 0.7, margin: "4px 0 0" }}>يتم ضغط الصورة وتحويلها لـ WebP تلقائياً</p>
+          <div className="hint-image-picker">
+            <button
+              type="button"
+              className="hint-image-picker__button"
+              aria-label="اختيار صورة التلميح"
+              aria-describedby="hint-image-size-limit"
+              disabled={disabled || isPreparing}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <ImagePlus size={32} aria-hidden="true" />
+            </button>
+            <p id="hint-image-size-limit" className="hint-image-picker__limit">
+              الحد الأقصى لحجم الصورة: <bdi>2 MB</bdi>
+            </p>
           </div>
         )}
         <input
           type="file"
           accept="image/jpeg, image/png, image/webp"
           onChange={handleFileChange}
-          disabled={disabled || isUploading}
+          disabled={disabled || isPreparing}
           style={{ display: "none" }}
           ref={fileInputRef}
         />
       </div>
-      {error && <p className="hint-field__note" style={{ color: "var(--danger)", marginTop: "4px" }}>{error}</p>}
+      {error && (
+        <p
+          role="alert"
+          className="hint-field__note"
+          style={{ color: "var(--danger)", marginTop: "4px" }}
+        >
+          {error}
+        </p>
+      )}
     </div>
   );
 }
