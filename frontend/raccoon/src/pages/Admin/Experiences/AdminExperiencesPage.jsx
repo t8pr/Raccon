@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { ChevronDown, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import AppNavbar from "../../../components/layout/AppNavbar";
 import ExperiencePackCard from "../../../components/ui/ExperiencePackCard";
 import FilterBar from "../../../components/ui/FilterBar";
-import SortButton from "../../../components/ui/SortButton";
 import Pagination from "../../../components/ui/Pagination";
 import InlineMessage from "../../../components/ui/InlineMessage";
 import { useAuth } from "../../../context/AuthContext";
@@ -20,7 +19,7 @@ How the data flows:
 1. useQuery calls getPacks(token, { page, size }) → the backend sends ONE page of packs.
 2. toCard() turns each backend pack into what the card needs
    (mode "seq" → "sequential", tags_count → pieces, price from the fixed price list).
-3. The mode / status filters and the sort work on the page we already have
+3. The mode filter works on the page we already have
    (the backend can't filter yet — see the note at the bottom of this file).
 */
 
@@ -30,19 +29,7 @@ const modeFilters = [
   { value: "open", label: "صيد مفتوح" },
 ];
 
-const statusOptions = [
-  { value: "all", label: "الكل" },
-  { value: "available", label: "متاحة" },
-  { value: "sold", label: "مُباعة" },
-];
-
-const sorts = [
-  { value: "default", label: "الافتراضي" },
-  { value: "pieces-desc", label: "عدد القطع: الأكثر أولًا" },
-  { value: "pieces-asc", label: "عدد القطع: الأقل أولًا" },
-];
-
-// 9 per page on laptop, 4 on phone (≤ 767px)
+// 8 per page on laptop (2 rows of 4, like Figma), 4 on phone (≤ 767px)
 function usePerPage() {
   const query = "(max-width: 767px)";
   const [isPhone, setIsPhone] = useState(() => window.matchMedia(query).matches);
@@ -52,7 +39,7 @@ function usePerPage() {
     mq.addEventListener("change", onChange);
     return () => mq.removeEventListener("change", onChange);
   }, []);
-  return isPhone ? 4 : 9;
+  return isPhone ? 4 : 8;
 }
 
 // backend pack → card props
@@ -73,8 +60,6 @@ export default function AdminExperiencesPage() {
   const { accessToken } = useAuth();
 
   const [mode, setMode] = useState("all");
-  const [status, setStatus] = useState("all");
-  const [sort, setSort] = useState("default");
   const [page, setPage] = useState(1);
   const [notice] = useState(location.state?.notice ?? "");
 
@@ -97,17 +82,15 @@ export default function AdminExperiencesPage() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, data?.pages ?? 1);
 
-  const visible = useMemo(() => {
-    const cards = (data?.items ?? []).map(toCard);
-    const list = cards.filter(
-      (c) => (mode === "all" || c.mode === mode) && (status === "all" || c.status === status),
-    );
-    if (sort === "pieces-desc") return [...list].sort((a, b) => b.pieces - a.pieces);
-    if (sort === "pieces-asc") return [...list].sort((a, b) => a.pieces - b.pieces);
-    return list;
-  }, [data, mode, status, sort]);
+  const visible = useMemo(
+    () =>
+      (data?.items ?? [])
+        .map(toCard)
+        .filter((c) => mode === "all" || c.mode === mode),
+    [data, mode],
+  );
 
-  const filtersOn = mode !== "all" || status !== "all";
+  const filtersOn = mode !== "all";
   const from = (page - 1) * perPage;
 
   function goTo(p) {
@@ -117,7 +100,6 @@ export default function AdminExperiencesPage() {
 
   function clearFilters() {
     setMode("all");
-    setStatus("all");
   }
 
   return (
@@ -125,42 +107,17 @@ export default function AdminExperiencesPage() {
       <AppNavbar />
 
       <main className="admin-exp" aria-labelledby="admin-exp-title">
-        <header className="admin-exp__header">
-          <div className="admin-exp__heading">
-            <p className="admin-exp__crumbs">
-              <Link to="/home">الرئيسية</Link> › إدارة التجارب
-            </p>
-            <h1 id="admin-exp-title">إدارة التجارب</h1>
-            <p className="admin-exp__intro">
-              كل التجارب اللي انتجت{data ? ` — ${total} تجربة` : ""}
-            </p>
-          </div>
-
-          <Link to="/admin/experiences/new" className="ui-button ui-button--primary admin-exp__new">
-            <Plus size={18} aria-hidden="true" />
-            <span>إنشاء تجربة جديدة</span>
-          </Link>
-        </header>
+        <h1 id="admin-exp-title">إدارة التجارب</h1>
 
         {notice && <InlineMessage type="success" message={notice} />}
 
         <div className="admin-exp__tools">
           <FilterBar filters={modeFilters} value={mode} onChange={setMode} label="نوع التجربة" />
 
-          <div className="admin-exp__controls">
-            <label className="sort-button admin-exp__status">
-              <select aria-label="حالة التجربة" value={status} onChange={(e) => setStatus(e.target.value)}>
-                {statusOptions.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    الحالة: {o.label}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown size={16} aria-hidden="true" />
-            </label>
-
-            <SortButton options={sorts} value={sort} onChange={setSort} />
-          </div>
+          <Link to="/admin/experiences/new" className="ui-button ui-button--outline admin-exp__new">
+            <span>إنشاء تجربة جديدة</span>
+            <Plus size={18} aria-hidden="true" />
+          </Link>
         </div>
 
         {/* ---------- loading / error / empty / list ---------- */}

@@ -31,3 +31,66 @@
     width: 100%;
   }
 }
+
+/* ---------- Figma "User · Store · 1441": same width as the navbar, 4 cards per row ---------- */
+.store-page {
+  width: calc(100% - 96px);
+  max-width: 1344px;
+  padding-block: 24px 48px;
+}
+.store-page h1 {
+  margin: 0 0 16px;
+  font-size: 32px;
+  line-height: 1.3;
+}
+.store-page .store-page__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+  margin-top: 16px;
+}
+@media (max-width: 1199px) {
+  .store-page .store-page__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+@media (max-width: 900px) {
+  .store-page .store-page__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .store-page {
+    width: calc(100% - 32px);
+  }
+  .store-page .store-page__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+}
+
+/* Figma filter + sort buttons: radius 8, ink outline, selected = green */
+.store-page .filter-bar__button,
+.admin-exp .filter-bar__button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+}
+.store-page .filter-bar__button[aria-pressed="true"],
+.admin-exp .filter-bar__button[aria-pressed="true"] {
+  min-height: 40px;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--surface);
+}
+.store-page .sort-button select {
+  width: auto;
+  min-height: 44px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}

@@ -304,3 +304,62 @@ button.pack-card__action:hover {
     transition: none;
   }
 }
+
+/* ---------- Figma "User · Store" / "Admin · experiences list" (4 per row) ---------- */
+.pack-card--store {
+  gap: 14px;
+  padding: 18px;
+  border-radius: 16px;
+}
+/* open = light mint card, green number (Figma) */
+.pack-card--open.pack-card--store {
+  --card-bg: color-mix(in srgb, var(--mint) 30%, var(--surface));
+  --card-strong: var(--primary);
+  --card-soft-text: var(--primary);
+  --card-dot: var(--primary);
+}
+.pack-card--store .pack-card__coil {
+  top: -96px;
+  right: -96px;
+  width: 220px;
+  height: 220px;
+}
+.pack-card--store .pack-card__mode {
+  justify-self: left; /* left of the card, like Figma (coil sits on the right) */
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+.pack-card--store .pack-card__mode i {
+  width: 6px;
+  height: 6px;
+}
+.pack-card--store .pack-card__overline {
+  font-size: 13px;
+  font-weight: 500;
+}
+.pack-card--store .pack-card__overline::before,
+.pack-card--store .pack-card__overline::after {
+  width: 22px;
+}
+.pack-card--store .pack-card__number {
+  font-size: 84px;
+  line-height: 1.05;
+}
+.pack-card--store .pack-card__buy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  text-decoration: none;
+}
+.pack-card--admin-v2 .pack-card__buy:disabled {
+  cursor: not-allowed;
+}
+@media (max-width: 767px) {
+  .pack-card--store .pack-card__number {
+    font-size: 72px;
+  }
+}

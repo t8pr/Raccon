@@ -55,8 +55,46 @@ export default function ExperiencePackCard({
   onBuy, // store: makes "شراء" a real button
 }) {
   const isStore = variant === "store";
+  const isAdmin = variant === "admin";
   const tone = mode === "open" ? "open" : "seq";
   const modeLabel = MODE_LABEL[mode] ?? MODE_LABEL.sequential;
+
+  // Admin list (Figma: Admin · experiences list): same card as the store, «تعديل» bar
+  if (isAdmin)
+    return (
+      <article
+        className={`pack-card pack-card--${tone} pack-card--store pack-card--admin-v2`}
+        aria-label={`${modeLabel} · ${pieces} قطعة`}
+      >
+        {title && <h2 className="pack-card__sr">{title}</h2>}
+        <NfcCoil bare line="var(--surface)" className="pack-card__coil" />
+        <span className="pack-card__mode">
+          <i aria-hidden="true" />
+          {modeLabel}
+        </span>
+        <div className="pack-card__pieces">
+          <p className="pack-card__overline">عدد القطع</p>
+          <p className="pack-card__number">{pieces}</p>
+        </div>
+        {/* the backend has no "edit pack" yet → the bar shows, but stays disabled */}
+        {editTo ? (
+          <Link to={editTo} className="pack-card__buy">
+            تعديل
+            <span className="pack-card__sr"> تجربة {pieces} قطعة</span>
+          </Link>
+        ) : (
+          <button
+            type="button"
+            className="pack-card__buy"
+            disabled
+            title="التعديل قريبًا"
+          >
+            تعديل
+            <span className="pack-card__sr"> (قريبًا)</span>
+          </button>
+        )}
+      </article>
+    );
 
   if (isStore)
     return (
