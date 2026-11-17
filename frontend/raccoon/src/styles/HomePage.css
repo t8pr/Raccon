@@ -84,54 +84,59 @@
 }
 
 .rc-home__art {
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 1;
+  align-self: center;
+  justify-self: center;
+  min-width: 0;
+  transform: translateX(24px);
+}
+
+.rc-home__animation {
   position: relative;
-  width: 380px;
-  height: 420px;
+  width: 100%;
+  height: 100%;
+  aspect-ratio: 1;
 }
 
-.rc-home__tag {
+.rc-home__animation-player,
+.rc-home__animation-poster {
   position: absolute;
-  top: 70px;
-  left: 20px;
-  width: 300px;
-  height: 300px;
-  border: 10px solid var(--surface);
-  border-radius: 50%;
-  background: var(--mint);
-  overflow: hidden;
+  inset: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.rc-home__tag .nfc-coil {
+.rc-home__animation-poster {
+  object-fit: contain;
+}
+
+.rc-home__animation-player svg {
   display: block;
   width: 100%;
   height: 100%;
 }
 
-.rc-home__dehem {
+.rc-home__animation-toggle {
   position: absolute;
-  top: 230px;
-  left: 228px;
-  width: 154px;
-  height: 154px;
-  border: 3px solid var(--ink);
+  inset-inline-end: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--accent-soft);
   border-radius: 50%;
   background: var(--surface);
-  object-fit: contain;
+  color: var(--accent);
+  cursor: pointer;
 }
 
-.rc-home__chip {
-  position: absolute;
-  top: 40px;
-  left: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: var(--radius-pill);
-  background: var(--accent-soft);
-  color: var(--accent);
-  font-size: 14px;
-  font-weight: 700;
+.rc-home__animation-toggle:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
 }
 
 /* ---------- side cards ---------- */
@@ -338,27 +343,8 @@
 
   .rc-home__art {
     order: 1;
-    width: 274px;
-    height: 302px;
-  }
-
-  .rc-home__tag {
-    top: 50px;
-    left: 14px;
-    width: 216px;
-    height: 216px;
-    border-width: 8px;
-  }
-
-  .rc-home__dehem {
-    top: 166px;
-    left: 164px;
-    width: 110px;
-    height: 110px;
-  }
-
-  .rc-home__chip {
-    top: 24px;
+    width: 100%;
+    max-width: 320px;
   }
 
   .rc-home__cta {
@@ -404,6 +390,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .rc-home__animation-toggle {
+    display: none;
+  }
+
   .rc-home__cta,
   .rc-home__card {
     transition: none;
