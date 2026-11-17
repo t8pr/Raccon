@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import googleLogo from "../../assets/googleLogo.png";
 import AuthField from "../ui/AuthField";
 import Button from "../ui/Button";
 import InlineMessage from "../ui/InlineMessage";
+import GoogleAuthButton from "./GoogleAuthButton";
+import AuthDivider from "./AuthDivider";
 import { registerSchema, validateForm } from "../../utils/validation";
 
 const initialValues = {
@@ -12,7 +12,6 @@ const initialValues = {
   email: "",
   phone_number: "",
   password: "",
-  confirmPassword: "",
 };
 
 export default function RegisterForm({
@@ -22,6 +21,8 @@ export default function RegisterForm({
   fieldErrors = {}, // any field error from server
   successMessage = "",
   onEdit,
+  onGoogle, // (credential) => void
+  onGoogleError,
 }) {
   const [values, setValues] = useState(initialValues);
   const [touched, setTouched] = useState({});
@@ -49,12 +50,6 @@ export default function RegisterForm({
       [name]: value,
     }));
 
-    if (name === "confirmPassword") {
-      setTouched((previous) => ({
-        ...previous,
-        confirmPassword: true,
-      }));
-    }
   }
 
   // Validate after leaving field
@@ -89,10 +84,21 @@ export default function RegisterForm({
       {/* Header */}
       <div className="register-form__header">
         <h1 className="register-form__title">أنشئ حسابك</h1>
+        <p className="register-form__subtitle">أنشئ حسابك عشان تتابع تجاربك.</p>
       </div>
 
-      {/* Fields */}
+      {/* Google first */}
+      <GoogleAuthButton
+        mode="signup"
+        onCredential={onGoogle}
+        onError={onGoogleError}
+        disabled={isSubmitting}
+      />
+      <AuthDivider />
+
+      {/* Fields: name, then username (stacked) — email + phone side by side */}
       <div className="register-form__fields">
+        <div className="register-form__field-full">
         <AuthField
           label="الاسم"
           name="name"
@@ -103,19 +109,22 @@ export default function RegisterForm({
           error={getFieldError("name")}
           autoComplete="name"
         />
+        </div>
 
+        <div className="register-form__field-full">
         <AuthField
           label="اسم المستخدم"
           name="username"
           value={values.username}
           onChange={handleChange}
           onBlur={handleBlur}
-          placeholder="زي: reem_s"
+          placeholder="raccon"
           error={getFieldError("username")}
           autoComplete="username"
         />
+        </div>
 
-        <div className="register-form__field-full">
+        <div className="register-form__field-half">
           <AuthField
             label="الإيميل"
             name="email"
@@ -123,13 +132,13 @@ export default function RegisterForm({
             value={values.email}
             onChange={handleChange}
             onBlur={handleBlur}
-            placeholder="name@example.com"
+            placeholder="name@raccon.com"
             error={getFieldError("email")}
             autoComplete="email"
           />
         </div>
 
-        <div className="register-form__field-full">
+        <div className="register-form__field-half">
           <AuthField
             label="رقم الجوال"
             name="phone_number"
@@ -138,7 +147,6 @@ export default function RegisterForm({
             onChange={handleChange}
             onBlur={handleBlur}
             placeholder="5X XXX XXXX"
-            helper="رقم الجوال يبدأ بـ 5"
             error={getFieldError("phone_number")}
             maxLength={9}
             autoComplete="tel-national"
@@ -146,6 +154,7 @@ export default function RegisterForm({
         </div>
 
         {/*Password*/}
+        <div className="register-form__field-full">
         <AuthField
           label="كلمة المرور"
           name="password"
@@ -153,23 +162,11 @@ export default function RegisterForm({
           value={values.password}
           onChange={handleChange}
           onBlur={handleBlur}
-          placeholder="8 أحرف أو أكثر"
-          helper="8 أحرف أو أكثر"
+          placeholder="8 حروف أو أكثر"
           error={getFieldError("password")}
           autoComplete="new-password"
         />
-        {/*confirmPassword*/}
-        <AuthField
-          label="تأكيد كلمة المرور"
-          name="confirmPassword"
-          type="password"
-          value={values.confirmPassword}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          placeholder="أعد كتابة كلمة المرور"
-          error={getFieldError("confirmPassword")}
-          autoComplete="new-password"
-        />
+        </div>
       </div>
 
       {/* Backend Messages */}
@@ -194,24 +191,6 @@ export default function RegisterForm({
         </Button>
       </div>
 
-      {/* Google Button */}
-
-      <div className="register-form__google">
-        <Button type="button" variant="secondary" fullWidth disabled>
-          <img src={googleLogo} alt="" className="register-form__google-logo" />
-
-          <span>
-            المتابعة باستخدام <bdi>Google</bdi>
-          </span>
-        </Button>
-      </div>
-
-      {/* Footer */}
-      <div className="register-form__footer">
-        <p className="register-form__signin">
-          عندك حساب؟ <Link to="/login">تسجيل الدخول</Link>
-        </p>
-      </div>
     </form>
   );
 }

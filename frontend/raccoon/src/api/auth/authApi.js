@@ -111,3 +111,18 @@ export function resetPassword({ token, newPassword }) {
     "تعذر تغيير كلمة المرور.",
   );
 }
+// Google sign-in: send the Google ID token (credential) to the backend.
+// Works for both login and register — the backend creates the account on first sign-in.
+export function googleLogin(credential) {
+  return apiRequest(
+    "/auth/google",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ credential }),
+    },
+    "تعذر الدخول باستخدام Google.",
+  );
+}

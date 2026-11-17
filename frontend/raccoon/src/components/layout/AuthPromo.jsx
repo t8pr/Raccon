@@ -1,4 +1,4 @@
-// The left side of the form witch have the animation of the nfc sacn and the context
+// The promo side of the auth pages: scan animation + headline
 export default function AuthPromo({
   scene,
   mobileTitle,
@@ -7,7 +7,7 @@ export default function AuthPromo({
 }) {
   return (
     <div className={`auth-promo auth-promo--${variant}`}>
-      {/* NFC Animation */}
+      {/* Scan animation */}
       <div className="auth-promo__scene">{scene}</div>
 
       {/* Content */}
@@ -24,16 +24,13 @@ export default function AuthPromo({
         <h2 className="auth-promo__title">
           كل قطعة
           <br />
-          تحكي حكاية
+          تخبّي حكاية.
         </h2>
 
         <p className="auth-promo__description">
-          جهّز رحلة البحث، شاركها مع ضيوفك، وتابع مين الأول على طول
+          جهّز رحلة البحث، شاركها مع ضيوفك، وتابع مين الأول على طول.
         </p>
       </div>
-
-      {/* Brand Pattern */}
-      <div className="auth-promo__pattern" aria-hidden="true" />
     </div>
   );
 }

@@ -51,16 +51,10 @@ const avatarSchema = z.custom(
 
 // التسجيل
 // تحقق كلمات المرور مستقل عن حقول معلومات الحساب.
-const registerPasswordsSchema = z
-  .object({
-    password: newPasswordSchema,
-
-    confirmPassword: z.string().min(1, "أكد كلمة المرور."),
-  })
-  .refine((values) => values.password === values.confirmPassword, {
-    message: "كلمتا المرور غير متطابقتين.",
-    path: ["confirmPassword"],
-  });
+// Figma v3: one password field (the eye button lets users check what they typed)
+const registerPasswordsSchema = z.object({
+  password: newPasswordSchema,
+});
 
 export const registerSchema = z
   .intersection(

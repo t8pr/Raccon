@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import AuthField from "../ui/AuthField";
 import Button from "../ui/Button";
 import InlineMessage from "../ui/InlineMessage";
+import GoogleAuthButton from "./GoogleAuthButton";
+import AuthDivider from "./AuthDivider";
 import { loginSchema, validateForm } from "../../utils/validation";
 
 export default function LoginForm({
@@ -11,6 +13,8 @@ export default function LoginForm({
   serverError = "",
   notice = "", // success message, e.g. after resetting the password
   onEdit,
+  onGoogle, // (credential) => void
+  onGoogleError,
 }) {
   const [values, setValues] = useState({ identifier: "", password: "" });
   const [touched, setTouched] = useState({});
@@ -71,6 +75,15 @@ export default function LoginForm({
         <p className="login-form__subtitle">ادخل حسابك عشان تتابع باقاتك.</p>
       </div>
 
+      {/* Google first */}
+      <GoogleAuthButton
+        mode="signin"
+        onCredential={onGoogle}
+        onError={onGoogleError}
+        disabled={isSubmitting}
+      />
+      <AuthDivider />
+
       <div className="login-form__error" aria-live="polite">
         {serverError ? (
           <InlineMessage type="error" message={serverError} />
@@ -123,13 +136,6 @@ export default function LoginForm({
         >
           ادخل
         </Button>
-      </div>
-
-      {/* Register Link */}
-      <div className="login-form__footer">
-        <p>
-          أول مرة معنا؟ <Link to="/register">أنشئ حساب جديد</Link>
-        </p>
       </div>
     </form>
   );
