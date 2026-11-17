@@ -1,0 +1,81 @@
+.register-welcome__card {
+  width: 100%;
+  max-width: 520px;
+  padding: 48px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.register-welcome__avatar {
+  display: block;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 20px;
+  object-fit: contain;
+}
+
+.register-welcome__card h1 {
+  margin-bottom: 12px;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 44px);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.register-welcome__subtitle {
+  margin-bottom: 20px;
+  color: var(--ink-muted);
+  font-size: 16px;
+}
+
+.register-welcome__hint {
+  margin: 16px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.register-welcome__toast {
+  position: fixed;
+  inset-inline-start: 32px;
+  bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 40px);
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--night);
+  color: var(--on-panel);
+  box-shadow: 0 12px 28px rgb(13 10 33 / 15%);
+}
+
+.register-welcome__toast svg {
+  flex-shrink: 0;
+  color: var(--mint);
+}
+
+@media (max-width: 600px) {
+  .register-welcome__card {
+      padding: 32px 24px;
+  }
+
+  .register-welcome__toast {
+      inset-inline: 20px;
+      bottom: 20px;
+      justify-content: center;
+  }
+}
+
+.register-welcome {
+  min-height: 100dvh;
+  background: var(--canvas);
+}
+
+.register-welcome__body {
+  display: flex;
+  justify-content: center;
+  padding: clamp(48px, 14.5vh, 148px) 20px 100px;
+}

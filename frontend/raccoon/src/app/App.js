@@ -8,33 +8,33 @@ import {
 } from "react-router-dom";
 
 // Auth (Register / login)
-import RegisterPage from "../pages/auth/RegisterPage";
-import LoginPage from "../pages/auth/LoginPage";
-import ForgotPasswordPage from "../pages/auth/ForgotPasswordPage";
-import ResetPasswordPage from "../pages/auth/ResetPasswordPage";
-import { AuthProvider } from "../context/AuthContext";
-import ScanPage from "../pages/journey/ScanPage";
+import RegisterPage from "../features/auth/RegisterPage";
+import LoginPage from "../features/auth/LoginPage";
+import ForgotPasswordPage from "../features/auth/ForgotPasswordPage";
+import ResetPasswordPage from "../features/auth/ResetPasswordPage";
+import { AuthProvider } from "../shared/auth/AuthContext";
+import ScanPage from "../features/journey/ScanPage";
 // Home
-import HomePage from "../pages/Home/HomePage";
-import ProtectedRoute from "../pages/auth/ProtectedRoute";
+import HomePage from "../features/home/HomePage";
+import ProtectedRoute from "../shared/auth/ProtectedRoute";
 
 // Store Page
-import StorePage from "../pages/Store/StorePage";
-import PackagesPage from "../pages/Packages/PackagesPage";
+import StorePage from "../features/store/StorePage";
+import PackagesPage from "../features/packages/PackagesPage";
 
 // Admin
-import AdminRoute from "../pages/Admin/AdminRoute";
-import AdminExperiencesPage from "../pages/Admin/Experiences/AdminExperiencesPage";
-import CreateExperiencePage from "../pages/Admin/Experiences/CreateExperiencePage";
+import AdminRoute from "../shared/auth/AdminRoute";
+import AdminExperiencesPage from "../features/admin/AdminExperiencesPage";
+import CreateExperiencePage from "../features/admin/CreateExperiencePage";
 
 // Profile Page
-import ProfilePage from "../pages/Profile/ProfilePage";
+import ProfilePage from "../features/profile/ProfilePage";
 
 // Customization Page
-import CustomizationPage from "../pages/Customization/CustomizationPage";
+import CustomizationPage from "../features/customization/CustomizationPage";
 
 // ClaimPackage
-import ClaimPage from "../pages/Claim/ClaimPage";
+import ClaimPage from "../features/claim/ClaimPage";
 
 function AppContent() {
   const location = useLocation(); // work only insdie BrowserRouter and App create useLocation(}

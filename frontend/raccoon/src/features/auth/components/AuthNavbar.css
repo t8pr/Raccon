@@ -1,0 +1,32 @@
+.auth-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 72px;
+  flex-shrink: 0;
+  padding: 0 32px;
+  background: var(--night);
+  direction: rtl;
+}
+
+.auth-navbar__logo {
+  display: block;
+  width: 46px;
+  height: 35px;
+  object-fit: contain;
+}
+
+.auth-navbar__help {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--on-panel-muted);
+}
+
+@media (max-width: 767px) {
+  .auth-navbar {
+      display: none;
+  }
+}

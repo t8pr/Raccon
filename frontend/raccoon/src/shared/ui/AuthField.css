@@ -1,0 +1,193 @@
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+  font-family: var(--font-sans);
+  direction: rtl;
+}
+
+.auth-field__label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink);
+  text-align: right;
+}
+
+.auth-field__control {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 44px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  overflow: visible;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.auth-field__input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0 12px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: start;
+}
+
+.auth-field__input::placeholder {
+  color: var(--ink-muted);
+  opacity: 1;
+  text-align: right;
+}
+
+.auth-field__control:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.auth-field--error .auth-field__control,
+.auth-field--error .auth-field__control:focus-within {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px var(--danger-ring);
+}
+
+.auth-field--error .auth-field__message {
+  color: var(--danger);
+}
+
+.auth-field--success .auth-field__control {
+  background: var(--canvas);
+}
+
+.auth-field--success .auth-field__input {
+  color: var(--ink-muted);
+}
+
+.auth-field--disabled .auth-field__control {
+  background: var(--canvas);
+  border-color: var(--line);
+}
+
+.auth-field--disabled .auth-field__input {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.auth-field__message {
+  margin: 0;
+  min-height: 28px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  color: var(--ink-muted);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.auth-field__input--password {
+  text-align: right;
+}
+
+.auth-field__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.auth-field__toggle:hover {
+  color: var(--accent);
+}
+
+.auth-field__toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.auth-field__phone-prefix {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 0 10px;
+  height: 24px;
+  direction: ltr;
+  border-right: 1px solid var(--line);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.auth-field__control:has(.auth-field__phone-prefix) {
+  direction: ltr;
+}
+
+.auth-field__phone-prefix + .auth-field__input {
+  direction: ltr;
+  text-align: left;
+}
+
+@media (max-width: 767px) {
+  .auth-field__label {
+      font-size: 13px;
+      line-height: 18px;
+  }
+
+  .auth-field__control {
+      height: 42px;
+  }
+
+  .auth-field__message {
+      min-height: 24px;
+      font-size: 10px;
+      line-height: 12px;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 800px) {
+  .auth-field {
+      gap: 2px;
+  }
+
+  .auth-field__label {
+      font-size: 12px;
+      line-height: 16px;
+  }
+
+  .auth-field__control {
+      height: 40px;
+  }
+
+  .auth-field__message {
+      min-height: 24px;
+      font-size: 10px;
+      line-height: 12px;
+  }
+}
+
+/* Hide Edge's built-in password reveal button (we use our own eye icon) */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}

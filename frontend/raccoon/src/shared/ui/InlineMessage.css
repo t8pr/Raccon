@@ -1,0 +1,53 @@
+.inline-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+  direction: rtl;
+}
+
+.inline-message__icon {
+  flex-shrink: 0;
+}
+
+.inline-message__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.inline-message--icon-left {
+  flex-direction: row-reverse;
+}
+
+.inline-message--error {
+  background: var(--banner-error-bg);
+  color: var(--banner-error-text);
+}
+
+.inline-message--warning {
+  background: var(--banner-warning-bg);
+  color: var(--banner-warning-text);
+}
+
+.inline-message--info {
+  background: var(--banner-info-bg);
+  color: var(--banner-info-text);
+}
+
+.inline-message--success {
+  background: var(--banner-success-bg);
+  color: var(--banner-success-text);
+}
+
+.inline-message--lg {
+  min-height: 52px;
+  padding: 12px 14px;
+  font-size: 15px;
+}

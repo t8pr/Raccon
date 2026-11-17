@@ -1,0 +1,119 @@
+.avatar-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  width: 64px;
+  cursor: pointer;
+}
+
+.avatar-option__radio {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.avatar-option__circle {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  transition: border-color 0.2s ease;
+}
+
+.avatar-option__image {
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.avatar-option__radio:checked + .avatar-option__circle {
+  border: 3px solid var(--accent);
+}
+
+.avatar-option__check {
+  position: absolute;
+  top: -5px;
+  right: -8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0;
+}
+
+.avatar-option__radio:checked + .avatar-option__circle .avatar-option__check {
+  opacity: 1;
+}
+
+.avatar-option__radio:focus-visible + .avatar-option__circle {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.avatar-option__name {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink);
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .avatar-option,
+    .avatar-option__circle {
+      width: 46px;
+  }
+
+  .avatar-option__circle {
+      height: 46px;
+  }
+
+  .avatar-option__name {
+      font-size: 12px;
+      line-height: 1.35;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 900px) {
+  .avatar-option,
+    .avatar-option__circle {
+      width: 52px;
+  }
+
+  .avatar-option__circle {
+      height: 52px;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 800px) {
+  .avatar-option,
+    .avatar-option__circle {
+      width: 40px;
+  }
+
+  .avatar-option__circle {
+      height: 40px;
+  }
+
+  .avatar-option__name,
+    .character-picker__title {
+      font-size: 12px;
+      line-height: 1.3;
+  }
+}
