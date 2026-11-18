@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from core.logger import logger
+from api.health.router import router as health_router
 from contextlib import asynccontextmanager
 from core.database import init_db
 from api.auth.router import router as auth_router
 from api.users.router import router as users_router 
-from backend.health.router import router as health_router
 from api.admin.router import router as admin_router
 from api.packs.router import router as packs_router
 from api.events.router import router as events_router
@@ -63,7 +64,9 @@ app.include_router(journey_router)
 app.include_router(nfc_router)
 
 origins = [
-    "https://react-learning.aalsalhi-eng.workers.dev",
+    "https://raccon.pages.dev",
+    "https://raccon.app",
+    "https://www.raccon.app",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
     "http://localhost:3000",
