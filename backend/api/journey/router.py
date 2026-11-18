@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session
 from core.database import engine
-from core.leaderboard_broadcast import subscribe_leaderboard, broadcast_latest_leaderboard
+from core.leaderboard_broadcast import subscribe_leaderboard, broadcast_latest_leaderboard, player_channel
 from services.journey_service import JourneyService
 from api.auth.dependencies import oauth2_scheme
 from api.auth.dependencies import get_current_user
@@ -16,9 +16,9 @@ from redis.exceptions import RedisError
 def authorize_leaderboard_stream(
     event_id: uuid.UUID,
     token: str = Depends(oauth2_scheme),
-) -> None:
+) -> str:
     with Session(engine) as session:
-        get_current_user(token=token, session=session)
+        user = get_current_user(token=token, session=session)
 
         event = EventRepository(session).get_event(event_id)
 
@@ -27,6 +27,7 @@ def authorize_leaderboard_stream(
                 status_code=404,
                 detail="Event not found.",
             )
+        return user.user_hash
         
 router = APIRouter(prefix="/journey", tags=["Journey"])
 
@@ -73,33 +74,64 @@ def get_leaderboard(
 ):
     return service.get_leaderboard(current_user, event_id)
 
-@router.get("/leaderboard/{event_id}/stream",
-    dependencies=[Depends(authorize_leaderboard_stream)],
-)
-async def stream_leaderboard(event_id: uuid.UUID, request: Request):
+@router.get("/leaderboard/{event_id}/stream")
+async def stream_leaderboard(
+    event_id: uuid.UUID,
+    request: Request,
+    user_hash: str = Depends(authorize_leaderboard_stream),
+):
     redis_client = request.app.state.redis
 
     if redis_client is None:
-        raise HTTPException(500, "Live updates are unavailable.")
+        raise HTTPException(503, "Live updates are unavailable.")
+
+    personal_channel = player_channel(event_id, user_hash)
 
     async def events():
         try:
-            async with subscribe_leaderboard(redis_client, event_id) as subscription:
+            async with subscribe_leaderboard(
+                redis_client,
+                event_id,
+                user_hash,
+            ) as subscription:
                 while not await request.is_disconnected():
                     message = await subscription.get_message(
                         ignore_subscribe_messages=True,
                         timeout=1,
                     )
 
-                    if message and message["type"] == "message":
-                        yield f"event: leaderboard\ndata: {message['data']}\n\n"
-                    else:
+                    if not message or message["type"] != "message":
                         yield ": heartbeat\n\n"
+                        continue
+
+                    channel = message["channel"]
+                    payload = message["data"]
+
+                    if isinstance(channel, bytes):
+                        channel = channel.decode("utf-8")
+
+                    if isinstance(payload, bytes):
+                        payload = payload.decode("utf-8")
+
+                    event_type = (
+                        "player"
+                        if channel == personal_channel
+                        else "leaderboard"
+                    )
+
+                    yield (
+                        f"event: {event_type}\n"
+                        f"data: {payload}\n\n"
+                    )
+
         except RedisError:
             return
 
     return StreamingResponse(
         events(),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
     )

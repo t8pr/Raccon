@@ -318,7 +318,7 @@ class JourneyService:
         }
 
     def get_leaderboard(self, user: User, event_id: uuid.UUID):
-        return self.journey_progress_repo.get_top_players(event_id)
+        return self.journey_progress_repo.get_top_players(event_id, user.user_hash)
 
     def is_complete(self, event_id: uuid.UUID) -> bool:
         event_tags = self.event_tags.get_all_by_event_id(event_id)
