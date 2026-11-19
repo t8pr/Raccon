@@ -26,6 +26,7 @@ import PackagesPage from "../pages/Packages/PackagesPage";
 import AdminRoute from "../pages/Admin/AdminRoute";
 import AdminExperiencesPage from "../pages/Admin/Experiences/AdminExperiencesPage";
 import CreateExperiencePage from "../pages/Admin/Experiences/CreateExperiencePage";
+import AdminStorePage from "../pages/Admin/Store/AdminStorePage";
 
 // Profile Page
 import ProfilePage from "../pages/Profile/ProfilePage";
@@ -124,6 +125,14 @@ function AppContent() {
             element={
               <AdminRoute>
                 <CreateExperiencePage />
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/admin/store"
+            element={
+              <AdminRoute>
+                <AdminStorePage />
               </AdminRoute>
             }
           />
