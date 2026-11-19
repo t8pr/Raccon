@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from core.logger import logger
+from api.health.router import router as health_router
 from contextlib import asynccontextmanager
 from core.database import init_db
-from core.logger import logger
 from api.auth.router import router as auth_router
 from api.users.router import router as users_router 
-from api.health.router import router as health_router
 from api.admin.router import router as admin_router
 from api.packs.router import router as packs_router
 from api.events.router import router as events_router
@@ -34,9 +34,9 @@ async def lifespan(app: FastAPI):
                     socket_connect_timeout=2,
                     socket_timeout=2,
                 )
-
-                app.state.redis = redis_client
+                
                 await redis_client.ping()
+                app.state.redis = redis_client
 
         except RedisError:
             logger.exception("Redis is not configured, live updates are unavailable.")

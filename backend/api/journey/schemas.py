@@ -41,3 +41,4 @@ class LeaderboardResponse(BaseModel):
     name: str
     avatar_id: int
     score: int
+    rank: int
