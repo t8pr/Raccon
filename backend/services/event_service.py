@@ -13,7 +13,8 @@ from core.config import settings
 from models.journey_progress import JourneyProgress
 from repositories.journey_progress_repo import JourneyProgressRepository
 from services.storage_service import StorageService
-
+from datetime import datetime, timezone
+from repositories.rebuild_code_repo import RebuildCodeRepository
 class EventService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
@@ -23,6 +24,7 @@ class EventService:
         self.event_tags = EventTagRepository(session)
         self.journey_progress_repo = JourneyProgressRepository(session)
         self.storage_service = StorageService()
+        self.rebuild_code_repo = RebuildCodeRepository(session)
 
     def get_event_details(self, user: User, event_id: uuid.UUID) -> dict:
         event = self.events.get_event(event_id)
@@ -211,22 +213,14 @@ class EventService:
 
         return event
 
-    def reset_event(self, user: User, event_id: uuid.UUID) -> dict:
-        event = self.events.lock_event(event_id)
-        if not event:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
-            
-        pack = self.packs.get_pack(event.pack_id)
-        if not pack or pack.owner_id != user.id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not own this pack.")
-
+    def _reset_event_data(self, event: Event) -> None:
         statement = delete(JourneyProgress).where(JourneyProgress.event_id == event.id)
         self.session.exec(statement)
 
         event_tags = self.event_tags.get_all_by_event_id(event.id)
         for et in event_tags:
             modified = False
-            content = dict(et.content or {}) #create a new dict for sqlmodel to track
+            content = dict(et.content or {})  # create a new dict for sqlmodel to track
 
             if "claimed_by" in content:
                 del content["claimed_by"]
@@ -240,12 +234,87 @@ class EventService:
                 et.content = content
                 self.session.add(et)
 
+    def reset_event(self, user: User, event_id: uuid.UUID) -> dict:
+        event = self.events.lock_event(event_id)
+        if not event:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
+            )
+
+        pack = self.packs.get_pack(event.pack_id)
+        if not pack or pack.owner_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own this pack.",
+            )
+
+        self._reset_event_data(event)
+
         event.status = "paused"
         self.session.add(event)
-        
         self.session.commit()
-        
-        return {"status": "success", "message": "Event has been perfectly reset to its initial state."}
+
+        return {
+            "status": "success",
+            "message": "Event has been perfectly reset to its initial state.",
+        }
+
+    def rebuild_event(self, user: User, event_id: uuid.UUID, code: str) -> dict:
+        event = self.events.lock_event(event_id)
+        if not event:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
+            )
+
+        pack = self.packs.get_pack(event.pack_id)
+        if not pack or pack.owner_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own this pack.",
+            )
+
+        if event.status == "draft":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Event is already in draft status.",
+            )
+
+        if event.status == "live":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Pause the event before rebuilding it.",
+            )
+
+        normalized_code = code.strip().upper()
+        rebuild_code = self.rebuild_code_repo.get_by_code_for_update(normalized_code)
+        if not rebuild_code or rebuild_code.is_used:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or already used rebuild code.",
+            )
+
+        self._reset_event_data(event)
+
+        event.status = "draft"
+        event.edit_count = 0
+        self.session.add(event)
+
+        rebuild_code.is_used = True
+        rebuild_code.used_by_user_id = user.id
+        rebuild_code.used_on_event_id = event.id
+        rebuild_code.used_at = datetime.now(timezone.utc)
+        self.session.add(rebuild_code)
+
+        self.session.commit()
+
+        return {
+            "status": "success",
+            "message": "Event has been rebuilt and returned to draft status.",
+            "event_status": event.status,
+            "edit_count": event.edit_count,
+            "edits_remaining": settings.MAX_EDIT_LIMIT - event.edit_count,
+            "max_edits": settings.MAX_EDIT_LIMIT,
+        }
 
     
     def list_my_events(self, user: User) -> List[MyEventResponse] | None:
