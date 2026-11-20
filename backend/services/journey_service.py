@@ -321,14 +321,8 @@ class JourneyService:
         return self.journey_progress_repo.get_top_players(event_id, user.user_hash)
 
     def is_complete(self, event_id: uuid.UUID) -> bool:
-        event_tags = self.event_tags.get_all_by_event_id(event_id)
-
-        clue_tags = [tag for tag in event_tags if tag.tag_type == "clue"]
-
-        return bool(clue_tags) and all(
-            (tag.content or {}).get("claimed_by")
-            for tag in clue_tags
-        )
+        total_clues, unclaimed_clues = self.event_tags.count_clues_status(event_id)
+        return total_clues > 0 and unclaimed_clues == 0
 
     def get_remaining_tags(self, pack, progress) -> int:
         if pack.mode == "seq":

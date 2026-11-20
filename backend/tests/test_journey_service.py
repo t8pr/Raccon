@@ -84,19 +84,19 @@ def journey_service(
     service.events = Mock(spec=["get_by_pack_id", "lock_event"])
     service.packs = Mock(spec=["get_pack"])
     service.event_tags = Mock(
-        spec=["get_exisiting_event_tag", "get_all_by_event_id", "add_event_tag"]
+        spec=["get_exisiting_event_tag", "get_all_by_event_id", "add_event_tag", "count_clues_status"]
     )
     service.journey_progress_repo = Mock(
         spec=["get_user_journey", "add_progress", "update_status"]
     )
     service.users = Mock(spec=["get_by_user_hash"])
-
     service.tags.get_by_static_hash.return_value = tag
     service.events.get_by_pack_id.return_value = event
     service.events.lock_event.return_value = event
     service.packs.get_pack.return_value = pack
     service.event_tags.get_exisiting_event_tag.return_value = event_tag
     service.event_tags.get_all_by_event_id.return_value = [event_tag]
+    service.event_tags.count_clues_status.return_value = (2, 1)
     service.journey_progress_repo.get_user_journey.return_value = (
         journey_progress
     )
@@ -349,7 +349,7 @@ def test_final_open_claim_completes_round(
     event.status = "live"
     pack.mode = "open"
     pack.tags_count = 1
-
+    journey_service.event_tags.count_clues_status.side_effect = [(1, 1), (1, 0)]
     result = journey_service.scan_tag(
         user=user,
         tag_hash=tag.static_hash,
