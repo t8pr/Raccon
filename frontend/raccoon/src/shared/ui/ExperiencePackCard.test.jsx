@@ -15,7 +15,7 @@ describe("بطاقة المتجر", () => {
     const card = screen.getByRole("article", { name: "صيد مفتوح · 15 قطعة" });
     expect(card).toHaveClass("pack-card--open", "pack-card--store");
     expect(within(card).getByText("15")).toBeInTheDocument();
-    expect(screen.getByRole("button")).toHaveTextContent("اشترِ · 195 ر.س");
+    expect(screen.getByRole("button")).toHaveTextContent("شراء · 195 ر.س");
   });
 
   test("الضغط يستدعي onBuy", async () => {
@@ -51,7 +51,7 @@ describe("بطاقة المتجر", () => {
     render(<ExperiencePackCard variant="store" pieces={6} price={0} onBuy={() => {}} />);
 
     expect(screen.getByRole("article", { name: "تسلسلي · 6 قطعة" })).toHaveClass("pack-card--seq");
-    expect(screen.getByRole("button")).toHaveTextContent("اشترِ · بدون سعر");
+    expect(screen.getByRole("button")).toHaveTextContent("شراء · بدون سعر");
   });
 });
 
@@ -72,35 +72,14 @@ describe("بطاقة الأدمن", () => {
       </MemoryRouter>,
     );
 
-  test("الحالة والسعر وعدد القطع والطريقة", () => {
+  // Figma "Admin · experiences list": نفس بطاقة المتجر — الطريقة وعدد القطع وشريط «تعديل»
+  test("الطريقة وعدد القطع، والاسم لقارئ الشاشة فقط", () => {
     renderAdmin({ title: "جولة", status: "sold" });
 
-    expect(screen.getByText("مُباعة")).toBeInTheDocument();
-    expect(screen.getByText("130")).toBeInTheDocument();
+    expect(screen.getByRole("article", { name: "تسلسلي · 10 قطعة" })).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument();
     expect(screen.getByText("تسلسلي")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "جولة" })).toHaveClass("pack-card__sr");
-  });
-
-  test("حالة غير معروفة تظهر «متاحة»", () => {
-    renderAdmin({ status: "weird" });
-
-    expect(screen.getByText("متاحة")).toBeInTheDocument();
-  });
-
-  test.each([
-    ["2026-11-17T08:00:00Z", "اليوم"],
-    ["2026-11-16T12:00:00Z", "أمس"],
-    ["2026-11-15T12:00:00Z", "قبل يومين"],
-    ["2026-11-12T12:00:00Z", "قبل 5 أيام"],
-    ["2026-11-08T12:00:00Z", "قبل أسبوع"],
-    ["2026-10-27T12:00:00Z", "قبل 3 أسابيع"],
-    ["2026-10-10T12:00:00Z", "قبل شهر"],
-    ["2026-07-17T12:00:00Z", "قبل 4 أشهر"],
-  ])("آخر تعديل %s → %s", (updatedAt, label) => {
-    renderAdmin({ updatedAt });
-
-    expect(screen.getByText(`آخر تعديل ${label}`)).toBeInTheDocument();
   });
 
   // \s? لأن jsdom يحذف المسافة قبل «» في الاسم؛ المتصفح يحتفظ فيها
@@ -113,11 +92,11 @@ describe("بطاقة الأدمن", () => {
     expect(screen.getByRole("link", { name: /^تعديل\s?«جولة»$/ })).toBeInTheDocument();
   });
 
-  test("بدون editTo ما فيه رابط، وزر ⋯ موجود", () => {
+  test("بدون editTo: زر «تعديل» معطّل (قريبًا) بدل الرابط", () => {
     renderAdmin({ title: "جولة" });
 
     expect(screen.queryByRole("link")).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "خيارات «جولة»" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: /تعديل/ })).toBeDisabled();
   });
 
   test("الصيد المفتوح لونه مختلف", () => {
