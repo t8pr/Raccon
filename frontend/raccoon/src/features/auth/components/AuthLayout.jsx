@@ -1,6 +1,5 @@
 // this components for use it in register and login form
 import AuthNavbar from "./AuthNavbar";
-import AuthTabs from "./AuthTabs";
 import "./AuthLayout.css";
 
 export default function AuthLayout({ children, promo, variant = "default" }) {
@@ -14,7 +13,6 @@ export default function AuthLayout({ children, promo, variant = "default" }) {
       <main className="auth-layout">
         <section className="auth-layout__form">
              <div className="auth-layout__form-inner">
-            {variant && <AuthTabs />}
             {children} {/*right side*/}
           </div>
         </section>
