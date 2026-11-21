@@ -3,15 +3,20 @@ import { Link } from "react-router-dom";
 import AuthField from "../../../shared/ui/AuthField";
 import Button from "../../../shared/ui/Button";
 import InlineMessage from "../../../shared/ui/InlineMessage";
+import GoogleAuthButton from "./GoogleAuthButton";
+import AuthDivider from "./AuthDivider";
 import { loginSchema, validateForm } from "../../../shared/utils/validation";
 import "./LoginForm.css";
 
 export default function LoginForm({
   onLogin,
   isSubmitting = false,
+  isGoogleSubmitting = false, // true only when the busy request came from Google
   serverError = "",
   notice = "", // success message, e.g. after resetting the password
   onEdit,
+  onGoogle, // (credential) => void
+  onGoogleError,
 }) {
   const [values, setValues] = useState({ identifier: "", password: "" });
   const [touched, setTouched] = useState({});
@@ -72,6 +77,16 @@ export default function LoginForm({
         <p className="login-form__subtitle">ادخل حسابك عشان تتابع باقاتك.</p>
       </div>
 
+      {/* Google first */}
+      <GoogleAuthButton
+        mode="signin"
+        onCredential={onGoogle}
+        onError={onGoogleError}
+        disabled={isSubmitting && !isGoogleSubmitting}
+        loading={isGoogleSubmitting}
+      />
+      <AuthDivider />
+
       <div className="login-form__error" aria-live="polite">
         {serverError ? (
           <InlineMessage type="error" message={serverError} />
@@ -90,7 +105,7 @@ export default function LoginForm({
           value={values.identifier}
           onChange={handleChange}
           onBlur={handleBlur}
-          placeholder="اسم المستخدم أو البريد الإلكتروني"
+          placeholder="raccon أو name@raccon.com"
           error={touched.identifier ? errors.identifier || "" : ""}
           autoComplete="username"
         />
@@ -102,7 +117,7 @@ export default function LoginForm({
           value={values.password}
           onChange={handleChange}
           onBlur={handleBlur}
-          placeholder="أدخل كلمة المرور"
+          placeholder="8 حروف أو أكثر"
           error={touched.identifier ? errors.password || "" : ""}
           autoComplete="current-password"
         />
@@ -120,17 +135,10 @@ export default function LoginForm({
           variant="primary"
           fullWidth
           disabled={!isFormValid}
-          loading={isSubmitting} // children
+          loading={isSubmitting && !isGoogleSubmitting} // children
         >
           ادخل
         </Button>
-      </div>
-
-      {/* Register Link */}
-      <div className="login-form__footer">
-        <p>
-          أول مرة معنا؟ <Link to="/register">أنشئ حساب جديد</Link>
-        </p>
       </div>
     </form>
   );

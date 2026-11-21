@@ -132,12 +132,11 @@ test.fails("خطأ معروف: زائر جاي من رابط ربط يرجع ل�
 });
 
 describe("جاي من مسح قطعة (redirect_tag)", () => {
-  test("يعرض «سجّل دخولك عشان تكمّل» أول، وبعد الدخول يرجع للمسح بالـhash", async () => {
+  test("يعرض «حصلتها!» والنموذج مباشرة، وبعد الدخول يرجع للمسح بالـhash", async () => {
     mockLogin();
     const { location } = renderLogin("/login?redirect_tag=tag42");
 
-    expect(screen.getByRole("heading", { name: "سجّل دخولك عشان تكمّل" })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "سجّل الدخول" }));
+    expect(screen.getByRole("heading", { name: "حصلتها!" })).toBeInTheDocument();
     await fillAndSubmit();
 
     expect(await screen.findByText("المسح")).toBeInTheDocument();
@@ -148,17 +147,16 @@ describe("جاي من مسح قطعة (redirect_tag)", () => {
     mockLogin();
     const { location } = renderLogin("/login?redirect_tag=tag42&redirect_sig=sig9");
 
-    await userEvent.click(screen.getByRole("button", { name: "سجّل الدخول" }));
     await fillAndSubmit();
 
     await screen.findByText("المسح");
     expect(location.current.search).toBe("?tag=tag42&sig=sig9");
   });
 
-  test("«أنشئ حساب جديد» يحمل القطعة للتسجيل", async () => {
+  test("زر «إنشاء حساب» في الشريط يحمل القطعة للتسجيل", async () => {
     const { location } = renderLogin("/login?redirect_tag=tag42&redirect_sig=sig9");
 
-    await userEvent.click(screen.getByRole("button", { name: "أنشئ حساب جديد" }));
+    await userEvent.click(screen.getByRole("link", { name: "إنشاء حساب" }));
 
     expect(location.current.pathname).toBe("/register");
     expect(location.current.search).toBe("?redirect_tag=tag42&redirect_sig=sig9");
@@ -177,11 +175,12 @@ test("بعد تغيير كلمة المرور تظهر رسالة نجاح", () 
   expect(screen.getByRole("status")).toHaveTextContent("تم تغيير كلمة المرور. ادخل بكلمة المرور الجديدة.");
 });
 
-test("رابط «نسيت كلمة المرور؟» و«أنشئ حساب جديد»", () => {
+test("رابط «نسيت كلمة المرور؟» وزر «إنشاء حساب» في الشريط", () => {
   renderLogin();
 
   expect(screen.getByRole("link", { name: "نسيت كلمة المرور؟" })).toHaveAttribute("href", "/forgot-password");
-  expect(screen.getByRole("link", { name: "أنشئ حساب جديد" })).toHaveAttribute("href", "/register");
+  expect(screen.getByRole("link", { name: "إنشاء حساب" })).toHaveAttribute("href", "/register");
+  expect(screen.getByRole("link", { name: "تسجيل الدخول" })).toHaveAttribute("aria-current", "page");
 });
 
 // خطأ معروف: خطأ كلمة المرور يعتمد على touched.identifier بدل touched.password

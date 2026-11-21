@@ -33,9 +33,10 @@ describe("المسارات", () => {
   test("/ يحوّل للتسجيل", async () => {
     openApp("/", { token: null });
 
+    // the title is there twice in the DOM (phone header + form); CSS shows one of them
     expect(
-      await screen.findByRole("heading", { name: "أنشئ حسابك" }),
-    ).toBeInTheDocument();
+      (await screen.findAllByRole("heading", { name: "أنشئ حسابك" })).length,
+    ).toBeGreaterThan(0);
     expect(window.location.pathname).toBe("/register");
   });
 
@@ -64,7 +65,7 @@ describe("المسارات", () => {
     openApp("/scan?tag=x&sig=y", { token: null });
 
     expect(
-      await screen.findByRole("heading", { name: "سجّل دخولك عشان تكمّل" }),
+      await screen.findByRole("heading", { name: "هلا، حياك من جديد" }),
     ).toBeInTheDocument();
     expect(window.location.search).toBe("?redirect_tag=x&redirect_sig=y");
   });
