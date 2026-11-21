@@ -8,20 +8,29 @@ import {
 import { buildAllTagsConfig, buildTagConfig } from "../utils/tagForm";
 
 /*
-  حفظ القطع ووضع التعديل.
+  حفظ القطع ووضع التعديل. زر «حفظ» واحد له حالتين (الصفحة تقرر أي وحدة):
 
-  - المسودة (draft): الحفظ مفتوح دائمًا.
-  - المتوقفة (paused): المالك يطلب «تعديل الباقة» أولًا، وكل حفظ يستهلك تعديلًا.
-    إذا كان هذا آخر تعديل، يظهر تحذير ويحتاج تأكيدًا.
+  1) القطعة الحالية فيها تعديل → stageTag: تنحفظ مؤقتًا في المتصفح (staging)، بدون أي طلب،
+     عشان يقدر ينتقل ويعدّل باقي القطع.
+  2) ما فيها تعديل → saveAllTags (بعد نافذة تأكيد): كل القطع، المؤقت فوق المحفوظ،
+     في طلب واحد. المسودة (draft) ← /setup بدون حد. وضع التعديل (paused) ← /edit
+     ويُستهلك تعديل واحد، حتى لو ما تعدّلت أي قطعة.
 
   الصفحة تمرّر allowed (هل الزر مسموح الآن)، والـhook يمنع الحفظ المزدوج بنفسه.
+  staging: ما يرجّعه useStagedEdits.
 */
-export function useTagSaving({ eventId, event, refetch, tagForm, supportsTraps }) {
+export function useTagSaving({
+  eventId,
+  event,
+  refetch,
+  tagForm,
+  supportsTraps,
+  staging,
+}) {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
   const [saveError, setSaveError] = useState("");
   const [isEditing, setIsEditing] = useState(false);
-  const [showLastEditWarning, setShowLastEditWarning] = useState(false);
   // يمنع الضغط المزدوج قبل أن يصل isSaving للشاشة
   const savingRef = useRef(false);
 
@@ -36,76 +45,94 @@ export function useTagSaving({ eventId, event, refetch, tagForm, supportsTraps }
     return () => clearTimeout(timer);
   }, [saveSuccess]);
 
-  // saveAll: القطعة الحالية + بقية القطع بإعدادها المحفوظ
-  async function saveTags({ allowed, saveAll = false, lastEditConfirmed = false }) {
-    if (!allowed || savingRef.current || isSaving) return;
+  // إعداد القطعة المختارة من النموذج. الصورة ممكن تبقى ملف (Blob) لين يجي وقت الرفع.
+  function buildSelectedConfig(imageUrl) {
+    const { selectedTag, form } = tagForm;
+    const isTrap = supportsTraps && form.trap !== "none";
 
-    setSaveError("");
-    setSaveSuccess("");
+    return buildTagConfig(selectedTag, {
+      trap: isTrap ? form.trap : "none",
+      hint: form.hint,
+      imageUrl,
+      freezeSeconds: form.freezeSeconds,
+    });
+  }
 
-    if (
-      event.status === "paused" &&
-      event.edits_remaining === 1 &&
-      lastEditConfirmed !== true
-    ) {
-      setShowLastEditWarning(true);
-      return;
+  // يرفع الصورة لو كانت ملف جديد، ويرجّع الإعداد برابطها
+  async function withUploadedImage(config) {
+    const image = config.content?.image;
+
+    if (!(image instanceof Blob)) return config;
+
+    const uploaded = await uploadHintImage(image);
+
+    if (typeof uploaded.url !== "string" || !uploaded.url) {
+      throw new Error("لم يرجع الخادم رابط الصورة. حاول مرة أخرى.");
     }
 
-    setShowLastEditWarning(false);
+    return { ...config, content: { ...config.content, image: uploaded.url } };
+  }
+
+  // الحالة 1: حفظ مؤقت للقطعة الحالية (الصورة تبقى ملف لين الحفظ النهائي)
+  function stageTag({ allowed }) {
+    if (!allowed || savingRef.current) return;
+
+    const tagNumber = String(tagForm.selectedTag.sequence_num).padStart(2, "0");
+
+    staging.stage(buildSelectedConfig(tagForm.form.image));
+    tagForm.reset();
+    setSaveError("");
+    setSaveSuccess(
+      `انحفظت القطعة ${tagNumber} مؤقتًا. لما تخلص كل القطع اضغط «حفظ» مرة ثانية.`,
+    );
+  }
+
+  // الحالة 2: الحفظ النهائي لكل القطع في طلب واحد
+  async function saveAllTags({ allowed }) {
+    if (!allowed || savingRef.current || isSaving) return;
+
+    const isEdit = event.status === "paused";
 
     savingRef.current = true;
     setIsSaving(true);
     setSaveError("");
-
-    const { selectedTag, form } = tagForm;
+    setSaveSuccess("");
 
     try {
-      const isTrap = supportsTraps && form.trap !== "none";
-      let imageUrl = form.image;
+      const configs = [];
 
-      // الصورة الجديدة تُرفع أولًا، والقطعة تحفظ رابطها
-      if (!isTrap && imageUrl instanceof Blob) {
-        const uploaded = await uploadHintImage(imageUrl);
-        if (typeof uploaded.url !== "string" || !uploaded.url) {
-          throw new Error("لم يرجع الخادم رابط الصورة. حاول مرة أخرى.");
+      for (const config of buildAllTagsConfig(staging.applyTo(event.tags))) {
+        const ready = await withUploadedImage(config);
+
+        if (ready !== config) {
+          // الصورة انرفعت: نحفظ رابطها في المؤقت عشان إعادة المحاولة ما ترفعها مرة ثانية
+          staging.stage(ready);
         }
-        imageUrl = uploaded.url;
-        // Retain the uploaded URL if saving fails, so retry does not re-upload.
-        tagForm.setImage(imageUrl);
+
+        configs.push(ready);
       }
 
-      const selectedConfig = buildTagConfig(selectedTag, {
-        trap: isTrap ? form.trap : "none",
-        hint: form.hint,
-        imageUrl,
-        freezeSeconds: form.freezeSeconds,
-      });
-      const tagsConfig = saveAll
-        ? buildAllTagsConfig(event.tags, selectedConfig)
-        : [selectedConfig];
-
-      if (event.status === "draft") {
-        await saveTagSetup(eventId, tagsConfig);
-      } else if (event.status === "paused") {
-        await saveTagEdits(eventId, tagsConfig);
+      if (isEdit) {
+        await saveTagEdits(eventId, configs);
+      } else {
+        await saveTagSetup(eventId, configs);
       }
 
-      if (event.status === "paused") {
-        setIsEditing(false);
-      }
-
-      await refetch(); /*get new saved data*/
+      setIsEditing(false);
+      await refetch();
+      staging.clear();
       tagForm.reset();
 
       setSaveSuccess(
-        saveAll
-          ? `تم حفظ جميع القطع (${event.tags.length}) بنجاح.`
-          : `انحفظت القطعة ${String(selectedTag.sequence_num).padStart(2, "0")} بنجاح`,
+        isEdit
+          ? "تم حفظ تعديلات الباقة بنجاح."
+          : `تم حفظ جميع القطع (${configs.length}) بنجاح.`,
       );
     } catch (error) {
+      // المؤقت يبقى، فيقدر يعيد المحاولة بدون ما يعيد التعديل
       setSaveError(
-        error.message || (saveAll ? "تعذر حفظ جميع القطع." : "تعذر حفظ القطعة."),
+        error.message ||
+          (isEdit ? "تعذر حفظ التعديلات." : "تعذر حفظ جميع القطع."),
       );
     } finally {
       savingRef.current = false;
@@ -134,20 +161,16 @@ export function useTagSaving({ eventId, event, refetch, tagForm, supportsTraps }
     setIsEditing(true);
   }
 
-  // يرجع true إذا أُلغي التعديل فعلًا
+  // يرجع true إذا أُلغي التعديل فعلًا. يمسح الحفظ المؤقت كذلك.
   function cancelEditing() {
     if (savingRef.current) return false;
 
     tagForm.reset();
-    setShowLastEditWarning(false);
+    staging.clear();
     setSaveError("");
     setSaveSuccess("");
     setIsEditing(false);
     return true;
-  }
-
-  function dismissLastEditWarning() {
-    setShowLastEditWarning(false);
   }
 
   return {
@@ -155,10 +178,9 @@ export function useTagSaving({ eventId, event, refetch, tagForm, supportsTraps }
     saveError,
     saveSuccess,
     isEditing,
-    showLastEditWarning,
-    saveTags,
+    stageTag,
+    saveAllTags,
     startEditing,
     cancelEditing,
-    dismissLastEditWarning,
   };
 }

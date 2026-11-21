@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { prepareHintImage } from "../utils/prepareHintImage";
-import { ImagePlus, Trash2, Loader2 } from "lucide-react";
-import Button from "../../../shared/ui/Button";
+import { ImagePlus, ImageUp, Trash2, Loader2 } from "lucide-react";
 
 // value is a saved URL, a prepared local File, or an empty string.
 // This component never uploads. The page uploads only when Save is pressed.
@@ -71,8 +70,10 @@ export default function ImageUploader({
 
   return (
     <div className="hint-field" style={{ marginTop: "16px" }}>
+      {/* نفس عنوان «نص التلميح»: العنوان، وجنبه «اختياري» بخط أصغر */}
       <div className="hint-field__header">
-        <label className="hint-field__label">صورة التلميح (اختياري)</label>
+        <span className="hint-field__label">صورة التلميح</span>
+        <span className="hint-field__indicator">اختياري</span>
       </div>
 
       <div
@@ -113,21 +114,30 @@ export default function ImageUploader({
                 objectFit: "contain",
               }}
             />
-            <div style={{ marginTop: "12px" }}>
-              <Button
-                variant="outline"
-                onClick={handleRemove}
+            {/* أيقونتين بدل زرين بنص، بنفس شكل زر رفع الصورة (hint-image-picker__button).
+                الاسم في aria-label لقارئ الشاشة و title يظهر عند المرور.
+                الصفحة RTL: الأول في الكود يطلع يمين، فالحذف يمين والاستبدال يسار. */}
+            <div className="hint-image-actions">
+              <button
+                type="button"
+                className="hint-image-picker__button"
+                aria-label="إزالة الصورة"
+                title="إزالة الصورة"
                 disabled={disabled}
+                onClick={handleRemove}
               >
-                <Trash2 size={16} aria-hidden="true" /> إزالة الصورة
-              </Button>
-              <Button
-                variant="outline"
+                <Trash2 size={18} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="hint-image-picker__button"
+                aria-label="استبدال الصورة"
+                title="استبدال الصورة"
                 disabled={disabled || isPreparing}
                 onClick={() => fileInputRef.current?.click()}
               >
-                استبدال الصورة
-              </Button>
+                <ImageUp size={18} aria-hidden="true" />
+              </button>
             </div>
           </div>
         ) : (

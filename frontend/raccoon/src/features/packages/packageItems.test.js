@@ -3,6 +3,7 @@ import {
   UNTITLED,
   filterPackages,
   getDisplayName,
+  getPackageTone,
   toPackageItem,
 } from "./packageItems";
 
@@ -31,6 +32,19 @@ test("toPackageItem يحوّل جولة الخادم لبطاقة", () => {
       status: "live",
     }),
   ).toEqual({ id: "e1", eventId: "e1", name: "مكتب", mode: "seq", pieces: 10 });
+});
+
+describe("getPackageTone", () => {
+  test.each([
+    ["seq", "seq"],
+    ["sequential", "seq"],
+    ["open", "open"],
+    [null, "unknown"],
+    [undefined, "unknown"],
+    ["weird", "unknown"],
+  ])("%s → %s", (mode, tone) => {
+    expect(getPackageTone(mode)).toBe(tone);
+  });
 });
 
 describe("filterPackages", () => {

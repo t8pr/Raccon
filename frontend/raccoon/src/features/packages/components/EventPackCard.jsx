@@ -1,8 +1,9 @@
 import { getModeLabel } from "../../../shared/constants/modes";
+import { getPackageTone } from "../packageItems";
 
 // بطاقة جولة: الاسم والطريقة، عدد القطع، وزر «تخصيص».
 export default function EventPackCard({ pkg, onOpen }) {
-  const tone = pkg.mode === "open" ? "open" : "seq";
+  const tone = getPackageTone(pkg.mode);
 
   return (
     <article

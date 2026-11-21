@@ -12,6 +12,7 @@ export function getPermissions({
   selectedTag,
   isEditing,
   hasChanges,
+  hasStaged = false,
   freezeIsValid,
   isPreparingImage,
   isSaving,
@@ -31,35 +32,25 @@ export function getPermissions({
   const allTagsReady =
     event.tags.length > 0 && configuredCount === event.tags.length;
 
-  // القطعة تُحفظ إذا فيها تعديل، أو إذا لم تُحفظ من قبل أبدًا
-  const canSaveTag =
-    Boolean(selectedTag) &&
-    canCustomize &&
-    freezeIsValid &&
-    !isPreparingImage &&
-    (hasChanges || !selectedTag.is_configured);
+  // زر «حفظ» متاح دائمًا وقت التخصيص: بتعديل يحفظ مؤقتًا، وبدونه يحفظ الكل (بعد تأكيد)
+  const canSave =
+    Boolean(selectedTag) && canCustomize && freezeIsValid && !isPreparingImage;
 
-  const canSaveAllTags =
-    event.tags.length > 0 &&
-    canCustomize &&
-    freezeIsValid &&
-    !isPreparingImage &&
-    !isSaving &&
-    !isStarting &&
-    !isFetching;
-
-  // البدء يحتاج كل القطع محفوظة وبلا تعديلات معلّقة
+  // البدء يحتاج كل القطع محفوظة وبلا تعديلات معلّقة (ولا حفظ مؤقت ما انرسل)
   const canStartRound =
     (event.status === "draft" || event.status === "paused") &&
     allTagsReady &&
     !isFetching &&
     !hasChanges &&
+    !hasStaged &&
     !isEditing &&
     !isSaving &&
     !isStarting &&
     !isPreparingImage;
 
-  const canChangeRoundStatus = isLive ? !isSaving && !isStarting : canStartRound;
+  const canChangeRoundStatus = isLive
+    ? !isSaving && !isStarting
+    : canStartRound;
 
   const canRequestEdit =
     canStartEditing && !isEditing && !isSaving && !isStarting;
@@ -72,8 +63,7 @@ export function getPermissions({
     canCustomize,
     configuredCount,
     allTagsReady,
-    canSaveTag,
-    canSaveAllTags,
+    canSave,
     canChangeRoundStatus,
     canRequestEdit,
     busy,

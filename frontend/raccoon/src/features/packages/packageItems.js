@@ -13,6 +13,15 @@ export function getDisplayName(title) {
   return isUntitled ? UNTITLED : trimmed;
 }
 
+// لون البطاقة من طريقة اللعب: "seq" | "open" | "unknown" (طريقة فاضية أو غير معروفة)
+export function getPackageTone(mode) {
+  const normalized = normalizeMode(mode);
+
+  if (normalized === "open") return "open";
+  if (normalized === "sequential") return "seq";
+  return "unknown";
+}
+
 // جولة من الخادم → بطاقة
 export function toPackageItem(event) {
   return {
@@ -24,7 +33,10 @@ export function toPackageItem(event) {
   };
 }
 
-export const PACKAGE_FILTERS = [{ value: "all", label: "الكل" }, ...MODE_OPTIONS];
+export const PACKAGE_FILTERS = [
+  { value: "all", label: "الكل" },
+  ...MODE_OPTIONS,
+];
 
 // الخادم يرسل "seq"، والفلتر يستخدم "sequential"
 export function filterPackages(items, filter) {

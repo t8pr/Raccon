@@ -42,11 +42,9 @@ export default function TagSelector({
             key={tag.tag_id}
             number={tag.sequence_num}
             configured={Boolean(tag.is_configured)}
-            selected={
-              selectedTagId === tag.tag_id &&
-              canCustomize &&
-              (hasChanges || !tag.is_configured)
-            }
+            selected={selectedTagId === tag.tag_id}
+            editing={selectedTagId === tag.tag_id && canCustomize}
+            staged={Boolean(tag.isStaged)}
             trapType={getTrapType(tag)}
             disabled={disabled}
             onClick={() => onSelect(tag)}
