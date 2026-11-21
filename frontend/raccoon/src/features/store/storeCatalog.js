@@ -16,7 +16,7 @@ export const STORE_PACKAGES = [MODE.SEQUENTIAL, MODE.OPEN].flatMap((mode) =>
 export const MODE_FILTERS = [{ value: "all", label: "الكل" }, ...MODE_OPTIONS];
 
 export const SORTS = [
-  { value: "default", label: "الترتيب الافتراضي" },
+  { value: "default", label: "الحجم والسعر" },
   { value: "price-asc", label: "السعر: الأقل أولًا" },
   { value: "price-desc", label: "السعر: الأعلى أولًا" },
 ];

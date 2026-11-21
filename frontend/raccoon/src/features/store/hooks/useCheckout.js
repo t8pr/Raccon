@@ -53,7 +53,7 @@ export function useCheckout() {
     openerRef.current?.focus();
   }
 
-  // زر «اشترِ» على البطاقة
+  // زر «شراء» على البطاقة
   function confirm(pkg) {
     if (purchaseLockRef.current) return;
 
@@ -68,7 +68,7 @@ export function useCheckout() {
     setSelected(pkg);
   }
 
-  // زر «اشترِ» داخل النافذة
+  // زر «شراء» داخل النافذة
   function buy() {
     const url = checkoutUrl(selected?.purchaseUrl);
 
