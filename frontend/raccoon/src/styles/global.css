@@ -29,6 +29,19 @@
   /* ===== Primary Button ===== */
   --primary: #448266;
   --on-primary: #ecebf6;
+  /* ===== Hover / focus (Figma: 02 · Button / Core, 03 · Button / Mode) ===== */
+  --primary-hover: #376d55;
+  --hover-subtle: #e2f3eb;
+  --shadow-hover: 0 2px 4px rgb(0 0 0 / 20%); /* Figma: hover = drop shadow */
+  --danger-soft: #fbeceb;
+  --danger-hover: #a8302c;
+  --focus-strong: #2c6a4d;
+  --mode-open-hunt: #e2f3eb;
+  --mode-open-hunt-hover: #cdebdc;
+  --mode-on-open-hunt: #2c6a4d;
+  --mode-sequential: #dcd6ee;
+  --mode-sequential-hover: #cbc3e6;
+  --mode-on-sequential: #4333a5;
   /* ===== Validation Colors ===== */
   --danger: #c0392b;
   --danger-ring: rgba(192, 57, 43, 0.12);
