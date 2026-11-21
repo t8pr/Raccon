@@ -60,6 +60,13 @@ if (typeof window.IntersectionObserver === "undefined") {
 // صفحة الأدمن ترجع لأعلى الصفحة عند تغيير الصفحة؛ jsdom ما ينفذ التمرير
 window.scrollTo = () => {};
 
+// قائمة الترتيب (Radix Select) تستخدم pointer capture، وjsdom ما يوفرها
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+  Element.prototype.setPointerCapture = () => {};
+  Element.prototype.releasePointerCapture = () => {};
+}
+
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = function scrollIntoView() {};
 }

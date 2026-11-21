@@ -39,7 +39,8 @@ describe("الروابط حسب الدور", () => {
     renderNavbar();
 
     await screen.findByText("إدارة التجارب");
-    expect(linkNames()).toEqual(["الرئيسية", "إدارة التجارب", "المتجر"]);
+    // الأدمن عنده كل صفحات المستخدم + صفحات الإدارة
+    expect(linkNames()).toEqual(["الرئيسية", "التجارب", "المتجر", "إدارة التجارب"]);
     expect(screen.getByText("إدارة المستخدمين")).toHaveAttribute("aria-disabled", "true");
   });
 

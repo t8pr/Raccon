@@ -76,3 +76,46 @@
       animation: none;
   }
 }
+
+/* ---------- hover + keyboard focus (Figma: 02 · Button / Core) ---------- */
+.ui-button {
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.2s ease;
+}
+.ui-button--primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  box-shadow: var(--shadow-hover);
+}
+/* outline keeps its white background, only the shadow appears */
+.ui-button--outline:hover:not(:disabled) {
+  box-shadow: var(--shadow-hover);
+}
+.ui-button--tertiary:hover:not(:disabled) {
+  background: var(--hover-subtle);
+  box-shadow: var(--shadow-hover);
+}
+.ui-button--secondary:hover:not(:disabled) {
+  background: var(--accent-soft);
+  box-shadow: var(--shadow-hover);
+}
+.ui-button--danger:hover:not(:disabled) {
+  background: var(--danger-hover);
+  box-shadow: var(--shadow-hover);
+}
+.ui-button--accent:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-hover);
+}
+.ui-button:focus-visible {
+  outline: 2px solid var(--focus-strong);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-button {
+    transition: none;
+  }
+}

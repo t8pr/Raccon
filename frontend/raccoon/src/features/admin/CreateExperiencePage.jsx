@@ -114,7 +114,10 @@ export default function CreateExperiencePage() {
           }}
         >
           {/* ---------- card 1: experience data ---------- */}
-          <section className="admin-card" aria-labelledby="exp-data-title">
+          <section
+            className={`admin-card ${isSeq ? "admin-card--seq" : "admin-card--open"}`}
+            aria-labelledby="exp-data-title"
+          >
             <h2 id="exp-data-title">بيانات التجارب</h2>
             <p className="admin-card__sub">تحدد طريقة اللعب وعدد القطع في التجربة.</p>
 
@@ -212,7 +215,10 @@ export default function CreateExperiencePage() {
           </section>
 
           {/* ---------- card 2: store preview ---------- */}
-          <section className="admin-card admin-preview" aria-labelledby="preview-title">
+          <section
+            className={`admin-card admin-preview ${isSeq ? "admin-card--seq" : "admin-card--open"}`}
+            aria-labelledby="preview-title"
+          >
             <div className="admin-preview__text">
               <h2 id="preview-title">كذا بتطلع في المتجر</h2>
               <p className="admin-card__sub">
@@ -250,7 +256,9 @@ export default function CreateExperiencePage() {
 
           {errorMessage && <InlineMessage type="error" message={errorMessage} />}
 
-          <div className="admin-create__bar">
+          <div
+            className={`admin-create__bar ${isSeq ? "admin-create__bar--seq" : "admin-create__bar--open"}`}
+          >
             <button type="button" className="admin-create__cancel" onClick={cancel}>
               إلغاء
             </button>
