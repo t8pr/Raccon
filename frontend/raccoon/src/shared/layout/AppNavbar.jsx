@@ -9,17 +9,19 @@ import { avatarImages } from "../constants/avatarImages";
 
 // Each role sees its own pages
 // "disabled" = page not built yet → shown as «قريبًا» instead of a dead link (cheated from Laila)
+const userPages = [
+  { label: "الرئيسية", to: "/home", end: true },
+  { label: "التجارب", to: "/packages" },
+  { label: "المتجر", to: "/store" },
+];
+
 const navigationByRole = {
-  user: [
-    { label: "الرئيسية", to: "/home", end: true },
-    { label: "التجارب", to: "/packages" },
-    { label: "المتجر", to: "/store" },
-  ],
+  user: userPages,
+  // admin = everything a user has (incl. their own packages to claim and play) + the admin pages
   admin: [
-    { label: "الرئيسية", to: "/home", end: true },
+    ...userPages,
     { label: "إدارة التجارب", to: "/admin/experiences" },
     { label: "إدارة المستخدمين", to: "/admin/users", disabled: true },
-    { label: "المتجر", to: "/store" },
   ],
 };
 
