@@ -1,0 +1,18 @@
+/* ---------- "أو" divider ---------- */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: rgba(27, 20, 66, 0.6);
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line-strong);
+}
+

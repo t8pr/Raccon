@@ -1,0 +1,69 @@
+/* Google button — Figma: Button / Outline · lg */
+/* ---------- Google button (top of login/register) ----------
+   Figma: Button / Outline · lg — default / hover / focus / disabled / loading.
+   Google's real button sits invisible on top (.google-auth__hit), so hover and
+   focus are read from the wrapper (:hover / :focus-within). */
+.google-auth {
+  position: relative;
+  width: 100%;
+}
+.google-auth .google-auth__button {
+  min-height: 48px;
+  gap: 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.google-auth .google-auth__button > span:last-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+/* hover */
+.google-auth:hover .google-auth__button {
+  background: #e6f2ec;
+}
+/* focus (keyboard focus lands on Google's button inside the wrapper) */
+.google-auth:focus-within .google-auth__button {
+  border: 2px solid var(--primary);
+  background: var(--surface);
+}
+/* disabled (no client id yet) */
+.google-auth--off .google-auth__button,
+.google-auth--off:hover .google-auth__button {
+  border-color: var(--line);
+  background: var(--surface);
+  color: rgba(27, 20, 66, 0.35);
+  opacity: 1;
+  cursor: not-allowed;
+}
+.google-auth--off .google-auth__logo {
+  opacity: 0.35;
+}
+/* loading (token sent to backend) */
+.google-auth--loading .google-auth__button {
+  opacity: 1;
+  cursor: progress;
+}
+.google-auth__logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+/* Google's real button: invisible, stretched over ours, takes the click */
+.google-auth__hit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.01;
+  overflow: hidden;
+}
+.google-auth__hit > div {
+  transform: scaleY(1.35);
+}
+
