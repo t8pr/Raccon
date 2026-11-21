@@ -7,7 +7,12 @@ const empty = { tag_id: "t2", is_configured: false };
 // الحالة الافتراضية: مسودة، قطعة مختارة غير محفوظة، لا شيء يحمّل
 function permissions({ event, ...overrides } = {}) {
   return getPermissions({
-    event: { status: "draft", edits_remaining: 3, tags: [configured, empty], ...event },
+    event: {
+      status: "draft",
+      edits_remaining: 3,
+      tags: [configured, empty],
+      ...event,
+    },
     selectedTag: empty,
     isEditing: false,
     hasChanges: false,
@@ -42,7 +47,10 @@ describe("حسب حالة الجولة", () => {
   });
 
   test("متوقفة بدون تعديلات متبقية: ما فيه تعديل", () => {
-    const p = permissions({ event: { status: "paused", edits_remaining: 0 }, isEditing: true });
+    const p = permissions({
+      event: { status: "paused", edits_remaining: 0 },
+      isEditing: true,
+    });
 
     expect(p.canStartEditing).toBe(false);
     expect(p.canRequestEdit).toBe(false);
@@ -55,8 +63,12 @@ describe("حسب حالة الجولة", () => {
     expect(permissions(live).isLive).toBe(true);
     expect(permissions(live).canCustomize).toBe(false);
     expect(permissions(live).canChangeRoundStatus).toBe(true);
-    expect(permissions({ ...live, isSaving: true }).canChangeRoundStatus).toBe(false);
-    expect(permissions({ ...live, isStarting: true }).canChangeRoundStatus).toBe(false);
+    expect(permissions({ ...live, isSaving: true }).canChangeRoundStatus).toBe(
+      false,
+    );
+    expect(
+      permissions({ ...live, isStarting: true }).canChangeRoundStatus,
+    ).toBe(false);
   });
 });
 
@@ -64,7 +76,9 @@ describe("عدّ القطع", () => {
   test("configuredCount و allTagsReady", () => {
     expect(permissions().configuredCount).toBe(1);
     expect(permissions().allTagsReady).toBe(false);
-    expect(permissions({ event: { tags: [configured] } }).allTagsReady).toBe(true);
+    expect(permissions({ event: { tags: [configured] } }).allTagsReady).toBe(
+      true,
+    );
   });
 
   test("جولة بلا قطع ليست جاهزة", () => {
@@ -72,14 +86,10 @@ describe("عدّ القطع", () => {
   });
 });
 
-describe("canSaveTag", () => {
-  test("قطعة ما انحفظت قبل تنحفظ حتى بدون تعديل", () => {
-    expect(permissions().canSaveTag).toBe(true);
-  });
-
-  test("قطعة محفوظة تحتاج تعديل", () => {
-    expect(permissions({ selectedTag: configured }).canSaveTag).toBe(false);
-    expect(permissions({ selectedTag: configured, hasChanges: true }).canSaveTag).toBe(true);
+describe("canSave", () => {
+  test("متاح دائمًا وقت التخصيص، حتى بدون تعديل وللقطعة المحفوظة", () => {
+    expect(permissions().canSave).toBe(true);
+    expect(permissions({ selectedTag: configured }).canSave).toBe(true);
   });
 
   test.each([
@@ -88,24 +98,7 @@ describe("canSaveTag", () => {
     ["الصورة تتجهز", { isPreparingImage: true }],
     ["التخصيص مقفل", { event: { status: "live" } }],
   ])("ممنوع: %s", (_, overrides) => {
-    expect(permissions(overrides).canSaveTag).toBe(false);
-  });
-});
-
-describe("canSaveAllTags", () => {
-  test("مسموح في الحالة العادية", () => {
-    expect(permissions().canSaveAllTags).toBe(true);
-  });
-
-  test.each([
-    ["بلا قطع", { event: { tags: [] } }],
-    ["مدة تجميد غلط", { freezeIsValid: false }],
-    ["الصورة تتجهز", { isPreparingImage: true }],
-    ["أثناء الحفظ", { isSaving: true }],
-    ["أثناء البدء", { isStarting: true }],
-    ["أثناء التحميل", { isFetching: true }],
-  ])("ممنوع: %s", (_, overrides) => {
-    expect(permissions(overrides).canSaveAllTags).toBe(false);
+    expect(permissions(overrides).canSave).toBe(false);
   });
 });
 
@@ -114,7 +107,10 @@ describe("بدء الجولة (canChangeRoundStatus لغير الشغّالة)",
 
   test("مسموح لما كل القطع محفوظة", () => {
     expect(permissions(ready).canChangeRoundStatus).toBe(true);
-    expect(permissions({ event: { status: "paused", tags: [configured] } }).canChangeRoundStatus).toBe(true);
+    expect(
+      permissions({ event: { status: "paused", tags: [configured] } })
+        .canChangeRoundStatus,
+    ).toBe(true);
   });
 
   test("ممنوع إذا فيه قطعة ما انحفظت", () => {
@@ -123,13 +119,16 @@ describe("بدء الجولة (canChangeRoundStatus لغير الشغّالة)",
 
   test.each([
     ["تعديلات معلّقة", { hasChanges: true }],
+    ["حفظ مؤقت ما انرسل", { hasStaged: true }],
     ["وضع التعديل", { isEditing: true }],
     ["أثناء الحفظ", { isSaving: true }],
     ["أثناء البدء", { isStarting: true }],
     ["الصورة تتجهز", { isPreparingImage: true }],
     ["أثناء التحميل", { isFetching: true }],
   ])("ممنوع: %s", (_, overrides) => {
-    expect(permissions({ ...ready, ...overrides }).canChangeRoundStatus).toBe(false);
+    expect(permissions({ ...ready, ...overrides }).canChangeRoundStatus).toBe(
+      false,
+    );
   });
 });
 

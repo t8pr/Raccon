@@ -219,6 +219,25 @@
   outline-offset: 2px;
 }
 
+/* محفوظة مؤقتًا في وضع تعديل الباقة: تنتظر «حفظ الجميع» */
+
+.customization-view
+  .class-tag--staged:not(.class-tag--current)
+  .class-tag__circle {
+  border: 1.5px dashed var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* المرور بالماوس على أي قطعة قابلة للضغط */
+
+@media (hover: hover) {
+  .customization-view .class-tag:not(:disabled):hover .class-tag__circle {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+}
+
 .customization-view .class-tag__label {
   min-height: 15px;
   color: var(--accent);
@@ -343,14 +362,23 @@
   display: none;
 }
 
+/* زري الجولة جنب بعض في كل المقاسات: عمودين بنفس العرض */
 .customization-view .Round-settings__actions {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
 .customization-view .Round-settings__actions .ui-button {
   width: 100%;
+  /* العمود الجانبي ضيق: حشو أصغر عشان «تعديل الباقة» يبقى سطر واحد */
+  padding-inline: 12px;
+}
+
+/* «إنهاء الجولة»: إطار ونص أحمر بدل خلفية حمراء، مثل «احذف حسابي» */
+.customization-view .Round-settings__actions .round-stop {
+  border-color: var(--danger);
+  color: var(--danger);
 }
 
 .customization-view .customization-note {
@@ -769,7 +797,12 @@
     gap: 24px;
   }
 
+  /* العنوان يمين والشارة يسار في نفس السطر */
   .customization-view .customization-editor__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
     min-height: 0;
     padding-inline-end: 0;
   }
@@ -780,7 +813,7 @@
 
   .customization-view .customization-editor__edits {
     position: static;
-    margin-top: 12px;
+    flex-shrink: 0;
   }
 
   .customization-view .trap-field__options {
@@ -803,8 +836,20 @@
     flex-wrap: wrap;
   }
 
+  /* أزرار الحفظ والإلغاء: سطر واحد، كل زر عمود بنفس العرض (2 أو 3 حسب الموجود) */
+  .customization-view .customization-editor__actions {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
   .customization-view .customization-editor__actions .ui-button {
     width: 100%;
+    padding-inline: 8px;
+    font-size: 14px;
+    line-height: 1.3;
+    text-align: center;
   }
 }
 
@@ -815,6 +860,14 @@
 }
 
 /* Image selection: one icon action and a concise file-size hint. */
+/* أيقونتا الصورة (حذف واستبدال): شكلهما من .hint-image-picker__button نفسه */
+.customization-view .hint-image-actions {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 12px;
+}
+
 .customization-view .hint-image-picker {
   display: flex;
   flex-direction: column;
@@ -902,6 +955,17 @@
 }
 .customization-heading .event-name-action > span {
   display: inline-flex;
+}
+
+/* زر القلم بدون إطار؛ يظهر له خلفية خفيفة عند المرور، وحلقة التركيز باقية للكيبورد */
+.customization-heading .event-name-edit {
+  border-color: transparent;
+}
+
+@media (hover: hover) {
+  .customization-heading .event-name-edit:hover {
+    background: var(--accent-soft);
+  }
 }
 @media (max-width: 599px) {
   .customization-heading .event-name-row {

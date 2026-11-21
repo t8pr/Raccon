@@ -1,17 +1,21 @@
 import ConfirmDialog from "../../../shared/ui/ConfirmDialog/ConfirmDialog";
 
-// نافذة تأكيد واحدة لثلاثة إجراءات في صفحة التخصيص.
-// action: null (مغلقة) | "saveAll" | "stopRound" | "edit"
+// نافذة تأكيد واحدة لكل إجراءات صفحة التخصيص.
+// action: null (مغلقة) | "saveAll" | "cancelEdit" | "stopRound" | "edit"
 function getCopy(action, { status, editsRemaining }) {
+  // الحفظ النهائي (زر «حفظ» بدون تعديل على القطعة الحالية): نفس السؤال في كل الحالات
   if (action === "saveAll") {
-    const editCost =
-      status === "paused"
-        ? ` سيُستهلك تعديل واحد عند نجاح الحفظ. التعديلات المتاحة: ${editsRemaining}.${editsRemaining === 1 ? " هذا آخر تعديل متاح." : ""}`
-        : "";
-
     return {
-      title: "حفظ جميع القطع",
-      description: `هل أنت متأكد من حفظ جميع القطع، بما فيها الفارغة؟ سيتم حفظ تغييرات القطعة الحالية مع إعدادات بقية القطع.${editCost}`,
+      title: status === "paused" ? "حفظ التعديلات" : "حفظ جميع القطع",
+      description: "هل ترغب في المتابعة وحفظ التعديلات؟",
+    };
+  }
+
+  // «إلغاء التعديل» وفيه تعديلات ما انرسلت
+  if (action === "cancelEdit") {
+    return {
+      title: "إلغاء التعديل",
+      description: "هل ترغب في إلغاء التعديل؟ التعديلات اللي ما انحفظت بتروح.",
     };
   }
 

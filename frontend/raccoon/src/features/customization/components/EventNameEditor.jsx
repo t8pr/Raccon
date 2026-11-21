@@ -68,7 +68,7 @@ export default function EventNameEditor({ title, rename }) {
           <button
             ref={rename.editButtonRef}
             type="button"
-            className="ui-button ui-button--outline event-name-action"
+            className="ui-button ui-button--outline event-name-action event-name-edit"
             aria-label="تعديل اسم التجربة"
             title="تعديل اسم التجربة"
             onClick={() => rename.start(title)}

@@ -61,29 +61,29 @@
 
 @media (max-width: 1100px) {
   .packages-page__grid {
-      gap: 16px;
+    gap: 16px;
   }
 }
 
 @media (max-width: 1023px) {
   .packages-page__grid {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 639px) {
   .packages-page {
-      width: calc(100% - 32px);
-      padding-block: 20px 32px;
+    width: calc(100% - 32px);
+    padding-block: 20px 32px;
   }
 
   .packages-page__header h1 {
-      font-size: 36px;
+    font-size: 36px;
   }
 
   .packages-page__grid {
-      grid-template-columns: minmax(0, 1fr);
-      gap: 20px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
   }
 }
 
@@ -111,6 +111,16 @@
 .event-pack--open {
   --event-bg: var(--mint);
   --event-color: var(--night);
+}
+/* طريقة اللعب غير معروفة: لون محايد بإطار، عشان ما يوحي إنها تسلسلي أو صيد مفتوح */
+.event-pack--unknown {
+  --event-bg: var(--surface);
+  --event-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+.event-pack--unknown .event-pack__mode {
+  background: var(--canvas);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 .event-pack__heading {
   display: flex;

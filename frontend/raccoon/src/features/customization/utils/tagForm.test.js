@@ -27,8 +27,16 @@ describe("getTrapType", () => {
 describe("getSavedTagForm", () => {
   test("تلميح بصورة", () => {
     expect(
-      getSavedTagForm({ tag_type: "clue", content: { hint: "تحت الكرسي", image: "https://x/a.png" } }),
-    ).toEqual({ hint: "تحت الكرسي", image: "https://x/a.png", trap: "none", freezeSeconds: 60 });
+      getSavedTagForm({
+        tag_type: "clue",
+        content: { hint: "تحت الكرسي", image: "https://x/a.png" },
+      }),
+    ).toEqual({
+      hint: "تحت الكرسي",
+      image: "https://x/a.png",
+      trap: "none",
+      freezeSeconds: 60,
+    });
   });
 
   test("فخ تجميد يحتفظ بمدته", () => {
@@ -48,22 +56,34 @@ describe("getSavedTagForm", () => {
 describe("buildTagContent", () => {
   test("الفخاخ", () => {
     expect(buildTagContent({ trap: "boom" })).toEqual({ boom: 1 });
-    expect(buildTagContent({ trap: "freeze", freezeSeconds: "45" })).toEqual({ freeze: 45 });
+    expect(buildTagContent({ trap: "freeze", freezeSeconds: "45" })).toEqual({
+      freeze: 45,
+    });
     expect(buildTagContent({ trap: "choose" })).toEqual({ choose: true });
   });
 
   test("تلميح مع صورة وبدونها", () => {
-    expect(buildTagContent({ trap: "none", hint: "عند الباب", imageUrl: "https://x/a.png" })).toEqual({
+    expect(
+      buildTagContent({
+        trap: "none",
+        hint: "عند الباب",
+        imageUrl: "https://x/a.png",
+      }),
+    ).toEqual({
       hint: "عند الباب",
       image: "https://x/a.png",
     });
-    expect(buildTagContent({ trap: "none", hint: "عند الباب", imageUrl: "" })).toEqual({
+    expect(
+      buildTagContent({ trap: "none", hint: "عند الباب", imageUrl: "" }),
+    ).toEqual({
       hint: "عند الباب",
     });
   });
 
   test("الفخ يتجاهل التلميح والصورة", () => {
-    expect(buildTagContent({ trap: "boom", hint: "x", imageUrl: "https://x/a.png" })).toEqual({ boom: 1 });
+    expect(
+      buildTagContent({ trap: "boom", hint: "x", imageUrl: "https://x/a.png" }),
+    ).toEqual({ boom: 1 });
   });
 });
 
@@ -88,19 +108,25 @@ describe("buildAllTagsConfig", () => {
     { tag_id: "t2", tag_type: "trap", content: { boom: 1 } },
     { tag_id: "t3", tag_type: null, content: null },
   ];
-  const selected = { tag_id: "t1", tag_type: "clue", content: { hint: "جديد" } };
 
-  test("القطعة المختارة بالإعداد الجديد، والباقي كما هو، والفاضية تلميح فارغ", () => {
-    expect(buildAllTagsConfig(tags, selected)).toEqual([
-      selected,
+  test("كل القطع بإعدادها، والفاضية تلميح فارغ", () => {
+    expect(buildAllTagsConfig(tags)).toEqual([
+      { tag_id: "t1", tag_type: "clue", content: { hint: "قديم" } },
       { tag_id: "t2", tag_type: "trap", content: { boom: 1 } },
       { tag_id: "t3", tag_type: "clue", content: { hint: "" } },
     ]);
   });
 
   test("ينسخ المحتوى بدل ما يشارك نفس الكائن", () => {
-    const result = buildAllTagsConfig(tags, selected);
+    expect(buildAllTagsConfig(tags)[1].content).not.toBe(tags[1].content);
+  });
 
-    expect(result[1].content).not.toBe(tags[1].content);
+  test("يتجاهل الحقول الزايدة (مثل isStaged و is_configured)", () => {
+    const staged = [
+      { ...tags[0], is_configured: true, isStaged: true, sequence_num: 1 },
+    ];
+    expect(buildAllTagsConfig(staged)).toEqual([
+      { tag_id: "t1", tag_type: "clue", content: { hint: "قديم" } },
+    ]);
   });
 });

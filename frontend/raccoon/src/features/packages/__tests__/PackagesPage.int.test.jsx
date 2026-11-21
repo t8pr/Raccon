@@ -2,7 +2,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse, delay } from "msw";
 import { Route, Routes } from "react-router-dom";
-import { expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { server } from "../../../test/server";
 import { API } from "../../../test/handlers";
@@ -28,26 +28,55 @@ const events = [
   makeEvent({ id: "e3", title: "حديقة", mode: "open", tags_count: null }),
 ];
 
-const cardTitles = () => screen.getAllByRole("article").map((card) => card.querySelector("h2").textContent);
+const cardTitles = () =>
+  screen
+    .getAllByRole("article")
+    .map((card) => card.querySelector("h2").textContent);
 
 test("يعرض الجولات كبطاقات بالاسم والطريقة وعدد القطع", async () => {
   server.use(http.get(`${API}/events`, () => HttpResponse.json(events)));
   renderPackages();
 
-  expect(await screen.findByRole("article", { name: "مكتب" })).toHaveTextContent("تسلسلي");
+  expect(
+    await screen.findByRole("article", { name: "مكتب" }),
+  ).toHaveTextContent("تسلسلي");
   expect(cardTitles()).toEqual(["مكتب", "بدون اسم", "حديقة"]);
   expect(screen.getByRole("article", { name: "حديقة" })).toHaveTextContent("—");
 });
 
+describe("لون البطاقة حسب طريقة اللعب", () => {
+  test.each([
+    ["seq", "event-pack--seq", "تسلسلي"],
+    ["open", "event-pack--open", "صيد مفتوح"],
+    [null, "event-pack--unknown", "غير محدد"],
+    ["weird", "event-pack--unknown", "غير محدد"],
+  ])("%s", async (mode, tone, label) => {
+    server.use(
+      http.get(`${API}/events`, () =>
+        HttpResponse.json([makeEvent({ title: "جولة", mode })]),
+      ),
+    );
+    renderPackages();
+
+    const card = await screen.findByRole("article", { name: "جولة" });
+    expect(card).toHaveClass(tone);
+    expect(card).toHaveTextContent(label);
+  });
+});
+
 test("الفلتر حسب طريقة اللعب، وفلتر بلا نتائج", async () => {
-  server.use(http.get(`${API}/events`, () => HttpResponse.json(events.slice(1))));
+  server.use(
+    http.get(`${API}/events`, () => HttpResponse.json(events.slice(1))),
+  );
   renderPackages();
   await screen.findByRole("article", { name: "حديقة" });
 
   await userEvent.click(screen.getByRole("button", { name: "تسلسلي" }));
 
   expect(screen.queryByRole("article")).not.toBeInTheDocument();
-  expect(screen.getByText("لا توجد حزم مطابقة لهذا الفلتر.")).toBeInTheDocument();
+  expect(
+    screen.getByText("لا توجد حزم مطابقة لهذا الفلتر."),
+  ).toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "صيد مفتوح" }));
   expect(cardTitles()).toEqual(["بدون اسم", "حديقة"]);
@@ -57,7 +86,9 @@ test("«تخصيص» يفتح صفحة الجولة", async () => {
   server.use(http.get(`${API}/events`, () => HttpResponse.json(events)));
   const { location } = renderPackages();
 
-  await userEvent.click(await screen.findByRole("button", { name: "تخصيص حديقة" }));
+  await userEvent.click(
+    await screen.findByRole("button", { name: "تخصيص حديقة" }),
+  );
 
   expect(await screen.findByText("صفحة التخصيص")).toBeInTheDocument();
   expect(location.current.pathname).toBe("/customization/e3");
@@ -67,8 +98,12 @@ test("بدون جولات: دعوة للمتجر", async () => {
   server.use(http.get(`${API}/events`, () => HttpResponse.json([])));
   renderPackages();
 
-  expect(await screen.findByText("لا توجد باقات مرتبطة بحسابك حاليًا.")).toBeInTheDocument();
-  expect(screen.queryByRole("group", { name: "طريقة اللعب" })).not.toBeInTheDocument();
+  expect(
+    await screen.findByText("لا توجد باقات مرتبطة بحسابك حاليًا."),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("group", { name: "طريقة اللعب" }),
+  ).not.toBeInTheDocument();
 
   await userEvent.click(screen.getByRole("button", { name: "استكشف الحزم" }));
   expect(await screen.findByText("صفحة المتجر")).toBeInTheDocument();
@@ -90,15 +125,21 @@ test("فشل الجلب ثم «إعادة المحاولة»", async () => {
   server.use(
     http.get(`${API}/events`, () => {
       attempts += 1;
-      return attempts === 1 ? HttpResponse.json({}, { status: 500 }) : HttpResponse.json(events);
+      return attempts === 1
+        ? HttpResponse.json({}, { status: 500 })
+        : HttpResponse.json(events);
     }),
   );
   renderPackages();
 
-  expect(await screen.findByRole("alert")).toHaveTextContent("تعذر تحميل باقاتك.");
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "تعذر تحميل باقاتك.",
+  );
   await userEvent.click(screen.getByRole("button", { name: "إعادة المحاولة" }));
 
-  expect(await screen.findByRole("article", { name: "مكتب" })).toBeInTheDocument();
+  expect(
+    await screen.findByRole("article", { name: "مكتب" }),
+  ).toBeInTheDocument();
 });
 
 test("زائر: زر تسجيل الدخول", async () => {

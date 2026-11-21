@@ -10,6 +10,8 @@ export default function ClassTag({
   number,
   configured = false,
   selected = false,
+  editing = false,
+  staged = false,
   trapType = "none",
   disabled = false,
   onClick,
@@ -20,6 +22,7 @@ export default function ClassTag({
     "class-tag",
     configured ? "class-tag--configured" : "",
     selected ? "class-tag--current" : "",
+    staged ? "class-tag--staged" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -33,7 +36,7 @@ export default function ClassTag({
       aria-pressed={selected}
       aria-label={`القطعة ${number}${
         TrapIcon ? "، فيها فخ" : ""
-      }، ${configured ? "جاهزة" : "غير محفوظة"}`}
+      }، ${staged ? "معدّلة ولم تُحفظ" : configured ? "جاهزة" : "غير محفوظة"}`}
     >
       <span className="class-tag__circle">
         {String(number).padStart(2, "0")}
@@ -45,7 +48,9 @@ export default function ClassTag({
         )}
       </span>
 
-      <span className="class-tag__label">{selected ? "قيد التعديل" : ""}</span>
+      <span className="class-tag__label">
+        {editing ? "قيد التعديل" : staged ? "معدّلة" : ""}
+      </span>
     </button>
   );
 }

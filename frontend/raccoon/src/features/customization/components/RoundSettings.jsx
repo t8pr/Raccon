@@ -21,7 +21,8 @@ export default function RoundSettings({
           onClick={onToggleRound}
           loading={isStarting}
           disabled={!canChangeRoundStatus}
-          variant={isLive ? "danger" : "primary"}
+          variant={isLive ? "outline" : "primary"}
+          className={isLive ? "round-stop" : ""}
         >
           {isLive ? "إنهاء الجولة" : "ابدأ الجولة"}
         </Button>

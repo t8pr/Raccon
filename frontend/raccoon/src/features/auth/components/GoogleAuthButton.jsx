@@ -12,12 +12,14 @@ function useSlotWidth() {
   const [width, setWidth] = useState(0);
 
   useEffect(() => {
-    if (!ref.current) return undefined;
+    // نحفظ العنصر نفسه: ref.current يصير null لما الصفحة تتغيّر، وممكن ResizeObserver ينادي بعدها
+    const element = ref.current;
+    if (!element) return undefined;
     const update = () =>
-      setWidth(Math.min(400, Math.floor(ref.current.offsetWidth)));
+      setWidth(Math.min(400, Math.floor(element.offsetWidth)));
     update();
     const observer = new ResizeObserver(update);
-    observer.observe(ref.current);
+    observer.observe(element);
     return () => observer.disconnect();
   }, []);
 

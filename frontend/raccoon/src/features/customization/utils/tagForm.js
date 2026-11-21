@@ -46,16 +46,11 @@ export function buildTagConfig(tag, { trap, hint, imageUrl, freezeSeconds }) {
   };
 }
 
-// «حفظ الكل»: القطعة الحالية بإعدادها الجديد، وبقية القطع بإعدادها المحفوظ.
-// القطع غير المجهّزة تُحفظ كتلميح فارغ.
-export function buildAllTagsConfig(tags, selectedConfig) {
-  return tags.map((tag) =>
-    tag.tag_id === selectedConfig.tag_id
-      ? selectedConfig
-      : {
-          tag_id: tag.tag_id,
-          tag_type: tag.tag_type || "clue",
-          content: tag.content ? { ...tag.content } : { hint: "" },
-        },
-  );
+// الحفظ النهائي: كل القطع بإعدادها (المؤقت مطبّق فوقها مسبقًا). غير المجهّزة تلميح فارغ.
+export function buildAllTagsConfig(tags) {
+  return tags.map((tag) => ({
+    tag_id: tag.tag_id,
+    tag_type: tag.tag_type || "clue",
+    content: tag.content ? { ...tag.content } : { hint: "" },
+  }));
 }

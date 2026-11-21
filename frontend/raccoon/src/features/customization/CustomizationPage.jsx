@@ -15,6 +15,7 @@ import EventNameEditor from "./components/EventNameEditor";
 import { useEventDetails } from "./hooks/useEventDetails";
 import { useTagForm } from "./hooks/useTagForm";
 import { useTagSaving } from "./hooks/useTagSaving";
+import { useStagedEdits } from "./hooks/useStagedEdits";
 import { useRoundStatus } from "./hooks/useRoundStatus";
 import { useEventRename } from "./hooks/useEventRename";
 import { getPermissions } from "./utils/permissions";
@@ -25,7 +26,8 @@ import { getPermissions } from "./utils/permissions";
   مصادر المنطق:
     useEventDetails  بيانات الجولة من الخادم
     useTagForm       نموذج القطعة المختارة (المحفوظ مقابل المعدَّل)
-    useTagSaving     الحفظ ووضع التعديل وتحذير آخر تعديل
+    useStagedEdits   الحفظ المؤقت للقطع (لين الحفظ النهائي)
+    useTagSaving     الحفظ المؤقت، والحفظ النهائي، ووضع التعديل
     useRoundStatus   بدء الجولة وإيقافها
     useEventRename   تعديل اسم الجولة من العنوان
     getPermissions   ما المسموح الآن
@@ -39,7 +41,11 @@ export default function CustomizationPage() {
   const event = eventQuery.data;
   const supportsTraps = event?.mode === "open";
 
-  const tagForm = useTagForm(event?.tags ?? [], supportsTraps);
+  // القطع مع التعديلات المؤقتة فوقها: النموذج والقائمة يشوفونها كأنها محفوظة
+  const staging = useStagedEdits();
+  const tags = staging.applyTo(event?.tags ?? []);
+
+  const tagForm = useTagForm(tags, supportsTraps);
   const round = useRoundStatus({ eventId, refetch: eventQuery.refetch });
   const rename = useEventRename(eventId);
   const saving = useTagSaving({
@@ -48,9 +54,10 @@ export default function CustomizationPage() {
     refetch: eventQuery.refetch,
     tagForm,
     supportsTraps,
+    staging,
   });
 
-  // نافذة التأكيد المفتوحة: null | "saveAll" | "stopRound" | "edit"
+  // نافذة التأكيد المفتوحة: null | "saveAll" | "cancelEdit" | "stopRound" | "edit"
   const [confirmation, setConfirmation] = useState(null);
 
   let content;
@@ -88,6 +95,7 @@ export default function CustomizationPage() {
     selectedTag,
     isEditing: saving.isEditing,
     hasChanges: tagForm.hasChanges,
+    hasStaged: staging.count > 0,
     freezeIsValid: tagForm.freezeIsValid,
     isPreparingImage: tagForm.isPreparingImage,
     isSaving: saving.isSaving,
@@ -95,17 +103,19 @@ export default function CustomizationPage() {
     isFetching: eventQuery.isFetching,
   });
 
-  function save({ saveAll = false, lastEditConfirmed = false } = {}) {
-    saving.saveTags({
-      allowed:
-        can.canCustomize &&
-        Boolean(selectedTag) &&
-        (saveAll ? can.canSaveAllTags : can.canSaveTag) &&
-        !tagForm.isPreparingImage &&
-        !round.isStarting,
-      saveAll,
-      lastEditConfirmed,
-    });
+  /*
+    زر «حفظ» (المسودة ووضع التعديل):
+      القطعة الحالية فيها تعديل → حفظ مؤقت، ويقدر ينتقل لقطعة ثانية
+      ما فيها تعديل            → نافذة تأكيد، ثم حفظ كل القطع في طلب واحد
+  */
+  function pressSave() {
+    if (!can.canSave || can.busy) return;
+
+    if (tagForm.hasChanges) {
+      saving.stageTag({ allowed: true });
+    } else {
+      setConfirmation("saveAll");
+    }
   }
 
   function changeRoundStatus() {
@@ -136,8 +146,11 @@ export default function CustomizationPage() {
     setConfirmation(null);
 
     if (action === "saveAll") {
-      // The bulk confirmation already includes the remaining-edit warning.
-      save({ saveAll: true, lastEditConfirmed: true });
+      saving.saveAllTags({
+        allowed: can.canCustomize && !can.busy && !tagForm.hasChanges,
+      });
+    } else if (action === "cancelEdit") {
+      if (!can.busy) saving.cancelEditing();
     } else if (action === "stopRound") {
       changeRoundStatus();
     } else if (action === "edit") {
@@ -155,9 +168,13 @@ export default function CustomizationPage() {
   function cancelEditing() {
     if (can.busy) return;
 
-    if (saving.cancelEditing()) {
-      setConfirmation(null);
+    // الإلغاء يمسح الحفظ المؤقت وتعديل القطعة الحالية، فنسأل أول (نافذة تأكيد) لو فيه شي بيروح
+    if (staging.count > 0 || tagForm.hasChanges) {
+      setConfirmation("cancelEdit");
+      return;
     }
+
+    saving.cancelEditing();
   }
 
   function selectTag(tag) {
@@ -172,7 +189,6 @@ export default function CustomizationPage() {
       if (!shouldDiscard) return;
     }
 
-    saving.dismissLastEditWarning();
     tagForm.selectTag(tag.tag_id);
   }
 
@@ -212,25 +228,18 @@ export default function CustomizationPage() {
           fieldsDisabled={can.busy || !can.canCustomize}
           busy={can.busy}
           isSaving={saving.isSaving}
-          isStarting={round.isStarting}
           isEditing={saving.isEditing}
-          canSaveTag={can.canSaveTag}
-          canSaveAllTags={can.canSaveAllTags}
-          showLastEditWarning={saving.showLastEditWarning}
+          canSave={can.canSave}
           saveError={saving.saveError}
-          onSave={() => save()}
-          onSaveAll={() => setConfirmation("saveAll")}
+          onSave={pressSave}
           onCancelEditing={cancelEditing}
-          onConfirmLastEdit={() => save({ lastEditConfirmed: true })}
-          onDismissLastEdit={saving.dismissLastEditWarning}
         />
 
         <TagSelector
-          tags={event.tags}
+          tags={tags}
           selectedTagId={selectedTag.tag_id}
           configuredCount={can.configuredCount}
           canCustomize={can.canCustomize}
-          hasChanges={tagForm.hasChanges}
           disabled={can.busy}
           onSelect={selectTag}
         >

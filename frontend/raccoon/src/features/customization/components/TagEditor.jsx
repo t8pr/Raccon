@@ -1,6 +1,5 @@
 import Button from "../../../shared/ui/Button";
 import Chip from "../../../shared/ui/Chip";
-import InlineMessage from "../../../shared/ui/InlineMessage";
 import HintField from "./HintField";
 import ImageUploader from "./ImageUploader";
 import TrapField from "./TrapField";
@@ -12,6 +11,8 @@ import TrapField from "./TrapField";
   form          القيم المعروضة { hint, image, trap, freezeSeconds }
   fieldsDisabled الحقول مقفلة (جاري الحفظ، أو الباقة غير قابلة للتخصيص...)
   busy          فيه عملية جارية (حفظ / تشغيل الجولة / تجهيز صورة)
+  canSave       زر «حفظ» متاح
+  onSave        الصفحة تقرر: حفظ مؤقت (فيه تعديل) أو تأكيد الحفظ النهائي (ما فيه)
 */
 export default function TagEditor({
   eventId,
@@ -28,17 +29,11 @@ export default function TagEditor({
   fieldsDisabled,
   busy,
   isSaving,
-  isStarting,
   isEditing,
-  canSaveTag,
-  canSaveAllTags,
-  showLastEditWarning,
+  canSave,
   saveError,
   onSave,
-  onSaveAll,
   onCancelEditing,
-  onConfirmLastEdit,
-  onDismissLastEdit,
 }) {
   return (
     <section className="customization-editor">
@@ -48,11 +43,15 @@ export default function TagEditor({
         </h2>
 
         <div className="customization-editor__edits">
+          {/* .chip نوعه inline-flex، والـflex يحذف المسافات بين عناصره،
+              فنحط النص كله في span واحد عشان تبقى المسافة قبل الرقم */}
           <Chip tone="mint" size="sm">
-            التعديلات الباقية{" "}
-            <bdi dir="ltr">
-              {editsRemaining}/{maxEdits}
-            </bdi>
+            <span>
+              التعديلات الباقية{" "}
+              <bdi dir="ltr">
+                {editsRemaining}/{maxEdits}
+              </bdi>
+            </span>
           </Chip>
         </div>
       </div>
@@ -83,20 +82,8 @@ export default function TagEditor({
       )}
 
       <div className="customization-editor__actions">
-        <Button
-          onClick={onSave}
-          loading={isSaving}
-          disabled={!canSaveTag || showLastEditWarning || isStarting}
-        >
-          احفظ القطعة
-        </Button>
-
-        <Button
-          variant="outline"
-          disabled={!canSaveAllTags || showLastEditWarning}
-          onClick={onSaveAll}
-        >
-          حفظ جميع القطع
+        <Button onClick={onSave} loading={isSaving} disabled={!canSave || busy}>
+          حفظ
         </Button>
 
         {isEditing && (
@@ -105,28 +92,6 @@ export default function TagEditor({
           </Button>
         )}
       </div>
-
-      {showLastEditWarning && (
-        <div>
-          <InlineMessage
-            type="warning"
-            message="هذا آخر تعديل متاح لك. بعد الحفظ ما تقدر تعدّل أي قطعة في الباقة. تبغى تكمل؟"
-          />
-
-          <div className="customization-editor__actions">
-            <Button
-              onClick={onConfirmLastEdit}
-              disabled={!canSaveTag || isSaving || isStarting}
-            >
-              تأكيد الحفظ
-            </Button>
-
-            <Button variant="outline" onClick={onDismissLastEdit}>
-              إلغاء
-            </Button>
-          </div>
-        </div>
-      )}
 
       {saveError && <p role="alert">{saveError}</p>}
     </section>
