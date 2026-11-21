@@ -1,0 +1,195 @@
+/* ==========================================
+   ScanLayout — الهيكل الموحّد لكل شاشات المسح
+   كل الحالات تشترك في نفس الصفوف: الشارات ← العنوان ← الدائرة ← الشريط،
+   ثم يبدأ المحتوى المتغيّر (تلميح، بطاقة، خيارات) من نفس الخط.
+========================================== */
+
+.screen {
+  /* المقاسات الموحّدة: أي تعديل على مقاس أعلى الشاشة يكون هنا فقط */
+  --sc-chips-h: 36px; /* صف الشارات (محجوز حتى لو كان فارغًا) */
+  --sc-hero-gap: 24px; /* من الشارات إلى العنوان */
+  --sc-title-size: 34px;
+  --sc-title-h: 48px;
+  --sc-circle: 120px;
+  --sc-circle-gap: 28px; /* من العنوان إلى الدائرة */
+  --sc-circle-text: 48px;
+  --sc-pill-gap: 30px; /* من الدائرة إلى الشريط */
+  --sc-pill-h: 34px;
+  --sc-content-gap: 20px; /* من الشريط إلى المحتوى، وبين عناصر المحتوى */
+
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+/* الناف بار العام له هوامش للصفحات العريضة؛ هنا نضيّقه على عرض الجوال */
+.screen :global(.rac-navbar) {
+  width: calc(100% - 24px);
+  max-width: 456px;
+  margin: 12px auto 0;
+  padding: 8px 14px;
+  min-height: 56px;
+}
+
+.main {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 480px;
+  margin-inline: auto;
+  padding: 12px 16px 16px;
+}
+
+/* ---------- صف الشارات ---------- */
+.chips {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  width: 100%;
+  height: var(--sc-chips-h);
+}
+
+.chips bdi {
+  font-variant-numeric: tabular-nums;
+}
+
+/* إكليل الترتيب: تحت شارة «باقي» مباشرة */
+.rank {
+  position: absolute;
+  top: 60px;
+  inset-inline-end: 24px;
+}
+
+/* ---------- العنوان + الدائرة ---------- */
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: var(--sc-hero-gap);
+}
+
+.title {
+  height: var(--sc-title-h);
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--sc-title-size);
+  font-weight: 900;
+  line-height: var(--sc-title-h);
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.circle {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--sc-circle);
+  height: var(--sc-circle);
+  margin-top: var(--sc-circle-gap);
+  border-radius: 50%;
+  /* حلقة واحدة رفيعة حول الدائرة */
+  box-shadow:
+    0 0 0 10px var(--canvas),
+    0 0 0 11.5px var(--line-strong);
+  font-family: var(--font-display);
+  font-size: var(--sc-circle-text);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* الألوان فقط تتغيّر بين الحالات، لا المقاس ولا الموضع */
+.dark {
+  background: var(--panel-raised);
+  color: var(--on-panel);
+}
+
+.mint {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+/* ---------- الشريط تحت الدائرة ---------- */
+.pill {
+  flex-shrink: 0;
+  height: var(--sc-pill-h);
+  margin: var(--sc-pill-gap) 0 0;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  background: var(--panel-raised);
+  color: var(--on-panel);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: var(--sc-pill-h);
+  text-align: center;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- المحتوى المتغيّر ---------- */
+.content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: var(--sc-content-gap);
+}
+
+.content:empty {
+  display: none;
+}
+
+/* ---------- الأزرار: زر واحد بعرض كامل، أو زران في عمودين ---------- */
+.footer {
+  position: sticky;
+  bottom: 0;
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 480px;
+  margin-inline: auto;
+  padding: 12px 16px 20px;
+  background: var(--canvas);
+}
+
+.footer :global(.ui-button) {
+  width: 100%;
+  min-height: 52px;
+  padding-inline: 10px;
+  border-radius: var(--radius-md);
+  white-space: nowrap;
+}
+
+/* الزر الثانوي في شاشات المسح بإطار أخضر */
+.footer :global(.ui-button--outline) {
+  border: 2px solid var(--primary);
+  color: var(--ink-muted);
+}
+
+/* ---------- الشاشات القصيرة: نفس المتغيّرات بقيم أصغر ---------- */
+@media (max-height: 740px) {
+  .screen {
+    --sc-hero-gap: 10px;
+    --sc-title-size: 30px;
+    --sc-title-h: 42px;
+    --sc-circle: 100px;
+    --sc-circle-gap: 20px;
+    --sc-circle-text: 40px;
+    --sc-pill-gap: 24px;
+    --sc-content-gap: 14px;
+  }
+
+  .content {
+    gap: 12px;
+  }
+}

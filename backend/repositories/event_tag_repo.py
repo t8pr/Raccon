@@ -2,7 +2,7 @@ from sqlmodel import Session, select
 from models import EventTag
 import uuid
 from typing import List
-
+from sqlalchemy import func, or_
 
 class EventTagRepository:
     def __init__(self, session: Session):
@@ -22,3 +22,18 @@ class EventTagRepository:
     
     def add_event_tag(self, new_tag: EventTag) -> None:
         self.session.add(new_tag)
+        
+    def count_clues_status(self, event_id: uuid.UUID) -> tuple[int, int]:
+        unclaimed_condition = or_(
+            EventTag.content.is_(None),
+            func.coalesce(EventTag.content["claimed_by"].astext, "") == "",
+        )
+        statement = select(
+            func.count(EventTag.id),
+            func.count(EventTag.id).filter(unclaimed_condition),
+        ).where(
+            EventTag.event_id == event_id,
+            EventTag.tag_type == "clue",
+        )
+        total_clues, unclaimed_clues = self.session.exec(statement).one()
+        return total_clues, unclaimed_clues

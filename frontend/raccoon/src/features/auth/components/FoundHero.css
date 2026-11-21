@@ -1,0 +1,79 @@
+/* ---------- "حصلتها!" hero (arrived from a tag scan) ---------- */
+.found-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  padding: var(--space-8) var(--space-6);
+  border-radius: var(--radius-xl);
+  background: var(--panel);
+  color: var(--on-panel);
+  text-align: center;
+}
+.found-hero__badge {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-pill);
+  background: var(--mint);
+  color: var(--panel);
+  box-shadow: 0 0 0 10px rgba(198, 236, 219, 0.18);
+}
+.found-hero__title {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-display);
+  font-size: 44px;
+  line-height: 1.1;
+}
+.found-hero__subtitle {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--on-panel-muted);
+}
+@media (max-width: 767px) {
+  .found-hero {
+    min-height: 160px;
+    padding: var(--space-6) var(--space-4);
+  }
+  .found-hero__badge {
+    width: 72px;
+    height: 72px;
+  }
+  .found-hero__title {
+    font-size: 32px;
+  }
+}
+
+
+/* Same look as the scan screens: light background, mint circle, #281F63 inside */
+.found-hero {
+  background: transparent;
+  color: var(--ink);
+}
+.found-hero__badge {
+  width: 120px;
+  height: 120px;
+  border: 4px solid var(--surface);
+  background: var(--mint);
+  color: #281f63;
+  box-shadow:
+    0 0 0 14px rgba(198, 236, 219, 0.35),
+    0 12px 24px rgba(13, 10, 33, 0.18);
+}
+.found-hero__title {
+  order: -1; /* title above the circle, like حصلتها in Figma */
+  margin: 0 0 var(--space-3);
+  color: var(--surface);
+  -webkit-text-stroke: 5px var(--night);
+  paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--accent);
+}
+.found-hero__subtitle {
+  color: var(--ink-muted);
+}

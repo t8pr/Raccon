@@ -30,3 +30,15 @@ class FactoryPackResponse(BaseModel):
     mode: str
     owner_name: Optional[str] = None
     tags_to_program: List[FactoryTagView]
+
+class AdminPackDetailResponse(BaseModel):
+    pack_id: uuid.UUID
+    mode: str
+    tags_count: int
+    master_auth_hash: str
+    is_claimed: bool
+    owner_id: Optional[uuid.UUID] = None
+    owner_name: Optional[str] = None
+    owner_username: Optional[str] = None
+    owner_email: Optional[str] = None
+    owner_phone: Optional[str] = None

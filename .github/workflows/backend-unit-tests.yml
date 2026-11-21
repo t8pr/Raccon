@@ -1,0 +1,68 @@
+name: Backend tests
+
+on:
+  pull_request:
+    branches:
+      - Dev
+      - main
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: backend-unit-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      PYTHONPATH: .
+      DATABASE_URL: postgresql://test:test@localhost:5432/raccon_test
+      SECRET_KEY: ci-only-secret-key
+      RESEND_API_KEY: ci-dummydata
+      MAX_EDIT_LIMIT: "3"
+      REDIS_URL: ""
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run unit and route integration tests
+        run: python -m pytest tests -v --junitxml=test-results/backend-tests.xml
+
+      - name: Publish backend test results
+        if: ${{ !cancelled() && hashFiles('backend/test-results/*.xml') != '' }}
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: backend/test-results/*.xml
+          check_name: Backend test results
+          comment_mode: "off"
+          compare_to_earlier_commit: "false"
+          check_run: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
+          job_summary: "true"
+          test_file_prefix: +backend/
+
+      - name: Upload JUnit XML report
+        if: ${{ !cancelled() && hashFiles('backend/test-results/*.xml') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend/test-results/*.xml
+          retention-days: 14

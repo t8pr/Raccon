@@ -1,0 +1,503 @@
+/* Auth pages — Figma v3 layout overrides (loaded after the component CSS). */
+.login-page {
+  width: 100%;
+}
+
+/* Auth pages redesign (login / register / password):
+   - app navbar (rac-navbar) instead of the old bar + «مساعدة»
+   - promo side = light card with the home scan animation, no stripe pattern
+   Tokens only, solid surfaces. Loaded after global.css (AuthLayout). */
+
+/* ---------- laptop / tablet — Figma "v3 · Register/Login · 1441" ---------- */
+@media (min-width: 768px) {
+  .auth-page {
+    background: #fafcfb;
+  }
+
+  /* Nav · TopNav Desktop · Public: night, 1px mint border, radius 16, h72 */
+  .auth-page .auth-navbar {
+    display: block;
+    height: auto;
+    padding: 0;
+    background: transparent;
+  }
+  .auth-page .rac-navbar {
+    min-height: 72px;
+    margin: 24px 48px 0;
+    padding: 12px 28px 12px 16px;
+    border: 1px solid var(--mint);
+    border-radius: var(--radius-lg);
+  }
+
+  /* form column + brand panel (560px) */
+  .auth-page .auth-layout {
+    gap: 24px;
+    padding: 24px 48px 48px;
+  }
+  .auth-page .auth-layout__form {
+    align-items: center;
+    padding: 24px;
+    background: transparent;
+  }
+
+  /* Brand panel: night, radius 32, padding 64 */
+  .auth-page .auth-layout__promo {
+    justify-content: flex-start;
+    padding: 64px;
+    border: 0;
+    border-radius: 32px;
+    background: var(--night);
+    color: var(--on-panel);
+  }
+  .auth-page .auth-promo {
+    flex: 0 0 auto;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 0;
+    background: transparent;
+    color: var(--on-panel);
+  }
+
+  /* scan animation card: white, radius 32, 432 × 308 */
+  .auth-page .auth-promo__scene {
+    width: 100%;
+    max-width: 432px;
+    aspect-ratio: 432 / 308;
+    border-radius: 32px;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .auth-page .auth-promo__content {
+    max-width: 432px;
+    margin-top: 32px;
+  }
+  .auth-page .auth-promo__title {
+    margin: 0 0 24px; /* space between the title and the line under it */
+    font-size: 60px;
+    line-height: 1.15;
+    color: var(--on-panel);
+  }
+  .auth-page .auth-promo__description {
+    max-width: 420px;
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--surface);
+  }
+
+  /* register used a fixed 100dvh screen; the navbar is taller now, so let it scroll */
+  .auth-page--register {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .auth-page .auth-layout {
+    padding-inline: 24px;
+  }
+  .auth-page .rac-navbar {
+    margin-inline: 24px;
+  }
+  .auth-page .auth-layout__promo {
+    padding: 40px;
+  }
+  .auth-page .auth-promo__title {
+    font-size: 48px;
+  }
+}
+
+/* ---------- phone: keep the compact header strip, animation as the thumbnail ---------- */
+@media (max-width: 767px) {
+  .auth-page .auth-promo__scene {
+    flex: 0 0 88px;
+    width: 88px;
+    max-width: 88px;
+    aspect-ratio: 1;
+    border-radius: 16px;
+    background: var(--surface);
+  }
+
+  .auth-page .auth-promo__scene .rc-home__animation-toggle {
+    display: none;
+  }
+}
+
+/* ---------- Register: name / username stacked, email + phone side by side ---------- */
+.register-form__field-half {
+  min-width: 0;
+}
+@media (max-width: 767px) {
+  .register-form__field-half {
+    grid-column: 1 / -1;
+  }
+}
+
+/* ---------- phone: show the navbar again (it carries the login/register pills) ---------- */
+@media (max-width: 767px) {
+  .auth-page .auth-navbar {
+    display: block;
+    flex-shrink: 0;
+    height: auto;
+    padding: var(--space-3) var(--space-4) 0;
+    background: transparent;
+  }
+
+  /* حصلتها hero shrinks to the 88px thumbnail; the words move to the mobile title */
+  .auth-page .auth-promo__scene .found-hero {
+    min-height: 0;
+    padding: 0;
+    gap: 0;
+    border-radius: 16px;
+  }
+  .auth-page .auth-promo__scene .found-hero__title,
+  .auth-page .auth-promo__scene .found-hero__subtitle {
+    display: none;
+  }
+  .auth-page .auth-promo__scene .found-hero__badge {
+    width: 52px;
+    height: 52px;
+    box-shadow: 0 0 0 6px rgba(198, 236, 219, 0.18);
+  }
+  .auth-page .auth-promo__scene .found-hero__badge svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+@media (max-width: 767px) {
+  .auth-page--register > .auth-navbar {
+    padding-bottom: var(--space-4);
+  }
+}
+
+/* ---------- Register header (Figma: title 44 · gap 16 · subtitle 16) ---------- */
+.auth-page .register-form__header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 0 0 16px;
+  text-align: right;
+}
+.auth-page .register-form__title {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1.15;
+}
+.auth-page .register-form__subtitle {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+@media (min-width: 768px) {
+  .auth-page--register .register-form__header {
+    margin-bottom: 16px;
+    text-align: right;
+  }
+}
+
+/* ---------- Figma spacing: 560px panel, 16px between fields ---------- */
+@media (min-width: 1200px) {
+  .auth-page .auth-layout {
+    grid-template-columns: minmax(0, 1fr) 560px;
+  }
+}
+@media (min-width: 768px) {
+  .auth-page .register-form__fields {
+    row-gap: 16px;
+  }
+  .auth-page .auth-field {
+    gap: 6px;
+  }
+  /* the message row only takes space when there is an error to show */
+  .auth-page .auth-field__message[aria-hidden="true"] {
+    display: none;
+  }
+  .auth-page .register-form__submit {
+    margin-top: 16px;
+  }
+}
+@media (min-width: 768px) {
+  /* login: same rhythm as register (title · 16 · subtitle · 16 · Google · fields 16 apart) */
+  .auth-page .login-form__header {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin: 0 0 16px;
+  }
+  .auth-page .login-form__title,
+  .auth-page .login-form__subtitle {
+    margin: 0;
+  }
+  .auth-page .login-form__error {
+    min-height: 0;
+    margin: 0;
+  }
+  .auth-page .login-form__error:not(:empty) {
+    margin-bottom: 16px;
+  }
+  .auth-page .login-form__fields {
+    gap: 16px;
+  }
+  .auth-page .login-form__submit {
+    margin-top: 16px;
+  }
+
+  /* brand panel fills the screen under the navbar, never runs past it */
+  /* form starts 108px under the panel's top edge, like Figma */
+  .auth-page .auth-layout__form {
+    align-items: flex-start;
+    padding-top: 108px;
+  }
+  .auth-page .auth-layout__promo {
+    height: calc(100dvh - 168px);
+    min-height: 640px;
+    align-self: start;
+  }
+}
+
+
+/* login form sits in the middle of the screen height (as before the refactor) */
+@media (min-width: 768px) {
+  .auth-page .login-page {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100dvh - 152px - 108px);
+  }
+}
+
+/* ======================================================================
+   Phone + tablet, up to 1023px (Figma "v4 · Login/Register · 📱"):
+   light page · navbar pill · white hero card (animation or حصلتها) + caption
+   · then Google, «أو», fields (one per row), button. No big form title.
+   ====================================================================== */
+@media (max-width: 1023px) {
+  .auth-page {
+    background: #fafcfb;
+  }
+
+  /* navbar: dark pill, logo right, the two buttons left */
+  .auth-page .auth-navbar {
+    display: block;
+    height: auto;
+    padding: 8px 16px 0;
+    background: transparent;
+  }
+  .auth-page .auth-navbar .rac-navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 72px;
+    margin: 0;
+    padding: 12px 16px;
+    border-radius: 20px;
+  }
+  .auth-page .auth-navbar .rac-navbar__links {
+    display: none;
+  }
+
+  .auth-page .auth-layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 560px; /* tablets: keep the phone layout readable, centred */
+    margin-inline: auto;
+    padding: 16px 16px 0;
+    gap: 0;
+    direction: rtl;
+  }
+  .auth-page .login-page {
+    min-height: 0;
+  }
+  .auth-page .auth-layout__form-inner,
+  .auth-page .login-form,
+  .auth-page .register-form {
+    width: 100%;
+    max-width: none; /* form as wide as the hero card */
+  }
+
+  /* hero card */
+  .auth-page .auth-layout__promo {
+    order: -1;
+    align-self: stretch; /* the laptop rules pin it to the top-start */
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 16px 20px 20px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background: var(--surface);
+  }
+  .auth-page .auth-promo {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    min-height: 0;
+    padding: 0;
+    background: transparent;
+    direction: rtl;
+  }
+  .auth-page .auth-promo__scene {
+    flex: none;
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 318 / 273;
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .auth-page .auth-promo__content {
+    max-width: none;
+    margin: 0;
+    text-align: center;
+  }
+  .auth-page .auth-promo__mobile-title,
+  .auth-page .auth-promo__title,
+  .auth-page .auth-promo__description {
+    display: none;
+  }
+  .auth-page .auth-promo__mobile-subtitle {
+    display: block;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: rgba(27, 20, 66, 0.6);
+    text-align: center;
+  }
+
+  /* حصلتها inside the card: full hero again (no thumbnail) */
+  .auth-page .auth-promo__scene .found-hero {
+    min-height: 0;
+    padding: 8px;
+    gap: 0;
+  }
+  .auth-page .auth-promo__scene .found-hero__title {
+    display: block;
+    font-size: 48px;
+  }
+  .auth-page .auth-promo__scene .found-hero__badge {
+    width: 112px;
+    height: 112px;
+  }
+  .auth-page .auth-promo__scene .found-hero__badge svg {
+    width: 44px;
+    height: 44px;
+  }
+  .auth-page .auth-promo__scene .found-hero__subtitle {
+    display: none;
+  }
+
+  /* form */
+  .auth-page .auth-layout__form,
+  .auth-page--register .auth-layout__form {
+    margin: 0;
+    padding: 20px 0 32px;
+    background: transparent;
+    border-radius: 0;
+  }
+  .auth-page .login-form__header,
+  .auth-page .register-form__header {
+    display: none;
+  }
+  .auth-page .login-form__fields {
+    gap: 16px;
+  }
+  .auth-page .register-form__fields,
+  .auth-page--register .register-form__fields {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 16px;
+  }
+  .auth-page .register-form__field-half {
+    grid-column: 1 / -1;
+  }
+
+  /* message rows only take space when there's an error (same as laptop) */
+  .auth-page .auth-field {
+    gap: 6px;
+  }
+  .auth-page .auth-field__message[aria-hidden="true"] {
+    display: none;
+  }
+  .auth-page .login-form__error {
+    min-height: 0;
+    margin: 0;
+  }
+  .auth-page .login-form__error:not(:empty) {
+    margin-bottom: 16px;
+  }
+  .auth-page .login-form__forgot {
+    margin-top: 12px;
+  }
+  .auth-page .login-form__submit,
+  .auth-page .register-form__submit {
+    margin-top: 16px;
+  }
+  .auth-page .register-form__feedback {
+    min-height: 0;
+  }
+
+  /* register was locked to one screen height (100dvh + overflow hidden):
+     on a phone the form is taller than the screen, so let the page scroll */
+  .auth-page--register {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .auth-page--register .auth-layout,
+  .auth-page--register .auth-layout__form {
+    min-height: 0;
+    overflow: visible;
+  }
+}
+
+
+/* ======================================================================
+   Short laptop screens (1280×720, 1366×768 …): everything fits without
+   scrolling — less empty space on top, slightly smaller title and art.
+   ====================================================================== */
+@media (min-width: 1024px) and (max-height: 860px) {
+  .auth-page .auth-navbar .rac-navbar {
+    min-height: 60px;
+    margin-top: 16px;
+    padding-block: 6px;
+  }
+  .auth-page .auth-layout {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+  .auth-page .auth-layout__form {
+    padding-top: 24px;
+  }
+  .auth-page .login-page {
+    min-height: 0;
+  }
+  .auth-page .auth-layout__promo {
+    height: calc(100dvh - 124px);
+    min-height: 520px;
+    padding: 40px;
+  }
+  .auth-page .auth-promo__scene {
+    max-width: 360px;
+  }
+  .auth-page .auth-promo__title {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+  .auth-page .register-form__header,
+  .auth-page .login-form__header {
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .auth-page .register-form__title,
+  .auth-page .login-form__title {
+    font-size: 36px;
+  }
+  .auth-page .register-form__fields {
+    row-gap: 12px;
+  }
+  .auth-page .auth-divider {
+    margin: 12px 0;
+  }
+}

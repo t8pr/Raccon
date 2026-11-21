@@ -1,0 +1,385 @@
+.profile-card {
+  background: var(--surface);
+  border-radius: 24px;
+  padding: 24px 32px;
+  box-shadow: 0 14px 30px rgb(27 20 66 / 5%);
+}
+
+.profile-card h2 {
+  margin: 0;
+  font: 900 26px/1.5 var(--font-display);
+}
+
+/* تخصيص الأزرار داخل البروفايل فقط */
+.profile-page .ui-button,
+.profile-dialog .ui-button {
+  border-radius: var(--radius-pill);
+  min-height: 44px;
+  font-size: 14px;
+  padding-inline: 22px;
+  border-width: 1px;
+}
+
+.profile-page .ui-button > span,
+.profile-dialog .ui-button > span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.profile-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profile-avatar > img {
+  display: block;
+  width: 94px;
+  height: 94px;
+  object-fit: contain;
+  padding: 12px;
+  border: 5px solid var(--accent-soft);
+  border-radius: 50%;
+  background: var(--mint);
+}
+
+.profile-avatar__edit {
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: var(--ink);
+  color: white;
+  cursor: pointer;
+}
+
+.profile-identity bdi {
+  color: var(--ink-muted);
+  font-weight: 700;
+}
+
+.profile-info__label {
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.profile-info__row strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+}
+
+.profile-info__row .ui-button {
+  min-height: 34px;
+  font-size: 12px;
+  padding-inline: 14px;
+  border-color: var(--line);
+}
+
+.profile-info__locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+}
+
+/* بطاقة الحذف */
+.profile-danger {
+  border: 1px solid #fac8c3;
+}
+
+.profile-danger h2 {
+  color: var(--danger);
+  font: 700 18px/1.5 var(--font-sans);
+}
+
+.profile-danger p {
+  color: var(--ink-muted);
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.profile-danger .ui-button {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.profile-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgb(13 10 33 / 46%);
+}
+
+.profile-dialog {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 101;
+
+  width: min(460px, calc(100% - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+
+  padding: 30px;
+  border-radius: 26px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 24px 60px rgb(13 10 33 / 20%);
+}
+
+.profile-dialog h2 {
+  margin: 0 0 18px;
+  padding-left: 28px;
+  font: 900 26px/1.5 var(--font-display);
+}
+
+.profile-dialog__close {
+  position: absolute;
+  top: 29px;
+  left: 24px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.profile-dialog__description {
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin: 0 0 18px;
+}
+
+.profile-dialog__fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.profile-dialog .auth-field__control {
+  min-height: 48px;
+  border-color: var(--line);
+  border-radius: 14px;
+}
+
+.profile-dialog .ui-button--primary {
+  background: var(--ink);
+  color: white;
+}
+
+.profile-dialog .profile-delete-confirm {
+  background: #b42318;
+}
+
+/* إعادة تنسيق CharacterPicker داخل النافذة فقط */
+.profile-dialog .character-picker__options {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profile-dialog .character-picker__title {
+  font-size: 14px;
+}
+
+.profile-dialog .avatar-option {
+  width: auto;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 12px 4px;
+}
+
+.profile-dialog .avatar-option:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.profile-dialog .avatar-option__circle {
+  width: 58px;
+  height: 58px;
+  background: var(--mint);
+  border: 0;
+}
+
+.profile-dialog .avatar-option__image {
+  width: 42px;
+  height: 42px;
+}
+
+.profile-dialog .avatar-option__name {
+  font-size: 13px;
+}
+
+.profile-dialog .avatar-option__check {
+  display: none;
+}
+
+/* نجاح الحذف */
+.profile-deleted {
+  text-align: center;
+  padding-top: 42px;
+}
+
+.profile-deleted h2 {
+  padding: 0;
+  margin: 10px 0;
+}
+
+.profile-deleted p {
+  color: var(--ink-muted);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.profile-deleted__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  background: var(--mint);
+  color: var(--primary);
+  border-radius: 50%;
+}
+
+/* وصف متاح لقارئ الشاشة */
+.profile-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.profile-view {
+  min-height: 100dvh;
+  background: var(--canvas);
+}
+
+.profile-page {
+  width: min(840px, calc(100% - 40px));
+  margin: 0 auto;
+  padding: 36px 0 56px;
+
+  display: grid;
+  gap: 20px;
+}
+
+.profile-page__heading {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.profile-page__heading h1 {
+  margin: 0;
+  font: 900 44px/1.4 var(--font-display);
+}
+
+.profile-page__heading p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.profile-identity,
+.profile-danger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.profile-identity__person {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 0;
+}
+
+.profile-identity__person h2 {
+  overflow-wrap: anywhere;
+}
+
+.profile-info h2 {
+  margin-bottom: 6px;
+}
+
+.profile-info__row {
+  display: grid;
+  grid-template-columns: 145px minmax(0, 1fr) 90px;
+  align-items: center;
+  gap: 16px;
+
+  min-height: 60px;
+  padding-block: 10px;
+  border-top: 1px solid var(--accent-soft);
+}
+
+.profile-info__row > :last-child {
+  justify-self: end;
+}
+
+.profile-dialog__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.profile-dialog__actions > :first-child {
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .profile-page {
+      width: calc(100% - 24px);
+      padding-top: 24px;
+      gap: 16px;
+  }
+
+  .profile-card {
+      padding: 20px 16px;
+  }
+
+  .profile-identity,
+    .profile-danger {
+      flex-wrap: wrap;
+  }
+
+  .profile-info__row {
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+  }
+
+  .profile-info__label {
+      grid-column: 1 / -1;
+  }
+
+  .profile-dialog {
+      padding: 24px 18px;
+  }
+
+  .profile-dialog .avatar-option__circle {
+      width: 48px;
+      height: 48px;
+  }
+
+  .profile-dialog .avatar-option__image {
+      width: 36px;
+      height: 36px;
+  }
+}

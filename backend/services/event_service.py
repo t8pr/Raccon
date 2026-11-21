@@ -1,6 +1,7 @@
 from sqlmodel import Session, delete
 from fastapi import Depends, HTTPException, status
 from core.database import get_session
+from api.events.schemas import MyEventResponse
 from repositories.pack_repo import PackRepository
 from repositories.event_repo import EventRepository
 from repositories.tag_repo import TagRepository
@@ -10,7 +11,10 @@ import uuid
 from typing import List
 from core.config import settings
 from models.journey_progress import JourneyProgress
-
+from repositories.journey_progress_repo import JourneyProgressRepository
+from services.storage_service import StorageService
+from datetime import datetime, timezone
+from repositories.rebuild_code_repo import RebuildCodeRepository
 class EventService:
     def __init__(self, session: Session = Depends(get_session)):
         self.session = session
@@ -18,6 +22,9 @@ class EventService:
         self.packs = PackRepository(session)
         self.tags = TagRepository(session)
         self.event_tags = EventTagRepository(session)
+        self.journey_progress_repo = JourneyProgressRepository(session)
+        self.storage_service = StorageService()
+        self.rebuild_code_repo = RebuildCodeRepository(session)
 
     def get_event_details(self, user: User, event_id: uuid.UUID) -> dict:
         event = self.events.get_event(event_id)
@@ -64,7 +71,7 @@ class EventService:
             "max_edits": settings.MAX_EDIT_LIMIT,
         }
 
-    def configure_tag(self, pack: Pack, event: Event, request) -> None:
+    def configure_tag(self, pack: Pack, event: Event, request, storage_service: StorageService) -> None:
         has_trap = any(tag.tag_type == "trap" for tag in request.tags_config)
         if has_trap and pack.mode != "open":
             raise HTTPException(
@@ -77,11 +84,27 @@ class EventService:
                 event.id, tag_data.tag_id
             )
 
+            new_image = tag_data.content.image if tag_data.tag_type == "clue" and hasattr(tag_data.content, 'image') else None
+            
             if existing_tag:
+                old_content = existing_tag.content or {}
+                old_image = old_content.get("image")
+                
+                if old_image and old_image != new_image:
+                    storage_service.delete_image(old_image)
+                    
+                if new_image and "temp/" in new_image:
+                    new_image = storage_service.promote_image(new_image)
+                    tag_data.content.image = new_image
+
                 existing_tag.tag_type = tag_data.tag_type
                 existing_tag.content = tag_data.content.model_dump(exclude_none=True)
                 self.event_tags.add_event_tag(existing_tag)
             else:
+                if new_image and "temp/" in new_image:
+                    new_image = storage_service.promote_image(new_image)
+                    tag_data.content.image = new_image
+
                 new_event_tag = EventTag(
                     event_id=event.id,
                     tag_id=tag_data.tag_id,
@@ -93,7 +116,7 @@ class EventService:
     def validate_event_ownership(
         self, user: User, event_id: uuid.UUID, request
     ) -> tuple:
-        event = self.events.get_event(event_id)
+        event = self.events.lock_event(event_id)
         if not event:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
@@ -125,7 +148,7 @@ class EventService:
                 "You can't setup a saved/live event, use the edit option.",
             )
         
-        self.configure_tag(pack, event, request)
+        self.configure_tag(pack, event, request, self.storage_service)
         self.session.commit()
 
     def edit_event(self, user: User, event_id: uuid.UUID, request) -> dict:
@@ -135,6 +158,12 @@ class EventService:
             raise HTTPException(
                 status.HTTP_400_BAD_REQUEST, "Edits are allowed in paused events only."
             )
+
+        if (pack.mode == "open" and self.journey_progress_repo.has_participants(event.id)):
+            raise HTTPException(
+                status_code=409,
+                detail="Reseting open hunt event is required.",
+            )
             
         if event.edit_count >= settings.MAX_EDIT_LIMIT:
             raise HTTPException(
@@ -142,7 +171,7 @@ class EventService:
                 detail="You have reached the maximum edit limit.",
             )
             
-        self.configure_tag(pack, event, request)
+        self.configure_tag(pack, event, request, self.storage_service)
         event.edit_count += 1
         self.events.add_event(event)
         self.session.commit()
@@ -154,7 +183,7 @@ class EventService:
         }
 
     def update_event(self, user: User, event_id: uuid.UUID, request: dict) -> Event:
-        event = self.events.get_event(event_id)
+        event = self.events.lock_event(event_id)
         if not event:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
@@ -184,22 +213,14 @@ class EventService:
 
         return event
 
-    def reset_event(self, user: User, event_id: uuid.UUID) -> dict:
-        event = self.events.get_event(event_id)
-        if not event:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found.")
-            
-        pack = self.packs.get_pack(event.pack_id)
-        if not pack or pack.owner_id != user.id:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You do not own this pack.")
-
+    def _reset_event_data(self, event: Event) -> None:
         statement = delete(JourneyProgress).where(JourneyProgress.event_id == event.id)
         self.session.exec(statement)
 
         event_tags = self.event_tags.get_all_by_event_id(event.id)
         for et in event_tags:
             modified = False
-            content = et.content or {}
+            content = dict(et.content or {})  # create a new dict for sqlmodel to track
 
             if "claimed_by" in content:
                 del content["claimed_by"]
@@ -213,15 +234,90 @@ class EventService:
                 et.content = content
                 self.session.add(et)
 
+    def reset_event(self, user: User, event_id: uuid.UUID) -> dict:
+        event = self.events.lock_event(event_id)
+        if not event:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
+            )
+
+        pack = self.packs.get_pack(event.pack_id)
+        if not pack or pack.owner_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own this pack.",
+            )
+
+        self._reset_event_data(event)
+
         event.status = "paused"
         self.session.add(event)
-        
         self.session.commit()
-        
-        return {"status": "success", "message": "Event has been perfectly reset to its initial state."}
+
+        return {
+            "status": "success",
+            "message": "Event has been perfectly reset to its initial state.",
+        }
+
+    def rebuild_event(self, user: User, event_id: uuid.UUID, code: str) -> dict:
+        event = self.events.lock_event(event_id)
+        if not event:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Event not found."
+            )
+
+        pack = self.packs.get_pack(event.pack_id)
+        if not pack or pack.owner_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own this pack.",
+            )
+
+        if event.status == "draft":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Event is already in draft status.",
+            )
+
+        if event.status == "live":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Pause the event before rebuilding it.",
+            )
+
+        normalized_code = code.strip().upper()
+        rebuild_code = self.rebuild_code_repo.get_by_code_for_update(normalized_code)
+        if not rebuild_code or rebuild_code.is_used:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or already used rebuild code.",
+            )
+
+        self._reset_event_data(event)
+
+        event.status = "draft"
+        event.edit_count = 0
+        self.session.add(event)
+
+        rebuild_code.is_used = True
+        rebuild_code.used_by_user_id = user.id
+        rebuild_code.used_on_event_id = event.id
+        rebuild_code.used_at = datetime.now(timezone.utc)
+        self.session.add(rebuild_code)
+
+        self.session.commit()
+
+        return {
+            "status": "success",
+            "message": "Event has been rebuilt and returned to draft status.",
+            "event_status": event.status,
+            "edit_count": event.edit_count,
+            "edits_remaining": settings.MAX_EDIT_LIMIT - event.edit_count,
+            "max_edits": settings.MAX_EDIT_LIMIT,
+        }
 
     
-    def list_my_events(self, user: User) -> List[Event] | None:
+    def list_my_events(self, user: User) -> List[MyEventResponse] | None:
         packs = self.packs.get_by_owner_id(user.id)
         pack_ids = [p.id for p in packs]
 
@@ -229,4 +325,24 @@ class EventService:
             return []
 
         events = self.events.get_all_events(pack_ids)
-        return events
+        
+        pack_map = {pack.id: pack for pack in packs}
+
+        results = []
+
+        for event in events:
+            pack = pack_map[event.pack_id]
+            
+            results.append(
+                MyEventResponse(
+                        id = event.id,
+                        pack_id = pack.id,
+                        mode = pack.mode,
+                        tags_count = pack.tags_count,
+                        title = event.title,
+                        status = event.status,
+                        edit_count = event.edit_count
+                )
+            )
+        return results
+

@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from core.logger import logger
+from api.health.router import router as health_router
 from contextlib import asynccontextmanager
 from core.database import init_db
 from api.auth.router import router as auth_router
-from api.users.router import router as users_router 
-from api.health.router import router as health_router
+from api.users.router import router as users_router
 from api.admin.router import router as admin_router
 from api.packs.router import router as packs_router
 from api.events.router import router as events_router
@@ -13,15 +14,52 @@ from scalar_fastapi import get_scalar_api_reference
 from core.logger import listener
 from api.nfc.router import router as nfc_router
 from fastapi_pagination import add_pagination
+from redis.asyncio import Redis
+from redis.exceptions import RedisError
+from core.config import settings
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    yield
-    if listener:
-        listener.stop()
+    app.state.redis = None
+    redis_client = None
 
-app = FastAPI(title="Raccon Event Platform", lifespan=lifespan)
+    try:
+        try:
+            if settings.REDIS_URL:
+                redis_client = Redis.from_url(
+                    settings.REDIS_URL,
+                    decode_responses=True,
+                    socket_connect_timeout=2,
+                    socket_timeout=2,
+                )
+                await redis_client.ping()
+                app.state.redis = redis_client
+
+        except RedisError:
+            logger.exception("Redis is not configured, live updates are unavailable.")
+
+        yield
+    finally:
+        if redis_client is not None:
+            try:
+                await redis_client.aclose()
+            except (RedisError, OSError):
+                logger.exception("Error closing Redis connection.")
+
+        if listener:
+            listener.stop()
+
+is_prod = settings.ENVIRONMENT == "production"
+
+app = FastAPI(
+    title="Raccon Event Platform",
+    lifespan=lifespan,
+    docs_url=None if is_prod else "/docs",
+    redoc_url=None if is_prod else "/redoc",
+    openapi_url=None if is_prod else "/openapi.json",
+)
 
 app.include_router(auth_router)
 app.include_router(users_router)
@@ -33,7 +71,9 @@ app.include_router(journey_router)
 app.include_router(nfc_router)
 
 origins = [
-    "https://react-learning.aalsalhi-eng.workers.dev",
+    "https://raccon.pages.dev",
+    "https://raccon.app",
+    "https://www.raccon.app",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
     "http://localhost:3000",
@@ -46,17 +86,21 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 add_pagination(app)
+
 
 @app.get("/")
 def root():
     return {"message": "System is running. Database connected!"}
 
-@app.get("/scalar", include_in_schema=False)
-async def scalar_html():
-    return get_scalar_api_reference(
-        openapi_url=app.openapi_url,
-        title=app.title,
-    )
+
+if not is_prod:
+    @app.get("/scalar", include_in_schema=False)
+    async def scalar_html():
+        return get_scalar_api_reference(
+            openapi_url=app.openapi_url,
+            title=app.title,
+        )
