@@ -1,0 +1,39 @@
+.auth-tabs {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .auth-tabs {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 4px;
+      width: 100%;
+      min-height: 40px;
+      padding: 4px;
+      margin-bottom: 8px;
+      background: var(--canvas);
+      border-radius: 14px;
+  }
+
+  .auth-tabs__link {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 36px;
+      border-radius: 10px;
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--ink-muted);
+      text-decoration: none;
+  }
+
+  .auth-tabs__link--active {
+      background: var(--accent);
+      color: var(--on-accent);
+  }
+
+  .auth-tabs__link--active:hover {
+      color: var(--on-accent);
+  }
+}

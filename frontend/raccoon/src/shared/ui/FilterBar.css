@@ -1,0 +1,44 @@
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.filter-bar__options {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 4px;
+  margin: -4px;
+}
+
+.filter-bar__button {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.filter-bar__button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--surface);
+  border-color: var(--ink);
+}
+
+@media (max-width: 600px) {
+  .filter-bar {
+      align-items: stretch;
+      flex-direction: column;
+  }
+
+  .filter-bar > .sort-button {
+      align-self: flex-end;
+  }
+}

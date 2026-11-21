@@ -1,0 +1,119 @@
+.rac-navbar {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 20px;
+  min-height: 72px;
+  margin: 24px 48px 0;
+  padding: 12px 32px;
+  border: 1px solid var(--panel);
+  border-radius: var(--radius-lg);
+  background: var(--night);
+}
+
+.rac-navbar__brand img {
+  display: block;
+  width: 36px;
+}
+
+.rac-navbar__links {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+}
+
+.rac-navbar__link {
+  padding-block: 12px;
+  border-bottom: 2px solid transparent;
+  color: var(--on-panel-muted);
+  white-space: nowrap;
+}
+
+.rac-navbar__link:hover,
+.rac-navbar__link--active {
+  color: var(--on-panel);
+}
+
+.rac-navbar__link--active {
+  position: relative;
+  font-weight: 700;
+}
+
+/* short mint bar under the active page */
+.rac-navbar__link--active::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 4px;
+  width: 20px;
+  height: 3px;
+  margin-inline: auto;
+  border-radius: var(--radius-pill);
+  background: var(--mint);
+}
+
+.rac-navbar__link--disabled {
+  cursor: default;
+}
+
+.rac-navbar__account {
+  justify-self: end;
+}
+
+@media (max-width: 1199px) {
+  .rac-navbar {
+      margin-inline: 24px;
+  }
+}
+
+@media (max-width: 600px) {
+  .rac-navbar {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 16px 16px 0;
+      padding: 12px 16px;
+  }
+
+  .rac-navbar__account {
+      grid-column: 2;
+      grid-row: 1;
+  }
+
+  .rac-navbar__links {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      justify-content: space-between;
+      gap: 12px;
+      overflow-x: auto;
+  }
+
+  .rac-navbar__link {
+      font-size: 14px;
+  }
+}
+
+/* rac-navbar — وضع العنوان (شاشات المسح): الشعار، اسم الجولة، الحساب في صف واحد */
+.rac-navbar__title {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--on-panel);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .rac-navbar--titled {
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+  }
+
+  .rac-navbar--titled .rac-navbar__account {
+      grid-column: auto;
+      grid-row: auto;
+  }
+}

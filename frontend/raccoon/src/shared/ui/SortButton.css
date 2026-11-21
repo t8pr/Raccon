@@ -1,0 +1,26 @@
+.sort-button {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.sort-button select {
+  appearance: none;
+  min-height: 44px;
+  padding: 8px 16px 8px 38px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.sort-button svg {
+  position: absolute;
+  inset-inline-end: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}

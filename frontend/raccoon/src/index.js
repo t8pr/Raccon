@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "./styles/global.css"; // All the Style is coming from here "All for one" :)
+import "./styles/global.css"; // المتغيّرات (tokens) + الأساسيات العامة (base)
 import App from "./app/App";
 import reportWebVitals from "./reportWebVitals";
 
