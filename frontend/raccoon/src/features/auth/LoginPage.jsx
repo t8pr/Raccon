@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { loginUser, googleLogin } from "../../shared/api/authApi";
 import { getCurrentUser } from "../../shared/api/usersApi";
 import { useAuth } from "../../shared/auth/AuthContext";
@@ -30,10 +30,13 @@ export default function LoginPage() {
       : "",
   );
   const [serverError, setServerError] = useState("");
-
+  const redirectedRef = useRef(false);
   // One place decides where to go after sign-in: scan → saved claim link → home.
   // ScanPage reads ?tag=...&sig=...
   function goAfterSignIn(userData) {
+    if (redirectedRef.current) return;
+    redirectedRef.current = true;
+
     if (redirectTag) {
       navigate(
         `/scan?${new URLSearchParams({
@@ -121,7 +124,9 @@ export default function LoginPage() {
         <AuthPromo
           // came from scanning a tag → حصلتها hero, came from the landing → animation
           scene={redirectTag ? <FoundHero /> : <HeroScanAnimation />}
-          mobileTitle={redirectTag ? "حصلتها!" : "هلا بالكحيلان حياك الله من جديد"}
+          mobileTitle={
+            redirectTag ? "حصلتها!" : "هلا بالكحيلان حياك الله من جديد"
+          }
           mobileSubTitle={
             redirectTag ? "ادخل حسابك عشان تنحسب لك" : "ادخل حسابك وتابع تجاربك"
           }

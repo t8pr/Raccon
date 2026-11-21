@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { startTransition, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 
@@ -109,8 +109,10 @@ export function useProfileEditor() {
     if (pending.current || busy) return;
 
     if (deleted) {
-      clearSession();
-      navigate("/", { replace: true });
+      startTransition(() => {
+        clearSession();
+        navigate("/", { replace: true });
+      });
     }
 
     setEditing(null);

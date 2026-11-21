@@ -1,26 +1,111 @@
+/* Figma: components-final · 04 · Sort / Dropdown */
+
+/* ---------- Trigger: Default / Hover / Open / Focus / Disabled ---------- */
 .sort-button {
-  position: relative;
   display: inline-flex;
   flex-shrink: 0;
-}
-
-.sort-button select {
-  appearance: none;
+  align-items: center;
+  gap: 12px;
   min-height: 44px;
-  padding: 8px 16px 8px 38px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
+  padding: 8px 16px 8px 14px;
+  border: 1px solid var(--ink);
   border-radius: var(--radius-sm);
+  background: var(--surface);
   color: var(--ink);
-  font-size: 14px;
-  font-weight: 500;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  white-space: nowrap;
   cursor: pointer;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
 }
 
-.sort-button svg {
-  position: absolute;
-  inset-inline-end: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
+.sort-button__icon {
+  display: inline-flex;
+  margin-inline-start: auto;
+  transition: transform 0.15s ease;
+}
+
+.sort-button:hover:not([data-disabled]) {
+  box-shadow: var(--shadow-hover);
+}
+
+/* open: 2px focus-ring border (inset shadow, so the size doesn't jump) + chevron up */
+.sort-button[data-state="open"] {
+  border-color: var(--focus-strong);
+  box-shadow: inset 0 0 0 1px var(--focus-strong);
+}
+.sort-button[data-state="open"] .sort-button__icon {
+  transform: rotate(180deg);
+}
+
+.sort-button:focus-visible {
+  outline: 2px solid var(--focus-strong);
+  outline-offset: 2px;
+}
+
+.sort-button[data-disabled] {
+  border-color: var(--disabled-border, #d1d1d6);
+  background: var(--disabled-bg, #e5e5ea);
+  color: var(--disabled-fg, #aeaeb2);
+  cursor: not-allowed;
+}
+
+/* ---------- Menu (same on laptop and phone) ---------- */
+.sort-menu {
+  z-index: 50;
+  min-width: max(var(--radix-select-trigger-width), 280px);
+  max-height: var(--radix-select-content-available-height);
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(27 20 66 / 14%);
+  color: var(--ink);
+  font-family: inherit;
+}
+
+.sort-menu__list {
+  display: grid;
+  gap: 2px;
+}
+
+.sort-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  line-height: 1.5;
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* hover + keyboard highlight */
+.sort-menu__item[data-highlighted] {
+  background: var(--hover-subtle);
+}
+
+/* selected: check + bold, no other colours */
+.sort-menu__item[data-state="checked"] {
+  font-weight: 700;
+}
+
+.sort-menu__check {
+  display: inline-flex;
+  margin-inline-start: auto;
+  color: var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sort-button,
+  .sort-button__icon {
+    transition: none;
+  }
 }

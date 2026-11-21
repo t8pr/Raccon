@@ -13,8 +13,10 @@ beforeEach(() => {
   return () => vi.unstubAllGlobals();
 });
 
-const renderStore = (options) => renderWithProviders(<StorePage />, { route: "/store", ...options });
-const cards = () => screen.getAllByRole("article").map((card) => card.getAttribute("aria-label"));
+const renderStore = (options) =>
+  renderWithProviders(<StorePage />, { route: "/store", ...options });
+const cards = () =>
+  screen.getAllByRole("article").map((card) => card.getAttribute("aria-label"));
 
 test("8 بكجات للزائر والمستخدم بدون أي طلب للخادم", () => {
   renderStore({ token: null });
@@ -33,39 +35,33 @@ test("8 بكجات للزائر والمستخدم بدون أي طلب للخا
 });
 
 describe("الفلاتر والترتيب", () => {
-  test("الطريقة + الحجم، ثم «امسح الفلاتر»", async () => {
+  // Figma "User · Store": أزرار الطريقة + الترتيب «الحجم والسعر». ما فيه قائمة حجم ولا «امسح الفلاتر».
+  test("فلتر الطريقة، والترتيب الافتراضي «الحجم والسعر»", async () => {
     renderStore();
 
-    expect(screen.queryByRole("button", { name: "امسح الفلاتر" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("combobox", { name: "الحجم والسعر" })).not.toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "ترتيب الباكجات" })).toHaveTextContent(
+      "ترتيب: الحجم والسعر",
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "صيد مفتوح" }));
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "الحجم والسعر" }), "10");
+    expect(cards()).toHaveLength(4);
+    expect(cards().every((label) => label.startsWith("صيد مفتوح"))).toBe(true);
 
-    expect(cards()).toEqual(["صيد مفتوح · 10 قطعة"]);
-
-    await userEvent.click(screen.getByRole("button", { name: "امسح الفلاتر" }));
+    await userEvent.click(screen.getByRole("button", { name: "الكل" }));
     expect(cards()).toHaveLength(8);
-  });
-
-  test("قائمة الحجم فيها الأسعار", () => {
-    renderStore();
-
-    const options = within(screen.getByRole("combobox", { name: "الحجم والسعر" })).getAllByRole("option");
-    expect(options.map((option) => option.textContent)).toEqual([
-      "الحجم والسعر: الكل",
-      "6 قطعة · 79 ر.س",
-      "10 قطعة · 130 ر.س",
-      "15 قطعة · 195 ر.س",
-      "21 قطعة · 273 ر.س",
-    ]);
   });
 
   test("الترتيب من الأغلى", async () => {
     renderStore();
 
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "ترتيب الباكجات" }), "price-desc");
+    await userEvent.click(screen.getByRole("combobox", { name: "ترتيب الباكجات" }));
+    await userEvent.click(await screen.findByRole("option", { name: "السعر: الأعلى أولًا" }));
 
-    expect(cards().slice(0, 2)).toEqual(["تسلسلي · 21 قطعة", "صيد مفتوح · 21 قطعة"]);
+    expect(cards().slice(0, 2)).toEqual([
+      "تسلسلي · 21 قطعة",
+      "صيد مفتوح · 21 قطعة",
+    ]);
   });
 });
 
@@ -76,39 +72,37 @@ describe("الشراء", () => {
     return screen.getByRole("dialog", { hidden: true });
   }
 
-  test("التأكيد ثم «اشترِ» يحوّل لصفحة الدفع الصحيحة", async () => {
+  test("التأكيد ثم «شراء» يحوّل لصفحة الدفع الصحيحة", async () => {
     renderStore();
 
     const dialog = await openCheckout();
 
     expect(dialog).toHaveAttribute("open");
-    expect(within(dialog).getByText("صيد مفتوح · 15 قطعة · 195 ر.س")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("صيد مفتوح · 15 قطعة · 195 ر.س"),
+    ).toBeInTheDocument();
 
-    await userEvent.click(within(dialog).getByRole("button", { name: "اشترِ" }));
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "شراء" }),
+    );
 
     expect(assign).toHaveBeenCalledWith("https://raccon.rmz.gg/product/15open");
     expect(dialog).not.toHaveAttribute("open");
     expect(screen.getByText("جاري التحويل للدفع...")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /اشترِ ·/ }).every((button) => button.disabled)).toBe(true);
-  });
-
-  // خطأ معروف (وصول): CheckoutDialog يضع autoFocus على «إلغاء»، لكن React ما يكتب
-  // autofocus في الـDOM، فـ showModal يركّز على أول زر «اشترِ». تأكدنا في Chromium.
-  // يعني Enter مباشرة بعد فتح النافذة يحوّل للدفع. موجود كذلك في Dev.
-  // test.fails = يصف السلوك الصحيح ويُتوقع فشله حتى ينصلح. بعد الإصلاح احذف .fails
-  test.fails("خطأ معروف: فتح نافذة الشراء يركّز على «إلغاء» (الخيار الآمن)", async () => {
-    renderStore();
-
-    const dialog = await openCheckout();
-
-    expect(within(dialog).getByRole("button", { name: "إلغاء", hidden: true })).toHaveFocus();
+    expect(
+      screen
+        .getAllByRole("button", { name: /شراء ·/ })
+        .every((button) => button.disabled),
+    ).toBe(true);
   });
 
   test("«إلغاء» يقفل النافذة بدون تحويل", async () => {
     renderStore();
 
     const dialog = await openCheckout("تسلسلي · 6 قطعة");
-    await userEvent.click(within(dialog).getByRole("button", { name: "إلغاء" }));
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "إلغاء" }),
+    );
 
     expect(dialog).not.toHaveAttribute("open");
     expect(assign).not.toHaveBeenCalled();

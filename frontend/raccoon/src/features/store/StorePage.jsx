@@ -19,18 +19,11 @@ import "./StorePage.css";
 */
 export default function StorePage() {
   const [mode, setMode] = useState("all");
-  const [size, setSize] = useState("all");
   const [sort, setSort] = useState("default");
 
   const checkout = useCheckout();
 
-  const visiblePackages = filterAndSort(STORE_PACKAGES, { mode, size, sort });
-  const filtersOn = mode !== "all" || size !== "all";
-
-  function clearFilters() {
-    setMode("all");
-    setSize("all");
-  }
+  const visiblePackages = filterAndSort(STORE_PACKAGES, { mode, size: "all", sort });
 
   return (
     <div className="store-view" dir="rtl">
@@ -39,22 +32,12 @@ export default function StorePage() {
       <section className="store-page" aria-labelledby="store-title">
         <h1 id="store-title">المتجر</h1>
 
-        <p className="store-page__intro">اختار التجربة اللي تناسب جمعتكم.</p>
-
         <StoreFilters
           mode={mode}
-          size={size}
           sort={sort}
           onModeChange={setMode}
-          onSizeChange={setSize}
           onSortChange={setSort}
         />
-
-        {filtersOn && (
-          <button type="button" className="store-page__clear" onClick={clearFilters}>
-            امسح الفلاتر
-          </button>
-        )}
 
         {checkout.error && <p role="alert">{checkout.error}</p>}
 

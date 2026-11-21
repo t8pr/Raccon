@@ -28,7 +28,7 @@ export default function CheckoutDialog({ checkout }) {
 
         <div className="store-modal__actions">
           <Button fullWidth onClick={checkout.buy}>
-            اشترِ
+            شراء
           </Button>
 
           <Button fullWidth variant="outline" onClick={checkout.close} autoFocus>
