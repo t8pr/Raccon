@@ -54,47 +54,39 @@ describe("إدارة التجارب", () => {
     expect(await screen.findByText("الرئيسية")).toBeInTheDocument();
   });
 
-  test("يعرض التجارب بالحالة والسعر من قائمة الأسعار", async () => {
-    const queries = mockPacks(pageOf([pack(1, "seq", 10), pack(2, "open", 21, 7)]));
+  test("يعرض التجارب، 8 بالصفحة", async () => {
+    const queries = mockPacks(pageOf([pack(1, "seq", 10), pack(2, "open", 21, 7)], { size: 8 }));
     renderAdmin();
 
-    expect(await screen.findByText(/كل التجارب اللي انتجت — 2 تجربة/)).toBeInTheDocument();
-    const cards = screen.getAllByRole("article");
+    const cards = await screen.findAllByRole("article");
     expect(cards).toHaveLength(2);
-    expect(cards[0]).toHaveTextContent("متاحة");
-    expect(cards[0]).toHaveTextContent("130");
-    expect(cards[1]).toHaveTextContent("مُباعة");
-    expect(queries[0]).toEqual({ page: "1", size: "9" });
+    expect(cards[0]).toHaveAccessibleName("تسلسلي · 10 قطعة");
+    expect(cards[1]).toHaveAccessibleName("صيد مفتوح · 21 قطعة");
+    expect(queries[0]).toEqual({ page: "1", size: "8" });
     expect(screen.getByText("عرض 1–2 من 2 تجربة")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /إنشاء تجربة جديدة/ })).toHaveAttribute(
+      "href",
+      "/admin/experiences/new",
+    );
   });
 
-  test("الفلاتر والترتيب على الصفحة الحالية", async () => {
-    mockPacks(pageOf([pack(1, "seq", 10), pack(2, "open", 21, 7), pack(3, "open", 6)]));
+  test("فلتر الطريقة على الصفحة الحالية", async () => {
+    mockPacks(pageOf([pack(1, "seq", 10), pack(2, "open", 21, 7), pack(3, "open", 6)], { size: 8 }));
     renderAdmin();
     await screen.findAllByRole("article");
 
     await userEvent.click(screen.getByRole("button", { name: "صيد مفتوح" }));
     expect(screen.getAllByRole("article")).toHaveLength(2);
+    expect(screen.getByText("2 نتيجة في هالصفحة")).toBeInTheDocument();
 
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "حالة التجربة" }), "available");
-    expect(screen.getAllByRole("article")).toHaveLength(1);
-    expect(screen.getByText("1 نتيجة في هالصفحة")).toBeInTheDocument();
-
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "حالة التجربة" }), "sold");
-    await userEvent.click(screen.getByRole("button", { name: "تسلسلي" }));
-    expect(screen.getByText("ما فيه تجارب بهالفلاتر في هالصفحة.")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "امسح الفلاتر" }));
+    await userEvent.click(screen.getByRole("button", { name: "الكل" }));
     expect(screen.getAllByRole("article")).toHaveLength(3);
-
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "ترتيب الباكجات" }), "pieces-desc");
-    expect(screen.getAllByRole("article")[0]).toHaveTextContent("21");
   });
 
   test("التنقل بين الصفحات يطلب الصفحة الجديدة", async () => {
     const queries = mockPacks((url) => {
       const page = Number(url.searchParams.get("page"));
-      return HttpResponse.json(pageOf([pack(page * 10, "seq", 6)], { page, total: 30 }));
+      return HttpResponse.json(pageOf([pack(page * 10, "seq", 6)], { page, size: 8, total: 30 }));
     });
     renderAdmin();
 
@@ -104,9 +96,9 @@ describe("إدارة التجارب", () => {
 
     await userEvent.click(within(pages).getByRole("button", { name: "صفحة 4" }));
 
-    // 30 تجربة ÷ 9 بالصفحة = 4 صفحات، والأخيرة فيها 3
-    expect(await screen.findByText("عرض 28–30 من 30 تجربة")).toBeInTheDocument();
-    expect(queries.at(-1)).toEqual({ page: "4", size: "9" });
+    // 30 تجربة ÷ 8 بالصفحة = 4 صفحات، والأخيرة فيها 6
+    expect(await screen.findByText("عرض 25–30 من 30 تجربة")).toBeInTheDocument();
+    expect(queries.at(-1)).toEqual({ page: "4", size: "8" });
     expect(within(pages).getByRole("button", { name: /التالي/ })).toBeDisabled();
   });
 

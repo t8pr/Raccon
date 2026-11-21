@@ -697,3 +697,126 @@
     flex: 1;
   }
 }
+
+/* ---------- Figma "Admin · experiences list · 1444" ---------- */
+.admin-exp {
+  padding-top: 24px;
+  gap: 16px;
+}
+.admin-exp > h1 {
+  font-size: 32px;
+}
+.admin-exp .admin-exp__new {
+  gap: var(--space-2);
+  min-height: 44px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+}
+.admin-exp .admin-exp__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+}
+@media (max-width: 1199px) {
+  .admin-exp .admin-exp__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+@media (max-width: 900px) {
+  .admin-exp .admin-exp__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .admin-exp .admin-exp__grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .admin-exp .admin-exp__new {
+    width: 100%;
+  }
+}
+
+/* Figma filter + sort buttons: radius 8, ink outline, selected = green */
+.store-page .filter-bar__button,
+.admin-exp .filter-bar__button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+}
+.store-page .filter-bar__button[aria-pressed="true"],
+.admin-exp .filter-bar__button[aria-pressed="true"] {
+  min-height: 40px;
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--surface);
+}
+.store-page .sort-button {
+  width: auto;
+  min-height: 44px;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius-sm);
+  font-weight: 700;
+}
+
+/* hover (Figma: drop shadow; selected also gets primary-hover) */
+.admin-exp .filter-bar__button:hover:not([aria-pressed="true"]),
+.admin-exp .admin-exp__new:hover {
+  box-shadow: var(--shadow-hover);
+}
+.admin-exp .filter-bar__button[aria-pressed="true"]:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  box-shadow: var(--shadow-hover);
+}
+.pagination__page:hover:not([aria-current="page"]),
+.pagination__step:hover:not(:disabled) {
+  background: var(--hover-subtle);
+  box-shadow: var(--shadow-hover);
+}
+.pagination__page,
+.pagination__step {
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* create page: when «صيد مفتوح» is picked, the selected states turn green
+   (Figma mode colours). «تسلسلي» keeps the purple accent. */
+.admin-card--open {
+  --accent: var(--mode-on-open-hunt);
+  --accent-soft: var(--mode-open-hunt);
+  --focus-ring: color-mix(in srgb, var(--mode-on-open-hunt) 25%, transparent);
+}
+
+/* preview: chips + note follow the mode (تسلسلي = purple, صيد مفتوح stays green) */
+.admin-preview.admin-card--seq .admin-preview__checks li {
+  border-color: var(--mode-sequential);
+  background: var(--accent-soft);
+  color: var(--mode-on-sequential);
+}
+.admin-preview.admin-card--seq .admin-preview__checks svg {
+  color: var(--mode-on-sequential);
+}
+.admin-preview.admin-card--seq .admin-preview__note {
+  background: var(--accent-soft);
+  color: var(--mode-on-sequential);
+}
+
+/* «أنشئ التجربة» turns purple for تسلسلي (صيد مفتوح keeps the green primary) */
+.admin-create__bar--seq .ui-button--primary:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+.admin-create__bar--seq .ui-button--primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 85%, black);
+  border-color: color-mix(in srgb, var(--accent) 85%, black);
+}
+.admin-create__bar--seq .ui-button--primary:focus-visible {
+  outline-color: var(--accent);
+}
