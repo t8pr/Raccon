@@ -6,7 +6,6 @@ from core.config import settings
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # for week
-PASS_RESET_TOKEN_EXPIRE_MINUTES = 15 
 
 def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
@@ -35,19 +34,3 @@ def create_access_token(data: dict) -> str:
         exp_minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
         purpose="access"
     )
-
-def reset_pass_token(data: dict) -> str:
-    return generate_token(
-        data=data,
-        exp_minutes=PASS_RESET_TOKEN_EXPIRE_MINUTES,
-        purpose="password_reset"
-        )
-    
-def decode_reset_pass_token(token: str) -> dict | None:
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except jwt.PyJWTError:
-            return None
-    if not payload or payload.get("purpose") != "password_reset":
-        return None
-    return payload

@@ -11,14 +11,19 @@ from models import User
 from services.auth_service import AuthService
 
 
+@pytest.fixture(scope="module")
+def correct_password_hash():
+    return hash_password("correct-password")
+
+
 @pytest.fixture
-def user():
+def user(correct_password_hash):
     return User(
         name="Test User",
         username="testuser",
         email="testing@gmail.com",
         phone_number="500000000",
-        password=hash_password("correct-password"),
+        password=correct_password_hash,
         user_hash="test-user-hash",
     )
 

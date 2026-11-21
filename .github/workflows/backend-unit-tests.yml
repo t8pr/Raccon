@@ -35,17 +35,32 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
+        id: python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: backend/requirements.txt
+
+      - name: Cache installed test dependencies
+        id: test-venv
+        uses: actions/cache@v4
+        with:
+          path: backend/.venv-ci
+          key: backend-venv-v1-${{ runner.os }}-${{ runner.arch }}-ubuntu-latest-${{ steps.python.outputs.python-version }}-${{ hashFiles('backend/requirements.txt') }}
+
+      - name: Set up uv for cold installs
+        if: steps.test-venv.outputs.cache-hit != 'true'
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          enable-cache: false
 
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt
+        if: steps.test-venv.outputs.cache-hit != 'true'
+        run: |
+          python -m venv .venv-ci
+          uv pip install --python .venv-ci/bin/python -r requirements.txt
 
       - name: Run unit and route integration tests
-        run: python -m pytest tests -v --junitxml=test-results/backend-tests.xml
+        run: .venv-ci/bin/python -m pytest tests -v --junitxml=test-results/backend-tests.xml
 
       - name: Publish backend test results
         if: ${{ !cancelled() && hashFiles('backend/test-results/*.xml') != '' }}
