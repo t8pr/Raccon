@@ -9,6 +9,8 @@ import { API } from "../../../test/handlers";
 import { testUser } from "../../../test/fixtures";
 import { renderWithProviders } from "../../../test/renderWithProviders";
 import ProfilePage from "../ProfilePage";
+import ProtectedRoute from "../../../shared/auth/ProtectedRoute";
+import { getToken } from "../../../shared/auth/tokenStore";
 
 function renderProfile() {
   return renderWithProviders(
@@ -30,7 +32,9 @@ test("يعرض الشخصية والمعلومات، والإيميل ما يت�
   expect(within(info).getByText("abdu@example.com")).toBeInTheDocument();
   expect(within(info).getByText("+966 512345678")).toBeInTheDocument();
   expect(within(info).getByText("ما يتعدّل")).toBeInTheDocument();
-  expect(screen.getByRole("heading", { name: "عبدالرحمن" })).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: "عبدالرحمن" }),
+  ).toBeInTheDocument();
 });
 
 describe("تعديل حقل", () => {
@@ -52,9 +56,13 @@ describe("تعديل حقل", () => {
 
     await userEvent.clear(input);
     await userEvent.type(input, "نورة");
-    await userEvent.click(within(dialog).getByRole("button", { name: "حفظ التغييرات" }));
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "حفظ التغييرات" }),
+    );
 
-    expect(await screen.findByRole("status")).toHaveTextContent("تم حفظ التغييرات.");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "تم حفظ التغييرات.",
+    );
     expect(body).toEqual({ name: "نورة" });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "نورة" })).toBeInTheDocument();
@@ -63,17 +71,27 @@ describe("تعديل حقل", () => {
   test("اسم مستخدم مأخوذ: الرسالة الصحيحة داخل النافذة", async () => {
     server.use(
       http.patch(`${API}/users/me`, () =>
-        HttpResponse.json({ detail: "Username is already taken" }, { status: 400 }),
+        HttpResponse.json(
+          { detail: "Username is already taken" },
+          { status: 400 },
+        ),
       ),
     );
     renderProfile();
     await ready();
 
-    await userEvent.click(screen.getByRole("button", { name: "تعديل اسم المستخدم" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "تعديل اسم المستخدم" }),
+    );
     const dialog = await screen.findByRole("dialog");
     await userEvent.clear(within(dialog).getByLabelText("اسم المستخدم"));
-    await userEvent.type(within(dialog).getByLabelText("اسم المستخدم"), "taken");
-    await userEvent.click(within(dialog).getByRole("button", { name: "حفظ التغييرات" }));
+    await userEvent.type(
+      within(dialog).getByLabelText("اسم المستخدم"),
+      "taken",
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "حفظ التغييرات" }),
+    );
 
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(
       "اسم المستخدم مستخدم من قبل. اختر اسمًا آخر.",
@@ -84,8 +102,14 @@ describe("تعديل حقل", () => {
     renderProfile();
     await ready();
 
-    await userEvent.click(screen.getByRole("button", { name: "تعديل رقم الجوال" }));
-    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "إلغاء" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "تعديل رقم الجوال" }),
+    );
+    await userEvent.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "إلغاء",
+      }),
+    );
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -107,7 +131,9 @@ test("تغيير الشخصية", async () => {
   expect(within(dialog).getByRole("radio", { name: "منتو" })).toBeChecked();
 
   await userEvent.click(within(dialog).getByRole("radio", { name: "صخر" }));
-  await userEvent.click(within(dialog).getByRole("button", { name: "حفظ التغييرات" }));
+  await userEvent.click(
+    within(dialog).getByRole("button", { name: "حفظ التغييرات" }),
+  );
 
   expect(await screen.findByText("تم حفظ التغييرات.")).toBeInTheDocument();
   expect(body).toEqual({ avatar_id: 4 });
@@ -124,15 +150,31 @@ test("تغيير كلمة المرور", async () => {
   renderProfile();
   await ready();
 
-  await userEvent.click(screen.getByRole("button", { name: "تغيير كلمة المرور" }));
+  await userEvent.click(
+    screen.getByRole("button", { name: "تغيير كلمة المرور" }),
+  );
   const dialog = await screen.findByRole("dialog");
-  await userEvent.type(within(dialog).getByLabelText("كلمة المرور الحالية"), "oldpass12");
-  await userEvent.type(within(dialog).getByLabelText("كلمة المرور الجديدة"), "newpass123");
-  await userEvent.type(within(dialog).getByLabelText("تأكيد كلمة المرور"), "newpass123");
-  await userEvent.click(within(dialog).getByRole("button", { name: "حفظ التغييرات" }));
+  await userEvent.type(
+    within(dialog).getByLabelText("كلمة المرور الحالية"),
+    "oldpass12",
+  );
+  await userEvent.type(
+    within(dialog).getByLabelText("كلمة المرور الجديدة"),
+    "newpass123",
+  );
+  await userEvent.type(
+    within(dialog).getByLabelText("تأكيد كلمة المرور"),
+    "newpass123",
+  );
+  await userEvent.click(
+    within(dialog).getByRole("button", { name: "حفظ التغييرات" }),
+  );
 
   expect(await screen.findByText("تم تغيير كلمة المرور.")).toBeInTheDocument();
-  expect(body).toEqual({ old_password: "oldpass12", new_password: "newpass123" });
+  expect(body).toEqual({
+    old_password: "oldpass12",
+    new_password: "newpass123",
+  });
 });
 
 describe("حذف الحساب", () => {
@@ -142,26 +184,61 @@ describe("حذف الحساب", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "احذف حسابي" }));
     const dialog = await screen.findByRole("dialog", { name: "حذف الحساب" });
-    const confirm = within(dialog).getByRole("button", { name: "احذف حسابي نهائيًا" });
+    const confirm = within(dialog).getByRole("button", {
+      name: "احذف حسابي نهائيًا",
+    });
 
     expect(confirm).toBeDisabled();
-    await userEvent.type(within(dialog).getByLabelText("اكتب اسم المستخدم abdu للتأكيد"), "abdu");
+    await userEvent.type(
+      within(dialog).getByLabelText("اكتب اسم المستخدم abdu للتأكيد"),
+      "abdu",
+    );
     expect(confirm).toBeEnabled();
   });
 
-  // خطأ معروف: markAccountDeleted يمسح التوكن فيصير user = null، فـ ProfilePage ترجع
-  // «بيانات الحساب غير متاحة» قبل ما تظهر نافذة «تم حذف حسابك». موجود كذلك في Dev.
-  // test.fails = يصف السلوك الصحيح ويُتوقع فشله حتى ينصلح. بعد الإصلاح احذف .fails
-  test.fails("خطأ معروف: بعد الحذف تظهر نافذة «تم حذف حسابك»", async () => {
-    server.use(http.delete(`${API}/auth/delete-account`, () => HttpResponse.json({})));
-    renderProfile();
+  // كان خطأ: markAccountDeleted يطلّع المستخدم فورًا، فالصفحة تختفي قبل نافذة «تم حذف حسابك».
+  // الحين تبقى الصفحة والنافذة، وإغلاق النافذة هو اللي يطلّعه.
+  test("بعد الحذف تظهر نافذة «تم حذف حسابك»، وإغلاقها يطلّعه", async () => {
+    server.use(
+      http.delete(`${API}/auth/delete-account`, () => HttpResponse.json({})),
+    );
+    const { location } = renderWithProviders(
+      <Routes>
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/" element={<p>البداية</p>} />
+        <Route path="/login" element={<p>صفحة الدخول</p>} />
+      </Routes>,
+      { route: "/profile" },
+    );
     await ready();
 
     await userEvent.click(screen.getByRole("button", { name: "احذف حسابي" }));
     const dialog = await screen.findByRole("dialog");
-    await userEvent.type(within(dialog).getByLabelText("اكتب اسم المستخدم abdu للتأكيد"), "abdu");
-    await userEvent.click(within(dialog).getByRole("button", { name: "احذف حسابي نهائيًا" }));
+    await userEvent.type(
+      within(dialog).getByLabelText("اكتب اسم المستخدم abdu للتأكيد"),
+      "abdu",
+    );
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "احذف حسابي نهائيًا" }),
+    );
 
-    expect(await screen.findByRole("heading", { name: "تم حذف حسابك" }, { timeout: 500 })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "تم حذف حسابك" }),
+    ).toBeInTheDocument();
+    // التوكن انمسح من التخزين من الحين، وما رحنا لصفحة الدخول
+    expect(getToken()).toBeNull();
+    expect(location.current.pathname).toBe("/profile");
+
+    await userEvent.click(screen.getAllByRole("button", { name: "إغلاق" })[0]);
+
+    expect(await screen.findByText("البداية")).toBeInTheDocument();
+    expect(location.current.pathname).toBe("/");
   });
 });

@@ -22,9 +22,7 @@ function createSession(token) {
 export function AuthProvider({ children }) {
   const queryClient = useQueryClient();
 
-  const [session, setSession] = useState(() =>
-    createSession(getToken()),
-  );
+  const [session, setSession] = useState(() => createSession(getToken()));
 
   const [accountDeleted, setAccountDeleted] = useState(false);
 
@@ -97,7 +95,6 @@ export function AuthProvider({ children }) {
 
   async function markAccountDeleted() {
     clearToken();
-    setSession(createSession(null));
     setAccountDeleted(true);
     await queryClient.cancelQueries({
       queryKey: profileKey,
