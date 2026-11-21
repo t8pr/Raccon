@@ -91,3 +91,6 @@ class MyEventResponse(BaseModel):
     title: str
     status: str
     edit_count: int
+
+class EventRebuildRequest(BaseModel):
+    code: str

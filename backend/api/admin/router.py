@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from services.admin_service import AdminService
 from models.user import User
 from api.admin.schemas import PackGenerateRequest, PackGenerateResponse, FactoryPackResponse, AdminPackDetailResponse
@@ -6,19 +6,53 @@ from api.packs.schemas import PackResponse
 from api.users.schemas import UserResponse
 from api.auth.dependencies import get_current_admin
 import uuid
-from typing import List
+from typing import List, Literal
 from fastapi_pagination import Page
+from fastapi.responses import PlainTextResponse
+
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 @router.post("/generate-packs", response_model=List[PackGenerateResponse])
 def generate_packs(
     request: PackGenerateRequest,
+    format: Literal["json", "txt"] = Query(default="json"),
+    as_links: bool = Query(default=True),
     service: AdminService = Depends(),
     admin_user: User = Depends(get_current_admin),
 ):
-    return service.generate_packs(admin_user, **request.model_dump())
+    packs = service.generate_packs(admin_user, **request.model_dump())
 
+    if format == "txt":
+        content, filename = service.format_packs_as_txt(
+            packs, request.mode, request.tags_count, request.quantity, as_links
+        )
+        return PlainTextResponse(
+            content=content,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    return packs
+
+@router.post("/generate-rebuild-codes")
+def generate_rebuild_codes(
+    quantity: int = Query(default=10, ge=1, le=500),
+    format: Literal["json", "txt"] = Query(default="json"),
+    admin_user: User = Depends(get_current_admin),
+    admin_service: AdminService = Depends(),
+):
+    codes = admin_service.generate_rebuild_codes(quantity)
+
+    if format == "txt":
+        content = "\n".join(codes)
+        return PlainTextResponse(
+            content=content,
+            headers={
+                "Content-Disposition": 'attachment; filename="rebuild_codes.txt"'
+            },
+        )
+
+    return {"count": len(codes), "codes": codes}
 
 @router.get("/factory/pack/{pack_id}", response_model=FactoryPackResponse)
 def get_factory_pack_config(

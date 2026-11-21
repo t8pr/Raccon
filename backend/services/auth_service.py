@@ -84,7 +84,7 @@ class AuthService:
 
     def delete_account(self, user: User) -> None:
         username, user_id = user.username, user.id
-        self.users.delete_user(user)
+        self.users.delete_user(user.id)
         self.session.commit()
         logger.info(f"User deleted: {username} (ID: {user_id})")
 

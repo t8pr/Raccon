@@ -1,6 +1,7 @@
 from sqlmodel import Session
 from core.database import get_session
 from core.logger import logger
+from core.config import settings
 from fastapi import Depends, HTTPException
 from repositories.user_repo import UserRepository
 from repositories.pack_repo import PackRepository
@@ -12,7 +13,9 @@ from typing import Literal
 import secrets
 import string
 import uuid
-
+from datetime import datetime, timezone
+from models.rebuild_code import RebuildCode
+from repositories.rebuild_code_repo import RebuildCodeRepository
 
 def generate_short_hash(length: int = 6) -> str:
     alphabet = string.ascii_letters + string.digits
@@ -24,7 +27,7 @@ class AdminService:
         self.users = UserRepository(session)
         self.packs = PackRepository(session)
         self.tags = TagRepository(session)
-        
+        self.rebuild_codes = RebuildCodeRepository(session)
     def generate_packs(self, admin_user: User, mode: Literal["open", "seq"], tags_count: int, quantity: int):
         all_generated_packs = []
         
@@ -161,3 +164,46 @@ class AdminService:
                 response_data["owner_phone"] = owner.phone_number
                 
         return response_data
+
+    def format_packs_as_txt(
+        self,
+        packs: list[dict],
+        mode: str,
+        tags_count: int,
+        quantity: int,
+        as_links: bool = True,
+    ) -> tuple[str, str]:
+        base_url = settings.FRONTEND_URL.rstrip("/")
+        lines = [
+            f"{base_url}/claim/{p['master_auth_hash']}" if as_links else p["master_auth_hash"]
+            for p in packs
+        ]
+        content = "\n".join(lines) + "\n"
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        filename = f"packs_{mode}_{tags_count}tags_x{quantity}_{timestamp}.txt"
+        return content, filename
+
+    def _generate_unique_rebuild_code(self) -> str:
+        alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        part1 = "".join(secrets.choice(alphabet) for _ in range(4))
+        part2 = "".join(secrets.choice(alphabet) for _ in range(4))
+        return f"RBLD-{part1}-{part2}"
+
+    def generate_rebuild_codes(self, quantity: int) -> list[str]:
+        if quantity < 1 or quantity > 500:
+            raise HTTPException(
+                status_code=400,
+                detail="Quantity must be between 1 and 500.",
+            )
+
+        generated_codes: list[str] = []
+        code_records: list[RebuildCode] = []
+
+        for _ in range(quantity):
+            code_str = self._generate_unique_rebuild_code()
+            generated_codes.append(code_str)
+            code_records.append(RebuildCode(code=code_str))
+
+        self.rebuild_codes.add_bulk(code_records)
+        self.session.commit()
+        return generated_codes

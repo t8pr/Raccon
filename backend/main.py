@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from core.logger import logger
+from api.health.router import router as health_router
 from contextlib import asynccontextmanager
 from core.database import init_db
-from core.logger import logger
 from api.auth.router import router as auth_router
-from api.users.router import router as users_router 
-from api.health.router import router as health_router
+from api.users.router import router as users_router
 from api.admin.router import router as admin_router
 from api.packs.router import router as packs_router
 from api.events.router import router as events_router
@@ -34,9 +34,8 @@ async def lifespan(app: FastAPI):
                     socket_connect_timeout=2,
                     socket_timeout=2,
                 )
-
-                app.state.redis = redis_client
                 await redis_client.ping()
+                app.state.redis = redis_client
 
         except RedisError:
             logger.exception("Redis is not configured, live updates are unavailable.")
@@ -52,7 +51,15 @@ async def lifespan(app: FastAPI):
         if listener:
             listener.stop()
 
-app = FastAPI(title="Raccon Event Platform", lifespan=lifespan)
+is_prod = settings.ENVIRONMENT == "production"
+
+app = FastAPI(
+    title="Raccon Event Platform",
+    lifespan=lifespan,
+    docs_url=None if is_prod else "/docs",
+    redoc_url=None if is_prod else "/redoc",
+    openapi_url=None if is_prod else "/openapi.json",
+)
 
 app.include_router(auth_router)
 app.include_router(users_router)
@@ -79,17 +86,21 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
 )
 
 add_pagination(app)
+
 
 @app.get("/")
 def root():
     return {"message": "System is running. Database connected!"}
 
-@app.get("/scalar", include_in_schema=False)
-async def scalar_html():
-    return get_scalar_api_reference(
-        openapi_url=app.openapi_url,
-        title=app.title,
-    )
+
+if not is_prod:
+    @app.get("/scalar", include_in_schema=False)
+    async def scalar_html():
+        return get_scalar_api_reference(
+            openapi_url=app.openapi_url,
+            title=app.title,
+        )
