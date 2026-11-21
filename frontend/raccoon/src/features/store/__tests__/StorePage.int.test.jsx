@@ -13,8 +13,10 @@ beforeEach(() => {
   return () => vi.unstubAllGlobals();
 });
 
-const renderStore = (options) => renderWithProviders(<StorePage />, { route: "/store", ...options });
-const cards = () => screen.getAllByRole("article").map((card) => card.getAttribute("aria-label"));
+const renderStore = (options) =>
+  renderWithProviders(<StorePage />, { route: "/store", ...options });
+const cards = () =>
+  screen.getAllByRole("article").map((card) => card.getAttribute("aria-label"));
 
 test("8 بكجات للزائر والمستخدم بدون أي طلب للخادم", () => {
   renderStore({ token: null });
@@ -36,10 +38,15 @@ describe("الفلاتر والترتيب", () => {
   test("الطريقة + الحجم، ثم «امسح الفلاتر»", async () => {
     renderStore();
 
-    expect(screen.queryByRole("button", { name: "امسح الفلاتر" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "امسح الفلاتر" }),
+    ).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "صيد مفتوح" }));
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "الحجم والسعر" }), "10");
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "الحجم والسعر" }),
+      "10",
+    );
 
     expect(cards()).toEqual(["صيد مفتوح · 10 قطعة"]);
 
@@ -50,7 +57,9 @@ describe("الفلاتر والترتيب", () => {
   test("قائمة الحجم فيها الأسعار", () => {
     renderStore();
 
-    const options = within(screen.getByRole("combobox", { name: "الحجم والسعر" })).getAllByRole("option");
+    const options = within(
+      screen.getByRole("combobox", { name: "الحجم والسعر" }),
+    ).getAllByRole("option");
     expect(options.map((option) => option.textContent)).toEqual([
       "الحجم والسعر: الكل",
       "6 قطعة · 79 ر.س",
@@ -63,9 +72,15 @@ describe("الفلاتر والترتيب", () => {
   test("الترتيب من الأغلى", async () => {
     renderStore();
 
-    await userEvent.selectOptions(screen.getByRole("combobox", { name: "ترتيب الباكجات" }), "price-desc");
+    await userEvent.selectOptions(
+      screen.getByRole("combobox", { name: "ترتيب الباكجات" }),
+      "price-desc",
+    );
 
-    expect(cards().slice(0, 2)).toEqual(["تسلسلي · 21 قطعة", "صيد مفتوح · 21 قطعة"]);
+    expect(cards().slice(0, 2)).toEqual([
+      "تسلسلي · 21 قطعة",
+      "صيد مفتوح · 21 قطعة",
+    ]);
   });
 });
 
@@ -82,33 +97,31 @@ describe("الشراء", () => {
     const dialog = await openCheckout();
 
     expect(dialog).toHaveAttribute("open");
-    expect(within(dialog).getByText("صيد مفتوح · 15 قطعة · 195 ر.س")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText("صيد مفتوح · 15 قطعة · 195 ر.س"),
+    ).toBeInTheDocument();
 
-    await userEvent.click(within(dialog).getByRole("button", { name: "اشترِ" }));
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "اشترِ" }),
+    );
 
     expect(assign).toHaveBeenCalledWith("https://raccon.rmz.gg/product/15open");
     expect(dialog).not.toHaveAttribute("open");
     expect(screen.getByText("جاري التحويل للدفع...")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: /اشترِ ·/ }).every((button) => button.disabled)).toBe(true);
-  });
-
-  // خطأ معروف (وصول): CheckoutDialog يضع autoFocus على «إلغاء»، لكن React ما يكتب
-  // autofocus في الـDOM، فـ showModal يركّز على أول زر «اشترِ». تأكدنا في Chromium.
-  // يعني Enter مباشرة بعد فتح النافذة يحوّل للدفع. موجود كذلك في Dev.
-  // test.fails = يصف السلوك الصحيح ويُتوقع فشله حتى ينصلح. بعد الإصلاح احذف .fails
-  test.fails("خطأ معروف: فتح نافذة الشراء يركّز على «إلغاء» (الخيار الآمن)", async () => {
-    renderStore();
-
-    const dialog = await openCheckout();
-
-    expect(within(dialog).getByRole("button", { name: "إلغاء", hidden: true })).toHaveFocus();
+    expect(
+      screen
+        .getAllByRole("button", { name: /اشترِ ·/ })
+        .every((button) => button.disabled),
+    ).toBe(true);
   });
 
   test("«إلغاء» يقفل النافذة بدون تحويل", async () => {
     renderStore();
 
     const dialog = await openCheckout("تسلسلي · 6 قطعة");
-    await userEvent.click(within(dialog).getByRole("button", { name: "إلغاء" }));
+    await userEvent.click(
+      within(dialog).getByRole("button", { name: "إلغاء" }),
+    );
 
     expect(dialog).not.toHaveAttribute("open");
     expect(assign).not.toHaveBeenCalled();

@@ -5,13 +5,19 @@ import { describe, expect, test } from "vitest";
 import { server } from "../../test/server";
 import { API } from "../../test/handlers";
 import { testUser } from "../../test/fixtures";
-import { TEST_TOKEN, renderHookWithProviders, waitForSignIn } from "../../test/renderWithProviders";
+import {
+  TEST_TOKEN,
+  renderHookWithProviders,
+  waitForSignIn,
+} from "../../test/renderWithProviders";
 import { queryKeys } from "../constants/queryKeys";
 import { useAuth } from "./AuthContext";
 import { getToken } from "./tokenStore";
 
 test("useAuth خارج AuthProvider يرمي خطأ واضح", () => {
-  expect(() => renderHook(() => useAuth())).toThrow("useAuth must be used within AuthProvider");
+  expect(() => renderHook(() => useAuth())).toThrow(
+    "useAuth must be used within AuthProvider",
+  );
 });
 
 describe("استعادة الجلسة", () => {
@@ -34,7 +40,9 @@ describe("استعادة الجلسة", () => {
   });
 
   test("بدون توكن: زائر بدون أي طلب", () => {
-    const { result } = renderHookWithProviders(() => useAuth(), { token: null });
+    const { result } = renderHookWithProviders(() => useAuth(), {
+      token: null,
+    });
 
     expect(result.current.user).toBeNull();
     expect(result.current.isRestoring).toBe(false);
@@ -42,7 +50,9 @@ describe("استعادة الجلسة", () => {
   });
 
   test.each([401, 403])("%i: يمسح الجلسة", async (status) => {
-    server.use(http.get(`${API}/users/me`, () => HttpResponse.json({}, { status })));
+    server.use(
+      http.get(`${API}/users/me`, () => HttpResponse.json({}, { status })),
+    );
 
     const { result } = renderHookWithProviders(() => useAuth());
 
@@ -52,12 +62,16 @@ describe("استعادة الجلسة", () => {
   });
 
   test("خطأ ثاني: restoreError ويبقى التوكن", async () => {
-    server.use(http.get(`${API}/users/me`, () => HttpResponse.json({}, { status: 503 })));
+    server.use(
+      http.get(`${API}/users/me`, () => HttpResponse.json({}, { status: 503 })),
+    );
 
     const { result } = renderHookWithProviders(() => useAuth());
 
     await waitFor(() =>
-      expect(result.current.restoreError).toBe("تعذر التحقق من جلسة الدخول. حاول مرة أخرى."),
+      expect(result.current.restoreError).toBe(
+        "تعذر التحقق من جلسة الدخول. حاول مرة أخرى.",
+      ),
     );
     expect(result.current.accessToken).toBe(TEST_TOKEN);
     expect(result.current.user).toBeNull();
@@ -72,13 +86,17 @@ test("signIn: يحفظ التوكن والحساب بدون طلب جديد", as
       return HttpResponse.json(testUser);
     }),
   );
-  const { result, queryClient } = renderHookWithProviders(() => useAuth(), { token: null });
+  const { result, queryClient } = renderHookWithProviders(() => useAuth(), {
+    token: null,
+  });
 
   act(() => result.current.signIn("new-token", testUser));
 
   expect(getToken()).toBe("new-token");
   expect(result.current.user).toEqual(testUser);
-  expect(queryClient.getQueryData(queryKeys.profile("new-token"))).toEqual(testUser);
+  expect(queryClient.getQueryData(queryKeys.profile("new-token"))).toEqual(
+    testUser,
+  );
   expect(requests).toBe(0);
 });
 
@@ -90,7 +108,9 @@ test("clearSession: يمسح التوكن والحساب", async () => {
 
   expect(getToken()).toBeNull();
   expect(result.current.user).toBeNull();
-  expect(queryClient.getQueryData(queryKeys.profile(TEST_TOKEN))).toBeUndefined();
+  expect(
+    queryClient.getQueryData(queryKeys.profile(TEST_TOKEN)),
+  ).toBeUndefined();
 });
 
 test("updateUser: يحدّث الحساب في الكاش", async () => {
@@ -103,13 +123,19 @@ test("updateUser: يحدّث الحساب في الكاش", async () => {
   await waitFor(() => expect(result.current.user.name).toBe("نورة"));
 });
 
-test("markAccountDeleted: يمسح التوكن ويصير المستخدم null", async () => {
+test("markAccountDeleted: يمسح التوكن المحفوظ ويخلي المستخدم لين يقفل النافذة", async () => {
   const { result, queryClient } = renderHookWithProviders(() => useAuth());
   await waitForSignIn(queryClient);
 
   await act(() => result.current.markAccountDeleted());
 
+  // لو حدّث الصفحة يطلع، لأن التوكن انمسح من التخزين
   expect(getToken()).toBeNull();
-  // هذا سبب خطأ «نافذة تم حذف حسابك لا تظهر»: user يصير null فورًا
+  // بس الصفحة الحالية تبقى عشان نافذة «تم حذف حسابك»
+  expect(result.current.user).toEqual(testUser);
+
+  // إغلاق النافذة يستدعي clearSession
+  act(() => result.current.clearSession());
   expect(result.current.user).toBeNull();
+  expect(result.current.accessToken).toBeNull();
 });
