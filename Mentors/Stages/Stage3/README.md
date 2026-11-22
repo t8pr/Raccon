@@ -19,1413 +19,596 @@
 
 ## Project Overview
 
-Raccon is an NFC-enabled platform for creating and playing physical, tag-based experiences. Administrators manufacture **packs** and program their NFC tags; customers claim purchased packs, thereby creating **events** that they can configure and publish; players scan the physical tags to view event content. The frontend is designed in React, the API is designed with FastAPI, and persistent data is stored in PostgreSQL.
+Raccon will let people create and play physical treasure hunts with NFC tags. Administrators will generate packs and program the physical tags. Customers will browse packs on Raccon, complete their purchase on Ramz, and use a claim link to add the pack to their account. Owners will configure their experience and start a round. Players will tap the tags with their phones to discover clues, encounter traps in Open Hunt, and see their ranking.
 
 ## Terminology and Domain Rules
 
-| Term | Meaning | Data model / API representation |
-|---|---|---|
-| **Pack** | Admin-generated physical inventory item containing a fixed set of NFC tags. It exists before purchase or claim. | `packs` |
-| **Tag** | A physical NFC tag with a non-sequential public identifier and internal order number. | `tags` |
-| **Master authorization token** | Unique, single-use claim credential identifying an unowned pack; Ramz delivers a link to the frontend claim page. | `packs.master_auth_hash` |
-| **Event** | Owner-customizable experience created when a pack is claimed. | `events` |
-| **Event tag** | Event-specific configuration for one physical tag, stored as JSONB. | `event_tags` |
-| **Journey** | Player-facing tag scan operation for an active event. | `POST /journey/scan` |
-| **`static_hash`** | Random, unique, public tag identifier, not the tag sequence number. | `tags.static_hash` |
-| **`user_hash`** | Unique, randomly generated 8-character string assigned to each user to help prevent unauthorized access through shared NFC tag links. | `users.user_hash` |
+| Term | Meaning |
+|---|---|
+| Pack | Physical inventory with a fixed tag count and a mode of Sequential (`seq`) or Open Hunt (`open`). A pack is generated before purchase or claim. |
+| Tag | Physical NFC item with an internal UUID, a position in its pack, and a public identifier (`static_hash`). |
+| Claim link | A URL of the form `https://raccon.app/claim/{master_auth_hash}`. A successful claim assigns the pack to one account and creates its event. |
+| Event | The owner’s configurable experience associated with a claimed pack. |
+| Event tag | Event-specific clue or trap configuration associated with a physical tag. Its content is stored as JSONB. |
+| Journey progress | A player’s score, visited sequences, completion state, and freeze deadline for an event. |
+| Rebuild code | A single-use code that returns a paused event to draft and restores its editing allowance. |
 
 ### Event lifecycle
 
-- **`draft`** — Created automatically at claim time; not scannable. The first non-empty successful setup request transitions it to `paused`.
-- **`paused`** — Configuration has been saved; scanning is unavailable. The owner may edit and save the configuration or change the status to `live` through the event update endpoint.
-- **`live`** — The scan endpoint accepts scans for this event and returns configured tag content. Configuration editing and saving are rejected until the owner ends the round and returns the event to `paused`.
+- **Draft.** Claiming a pack creates an event in draft. The owner saves its initial configuration through the setup endpoint and then starts the round to make the event live.
+- **Paused.** Players cannot scan for progress. The owner can edit the configuration within the available allowance or start a round by setting the event live.
+- **Live.** Players can scan tags and progress under the rules of the pack’s mode. The owner pauses the event before editing.
+- **Reset.** Resetting clears player progress and Open Hunt clue claims, restores activated Choose traps, and leaves the event paused with its configuration and edit allowance intact. An Open Hunt event with player progress must be reset before editing.
+- **Rebuild.** A valid rebuild code clears round progress, returns the event to draft, and resets the edit count. The pack and its programmed NFC URLs stay associated with the event.
 
-
-### Identifier and ownership conventions
-
-Owners are identified by `packs.owner_id`; an event inherits ownership through its associated pack. Admin privileges come from `users.role = "admin"`, verified after JWT authentication. The frontend must not treat public NFC URLs or client-supplied identifiers as proof of authorization.
-
-
+The API will check event ownership through the pack’s owner account. Administrative operations require the admin role. A public NFC URL identifies a tag, and player requests also require an authenticated account.
 
 ## User Stories
 
-The user stories below specify the complete intended Raccon experience. **Packs** are admin-generated physical inventory, while **events** are created when customers claim packs and are subsequently configured and managed by their owners. The user stories are prioritized according to the [MoSCoW prioritization table](../stage2/README.md), which establishes the relative importance of each feature.
+### Owner Stories
 
-## Owner Stories
+The account stories apply to owners and players. Pack management and customization require ownership of the selected pack.
 
-### US-01: Registration
+#### US-01 — Registration
 
-**Category:** Owner/Player &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As a new visitor,
-> I want to register an account,
-> So I can buy NFC packs, manage my experiences, or participate in experiences as a player.
+> As a visitor, I want to register so I can own or play experiences.
 
 **Acceptance criteria**
 
-- The visitor should be able to access the registration page without being signed in.
-- If the user already has an account, they can navigate to the login page from the registration page.
-- The visitor should be able to select an avatar from the available options, with the first avatar selected by default.
-- The registration form should require a name, username, email address, phone number, and password.
-- All the registration form fields are mandatory.
-- The username and email must be unique and must not already belong to another Raccon account.
-- If the entered username is already in use, the system should inform the visitor that the username is unavailable.
-- If the entered email address is already registered, the system should inform the visitor that an account already exists with that email.
-- The system should validate the format of the entered fields.
-- The system should prevent registration until all mandatory fields contain valid values.
-- Validation errors should be displayed clearly under the relevant field in red.
-- The created account should be identifiable by the system as an owner or player according to the actions available to that user.
-- After successful registration, the owner should be redirected to the Raccon platform.
-- After successful registration, the player should be redirected to the NFC experience they were attempting to access.
+- Offer avatar selection with a default avatar.
+- Validate name, username, email, phone number, and password before submitting.
+- Require unique usernames and email addresses.
+- Use a nine-digit phone number in the registration request.
+- Load the new account after registration and preserve the destination for visitors arriving from a claim link or scan.
 
----
+#### US-02 — Log In
 
-### US-02: Log In
-
-**Category:** Owner/Player &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As a registered user,
-> I want to log in to my Raccon account,
-> So I can securely access my account.
+> As a registered user, I want to sign in so I can access my account.
 
 **Acceptance criteria**
 
-- The user should be able to log in using their username or email address and password.
-- Invalid credentials should result in a generic error message without revealing whether a specific account exists.
-- After successfully logging in, the user should remain authenticated until their session expires or they log out.
-- An authenticated package owner should be able to access packages associated with their account.
-- An authenticated player should be able to continue participating in an NFC experience.
-- The user should be able to navigate to the Forgot Password page from the login page.
-- If a player is redirected to log in after scanning an NFC tag, the system should return the player to the scanned tag after successful authentication.
+- Accept a username or an email address with a password.
+- Show an error for invalid credentials.
+- Offer a password recovery link.
+- Load the current profile before displaying authenticated screens.
+- Use the Google credential flow to sign in or create a user on first use.
+- Resume the pending claim or scan after authentication.
 
----
+#### US-03 — Log Out
 
-### US-03: Log Out
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As a registered user,
-> I want to log out of my Raccon account,
-> So I can end my session when needed.
+> As a signed-in user, I want to log out so I can end my session on this device.
 
 **Acceptance criteria**
 
-- The authenticated user should be able to access a Log Out option.
-- Selecting Log Out should end the user's current session.
-- After logging out, the user should be redirected to the login page.
-- The user should not be able to access authenticated pages without logging in again.
+- Expose Log Out in authenticated navigation.
+- Send the authenticated logout request and clear the frontend session.
+- Redirect to sign-in and require authentication before reopening protected pages.
 
----
+#### US-04 — Forgot Password
 
-### US-04: Forgot Password
-
-**Category:** Owner/Player &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As a registered user,
-> I want to reset my password if I forget it,
-> So I can regain access to my Raccon account.
+> As a registered user, I want to reset my forgotten password.
 
 **Acceptance criteria**
 
-- The sign-in page should display a "Forgot Password?" link.
-- Clicking the link should redirect the user to the Forgot Password page.
-- The user should be able to enter their registered email address.
-- The system should validate the entered email address format.
-- After submitting the email address, the system should display a confirmation message indicating that password reset instructions have been sent if the account exists.
-- If the email address is associated with a Raccon account, the system should send a password reset link to that email address.
-- The password reset link should be unique, time-limited, and usable only once.
-- Clicking a valid reset link should redirect the user to a page where they can enter and confirm a new password.
-- The system should validate the new password and ensure both password fields match.
-- After successfully resetting the password, the system should display a confirmation message and allow the user to return to the sign-in page.
-- The user should be able to log in using their new password.
-- Expired or previously used reset links should be rejected with a clear error message.
+- Validate the email before submitting a reset request.
+- Use a neutral confirmation for registered and unregistered email addresses.
+- Send a reset link to matching accounts.
+- Collect and compare the new password and its confirmation on the reset page.
+- Reject invalid or expired tokens and invalidate the token when the password changes.
+- Allow sign-in with the new password.
 
----
+#### US-05 — Manage Account
 
-### US-05: Manage Account
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As a registered user,
-> I want to manage my Raccon account,
-> So I can control my profile information and account settings.
+> As a registered user, I want to manage my account.
 
 **Acceptance criteria**
 
-- The user should be able to view their profile information.
-- The user should be able to edit their name, username, phone number or avatar.
-- The user should be able to save changes to their profile information.
-- The system should display a confirmation message after successfully saving profile changes.
-- The user should be able to change their password.
-- The user should be required to enter their current password before setting a new password.
-- The system should validate the new password before saving it.
-- The user should be able to delete their account.
-- The system should request confirmation before permanently deleting the account.
-- The user should be logged out after successfully deleting their account.
+- Display profile information and the selected avatar.
+- Allow users to edit name, username, phone, and avatar.
+- Show the updated profile after saving.
+- Require the current password for a password change.
+- Ask for confirmation before deleting an account and clear the session after deletion.
 
----
+#### US-06 — Claim a Purchased Package
 
-### US-06: Claim a Purchased Package
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As a registered user,
-> I want to claim a package I purchased,
-> So I can securely access my package and customize its experience.
-
-**Acceptance Criteria**
-
-- The user shall be able to view the available NFC pack options on the Raccon platform.
-- Each pack option shall display its mode (Sequential or Open Hunt), number of NFC tags, and price.
-- The user shall be able to select a pack and be redirected to its corresponding product page on Ramz to complete the purchase.
-- After a successful purchase, Ramz shall send the customer a unique claim link, such as `https://raccon.app/claim?token=<master-auth-token>`.
-- When the customer opens the claim link, the browser shall make an **HTTP GET request** to the React frontend route `/claim`, which displays the pack claim page and preserves the authorization token.
-- If the customer is not authenticated, the system shall require them to log in or register while preserving the claim token.
-- The React frontend shall display a confirmation action before claiming the pack.
-- When the customer confirms, the React frontend shall send an **authenticated HTTP POST request** to the FastAPI endpoint `POST /packs/claim`, including the authorization token in the JSON request body and the customer's JWT in the authorization header.
-- The backend shall validate the authorization token and verify that the pack has not already been claimed.
-- If the claim is valid, the system shall assign the pack to the authenticated customer and create exactly one event with the initial status `draft`.
-- If the token is invalid or already used, the system shall reject the claim and display an appropriate error message without changing pack ownership or creating an event.
-- A pack that has already been claimed shall not be claimable by another account.
-- After a successful claim, the event shall appear in the customer's owned events list.
-- The customer shall be able to access the customization page for the claimed event.
-- The physical pack and its NFC tags shall exist before claiming; the claim process shall not create or modify physical tags.
----
-
-### US-07: View and Manage Purchased NFC Packages
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As an NFC event owner,
-> I want to view and identify the NFC packs associated with my account,
-> So I can access and manage my purchased experiences.
+> As a customer, I want to claim a pack I purchased so I can configure it.
 
 **Acceptance criteria**
 
-- The owner should be able to view all NFC packs associated with their account.
-- A newly claimed pack should use “Untitled” as its default Event Title.
-- Package names can be duplicates.
-- Each package should display:
-  - Event Title
-  - Event ID
-  - Mode: Sequential or Open Hunt
-  - Number of NFC tags
-  - Current status
-- The Event ID, mode and number of tags should not be editable.
-- The package status should not be directly editable by changing the event information.
-- The event title should be editable independently of tag configuration.
-- The event title field should have a maximum length of 20 characters.
-- The owner should be able to rename the event at any time without an edit limit.
-- Renaming the event should not count toward the event's customization edit limit.
-- The owner should only be able to access packages associated with their account.
-- Selecting a package should allow the owner to access its customization interface.
-- Previously saved event configurations should remain available when the owner returns to the event.
-- `GET /events` should list the owner’s events; `GET /events/{event_id}` should provide the selected event’s configuration details.
-- `PATCH /events/{event_id}` should update the event title and control status changes, including transition to `live`.
+- List pack modes, tag counts, and prices in the store.
+- Use the corresponding Ramz product link for checkout.
+- Open the claim page at `/claim/{master_auth_hash}` and load the pack preview.
+- Preserve the destination through sign-in or registration.
+- Submit the authenticated claim after the user confirms.
+- Assign the pack and create its draft event in the same database commit.
+- Show a claim error for an invalid credential or a pack owned by another customer.
+- When the pack belongs to the current account, use its event to link to customization.
 
+#### US-07 — View and Manage Purchased NFC Packages
 
----
-
-### US-08: NFC Package Customization
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As an NFC event owner,
-> I want to customize the individual tags in my package,
-> So I can create experiences that fit my intended activity.
+> As a pack owner, I want to see and manage my experiences.
 
 **Acceptance criteria**
 
-- The customization dashboard should display all NFC tags belonging to the selected package.
-- Tags should be displayed as numbered circles in ascending order.
-- The total number of displayed tags should match the number of tags included in the claimed pack.
-- The first tag should be selected by default when the customization dashboard is initially opened.
-- Selecting another tag should load that tag's current configuration into the customization area.
-- The currently selected tag should be visually distinguishable from the remaining tags via hover effect.
-- The empty tags, configured tags and current tag should be visually distinguishable.
-- The customization area should clearly display the number of the tag currently being edited.
-- The owner should be able to configure tags individually while remaining within the same event customization session.
-- The owner should be able to save the completed event configuration.
-- `PUT /events/{event_id}/setup` should save the event-specific tag configurations; the first successful non-empty setup should transition the event from `draft` to `paused`.
-- Event configuration must not modify the physical pack’s immutable tag identifiers or ordering.
+- List the authenticated owner's packs with event title, mode, tag count, and status.
+- Give a newly claimed event the title `UnTitled Event`.
+- Open the selected event with its saved configuration.
+- Limit the title to 20 characters in the editor.
+- Save title changes separately from tag configuration.
+- Check ownership before every event read or update.
 
----
+#### US-08 — NFC Package Customization
 
-### US-09: Customize Tag Content
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As an NFC event owner,
-> I want to add content to an individual NFC tag,
-> So players receive the intended hint or information when they discover that tag.
+> As a pack owner, I want to configure numbered tags and control the round.
 
 **Acceptance criteria**
 
-- The owner should be able to add optional hint text to a tag.
-- Hint text should have a maximum length of 255 characters and minimum of 0 characters.
-- The interface should display the current character count.
-- The owner should not be able to enter more than 255 characters.
-- The text field should use the Thmanyah font, a font size of 18px, and the color `#2D3B33`.
-- The owner should be able to optionally upload an image.
-- Supported image formats should be JPG, PNG, and WEBP.
-- An uploaded image should not exceed 5 MB.
-- Unsupported files should be rejected with a clear validation message.
-- Images larger than 5 MB should be rejected with a clear validation message.
-- If replacing an existing image fails validation, the previously saved image should remain unchanged.
-- Text and image content should both be optional, allowing the owner to configure a tag with text only, an image only, both, or no content.
-- Saving should persist the selected tag’s configuration through the event setup request, which submits the event’s tag configuration set.
-- After a successful save, the interface should provide confirmation that the tag was saved.
-- Successfully configuring a previously empty tag should update the event configuration progress.
-- Navigating away from a tag with unsaved changes should warn the owner before those changes are discarded.
-- Tag content should be represented by `event_tags.content` as JSONB, using `hint` and `image` fields for clue tags.
-- The backend should validate tag membership and event ownership before replacing event tag configurations.
+- Show the physical tags in sequence order and select the first tag on entry.
+- Indicate which tag is selected and which tags are configured.
+- Load the selected tag's saved fields into the editor.
+- Stage individual changes locally and submit the configuration in one request on the final save.
+- Keep tag identifiers and positions stable.
+- Provide controls to start, pause, and reset a round.
 
----
+#### US-09 — Customize Tag Content
 
-### US-10: Edit a Saved Package Configuration
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As an NFC event owner,
-> I want to edit a previously saved event configuration,
-> So I can correct or update the experience after its initial customization.
+> As a pack owner, I want to add a hint or image to a clue tag.
 
 **Acceptance criteria**
 
-- A package should allow a maximum of three editing sessions after its initial configuration is saved.
-- The edit limit should apply to the entire package, not to individual tags.
-- A saved package should not be directly editable until the owner explicitly selects Edit, and editing is permitted only while the event is `paused`.
-- Selecting Edit should open the entire package for editing.
-- Once editing is enabled while the event is `paused`, the owner should be able to modify any configurable tag or package-level setting as they would during the initial customization.
-- Editing only one tag should still count as one event editing session.
-- Editing multiple tags during the same editing session should still count as only one package edit.
-- The interface should display how many event edits remain.
-- Entering the customization page without making and saving changes should not consume an edit.
-- Previewing the event should not consume an edit.
-- Discarding changes should not consume an edit.
-- An edit should only be consumed when changes from an editing session are successfully saved while the event is `paused`. Saves attempted while `live` shall be rejected without consuming an edit.
-- When one edit remains, the system should warn the owner before saving that this will use the event's final edit.
-- Once all three event edits have been used, the event configuration should become read-only.
-- The Event Title should remain editable even when no customization edits remain.
+- Allow up to 255 characters of optional hint text and display a character counter.
+- Accept JPEG, PNG, and WebP image input.
+- Prepare uploads at no more than 2 MiB and 1200 pixels on the longest side in the browser.
+- Display image preparation errors in the editor.
+- Use the image reference returned by the upload API when saving the configuration.
+- Keep the saved hint and image available when the owner returns.
 
+#### US-10 — Edit a Saved Package Configuration
 
----
-
-### US-11: Configure Freeze Trap
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** Medium
-
-**User story**
-
-> As an Open Hunt NFC event owner,
-> I want to assign a Freeze trap to selected NFC tags,
-> So I can temporarily prevent players from continuing the experience.
+> As a pack owner, I want to revise a saved configuration.
 
 **Acceptance criteria**
 
-- The owner should be able to configure an individual tag as a Freeze trap.
-- Only one trap type should be assigned to a tag at a time.
-- When the owner selects Freeze, they should be prompted to specify the Freeze duration.
-- The Freeze duration should be selectable in 30-second increments, ranging from 30 seconds to 3 minutes.
-- Values outside the allowed range should not be accepted.
-- The Freeze configuration should only become active after the event configuration is successfully saved.
-- Changes to the Freeze configuration after the initial save should follow the event editing rules defined in US-10.
-- A player who successfully scans the tag should be frozen for the configured duration.
-- While frozen, the player should not be able to successfully scan another tag.
-- The Freeze countdown should be tracked independently for each player.
-- Re-scanning the same Freeze tag while frozen should display the remaining time without restarting the countdown.
-- A Freeze tag should never become claimed and should remain available to all players throughout the experience.
-- Freeze settings should be represented within the trap tag’s event-specific JSONB content.
+- Enable configuration editing for paused events with allowance remaining.
+- Stage edits across multiple tags and consume one edit on a successful event-level save.
+- Display the available allowance, with three edits as the MVP configuration.
+- Require an Open Hunt reset before editing an event with player progress.
+- Keep title changes independent of the edit quota.
+- Accept a single-use rebuild code for a paused event and restore its quota and draft state.
 
----
+#### US-11 — Configure Freeze Trap
 
-### US-12: Configure Boom Trap
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** Medium
-
-**User story**
-
-> As an Open Hunt NFC event owner,
-> I want to assign a Boom trap to selected NFC tags,
-> So I can introduce point penalties into the experience.
+> As an Open Hunt owner, I want to configure a Freeze trap.
 
 **Acceptance criteria**
 
-- The owner should be able to configure an individual tag as a Boom trap.
-- Only one trap type should be assigned to a tag at a time.
-- When the owner selects Boom, the point deduction should be fixed at one point.
-- The Boom configuration should only become active after the event configuration is successfully saved.
-- Changes to the Boom configuration after the initial save should follow the event editing rules defined in US-10.
-- A player who successfully scans the tag should lose one point.
-- A player's score should never fall below zero.
-- A Boom tag should never become claimed and should remain available to all players throughout the experience.
-- The same player should not be able to trigger the same Boom tag twice consecutively.
-- Re-scanning the same Boom tag consecutively should not result in an additional point deduction.
-- After successfully scanning a different tag, the player should be able to trigger the previous Boom tag again.
-- One player's interaction with a Boom tag should not affect another player's ability to trigger it.
-- Boom settings should be represented within the trap tag’s event-specific JSONB content.
+- Offer Freeze for Open Hunt tags and store the duration in seconds.
+- Allow one trap type per tag.
+- Cap the duration at three minutes.
+- Apply the freeze to the player who triggers it.
 
----
+#### US-12 — Configure Boom Trap
 
-### US-13: Configure Choose Trap
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** Medium
-
-**User story**
-
-> As an Open Hunt NFC event owner,
-> I want to assign a Choose Trap to selected NFC tags,
-> So players can determine the trap behavior encountered by subsequent scanners during the experience.
+> As an Open Hunt owner, I want to configure a Boom trap.
 
 **Acceptance criteria**
 
-- The owner should be able to configure an individual tag as a Choose Trap.
-- Only one trap type should be assigned to a tag at a time.
-- The Choose Trap configuration should only become active after the event configuration is successfully saved.
-- Changes to the Choose Trap configuration after the initial save should follow the event editing rules defined for event customization.
-- A Choose Trap tag should never become claimed and should remain available throughout the Open Hunt experience.
-- Multiple players should be able to interact with the same Choose Trap tag.
-- When a player is allowed to configure the trap, they should be able to choose between Freeze and Boom.
-- Selecting Freeze should prompt the player to specify a duration selectable in 30-second increments, ranging from 30 seconds to 3 minutes.
-- Selecting Boom should configure a deduction of one point.
-- The player should only be able to select one trap type.
-- The confirmed choice takes effect immediately and remains active for subsequent eligible scans until replaced. The effect can include the chooser; the precise set of players affected immediately must be specified in the rules.
-- The player who configures the trap is also subject to its effect on a later eligible scan.
-- Any Freeze or Boom behavior configured through Choose Trap should follow the same player-specific rules as a directly configured Freeze or Boom tag.
-- set-trap configuration should be represented within the trap tag’s event-specific JSONB content.
+- Offer Boom for Open Hunt tags.
+- Store a one-point penalty.
+- Give a tag one trap type at a time.
+- Apply the penalty to the triggering player's score, with a floor of zero.
 
----
+#### US-13 — Configure Choose Trap
 
-### US-14: Preview Sequential Tag Experience
-
-**Category:** Owner &nbsp; · &nbsp; **Priority:** Medium
-
-**User story**
-
-> As a sequential NFC event owner,
-> I want to preview a tag before saving or publishing it,
-> So I can understand what the player will see when the tag is scanned.
+> As an Open Hunt owner, I want to configure a Choose trap.
 
 **Acceptance criteria**
 
-- A Preview button should be available in the tag customization interface.
-- Clicking Preview should display a mobile representation of the player's scan-result screen.
-- The preview should use the selected tag's current configuration, including unsaved changes.
-- The preview should display a circle containing the selected tag number.
-- The preview should display the "ﺣﺻﻠﺗﮭﺎ!" heading used in the player experience.
-- The preview should display the configured hint text when present.
-- The preview should display the configured image when present.
-- The preview should use a fixed Sequential experience layout, regardless of the event being customized.
-- The preview should display a generic leaderboard with sample player information rather than actual player rankings.
-- Opening or closing the preview should not save the event configuration or consume an available package edit.
+- Offer Choose for Open Hunt tags.
+- Ask the player to pick Freeze or Boom when they find an available Choose tag.
+- Accept the choice during an active, unfinished round and apply it to that tag.
+- Use the selected trap for subsequent eligible scans.
+- Restore the Choose state when resetting the round.
 
----
 
-### US-15: Preview Open Hunt Tag Experience
+### Player Stories
 
-**Category:** Owner &nbsp; · &nbsp; **Priority:** Medium
+#### US-16 — Scan a Hashed NFC Tag
 
-**User story**
-
-> As an open hunt NFC event owner,
-> I want to preview a tag before saving or publishing it,
-> So I can understand what the player will see when the tag is scanned.
+> As a player, I want to tap an NFC tag with my phone so I can enter the experience.
 
 **Acceptance criteria**
 
-- A Preview button should be available from the tag customization interface.
-- Clicking Preview should display a mobile representation of the player's scan-result screen.
-- The preview should use the tag's current configuration, including unsaved changes.
-- The preview should display a circle with the selected tag number.
-- The preview should display the "ﺣﺻﻠﺗﮭﺎ!" heading used in the player experience.
-- The preview should display the configured hint text when present.
-- The preview should display the configured image when present.
-- The preview should use a fixed Open Hunt experience layout, regardless of the event being customized.
-- The preview should display a generic leaderboard with sample player information.
-- Opening or closing a preview should not save the tag or consume one of the available edits.
+- Program each tag with its stable URL on raccon.link.
+- Preserve the tag destination through authentication.
+- Submit the tag hash and user context with an authenticated scan request.
+- Check that the event is live and that the request matches the current player.
+- Return errors for invalid tags and ineligible scans.
 
-## Player Stories
+#### US-17 — View Successful Sequential Scan Result
 
-### US-16: Scan a Hashed NFC Tag
-
-**Category:** Player &nbsp; · &nbsp; **Priority:** Medium
-
-**User story**
-
-> As a player,
-> I want to access the correct event tag by scanning its unique NFC URL,
-> So I can participate securely in a live Raccon experience.
+> As a Sequential player, I want to see the result of a successful scan so I can find the next tag.
 
 **Acceptance criteria**
 
-- Each physical tag should contain a URL in the format `https://raccon.link/t/{static_hash}`.
-- `static_hash` should be a unique identifier that does not reveal the tag's internal sequence number.
-- Opening the NFC URL should resolve the corresponding physical tag without exposing its ordering in the link.
-- A player who is not authenticated should be redirected to sign in and then returned to the intended tag.
-- The frontend should submit the tag's `static_hash` as `tag_hash` to `POST /journey/scan`.
-- The scan request should include `injected_user_hash`, containing the authenticated player's UUID.
-- The backend should compare that UUID with the user ID in the JWT and reject a mismatch.
-- A nonexistent tag hash should be rejected without changing progress or score.
-- The backend should reject scans when the associated event has status `draft` or `paused`.
-- Only tags belonging to an event with status `live` should be eligible for a successful scan.
-- Rejected scans should not award points, advance progress, or trigger traps.
-- The scan response should identify the tag's sequence number, configured type, and event-specific content as applicable.
+- Accept the next clue in numerical order.
+- Reject repeats and scans past the next expected position.
+- Show the clue text, optional image, and player progress after success.
+- Track progress independently for each player and mark completion when they reach the end.
 
----
+#### US-18 — View Successful Open Hunt Scan Result
 
-### US-17: View Successful Sequential Scan Result
-
-**Category:** Player &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As a player,
-> I want to see the result of a successful sequential NFC scan,
-> So I know which tag I discovered and can receive its clue or content.
+> As an Open Hunt player, I want to see the result of my scan and know whether I earned a point.
 
 **Acceptance criteria**
 
-- After a successful scan, the player should see the "ﺣﺻﻠﺗﮭﺎ!" heading.
-- The scanned tag number should be prominently displayed inside a numbered circle.
-- The configured hint text should be displayed when the owner has provided one.
-- The configured image should be displayed when the owner has provided one.
-- If neither text nor an image is configured, the scan result should still display the relevant tag information.
-- If Tags Left is enabled, the number of remaining tags should be displayed.
-- If Tags Left is disabled, this information should not be displayed.
-- The player's progress should be updated.
-- The player should be able to access the sequential leaderboard from the scan-result interface.
+- Allow clue scans in any order.
+- Award a clue to its first successful claimant and add one point.
+- Distinguish a repeat scan from a clue claimed by another player.
+- Show the outcome and current score.
+- Complete the round once all configured clues have been claimed.
+- Show view-only results for subsequent scans.
 
----
+#### US-19 — Experience a Freeze Trap
 
-### US-18: View Successful Open Hunt Scan Result
-
-**Category:** Player &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As a player,
-> I want to see the result of a successful open hunt NFC scan,
-> So I can earn its points before another player claims it.
+> As an Open Hunt player, I want to know when I am frozen and when I can play again.
 
 **Acceptance criteria**
 
-- After a successful scan, the player should see the "ﺣﺻﻠﺗﮭﺎ!" heading.
-- The configured hint text should be displayed when the owner has provided one.
-- The configured image should be displayed when the owner has provided one.
-- If neither text nor an image is configured, the scan result should still display the relevant tag information.
-- The first player to successfully scan an unclaimed normal tag in the current round should claim that tag.
-- The first player to claim the tag should receive exactly one point.
-- A tag claimed by Player A should no longer award points to Player B, Player C, or any other player.
-- Re-scanning a tag already claimed by the same player should also award no additional points.
-- The player should be able to see their current score.
-- If Tags Left is enabled, the number of remaining tags should be displayed.
-- If Tags Left is disabled, this information should not be displayed.
-- The player's score should be updated.
-- The player should be able to access the open hunt leaderboard from the scan-result interface.
+- Set a freeze deadline when the player triggers a Freeze trap.
+- Show the countdown in the scan interface.
+- Reject attempts to advance while the freeze is active.
+- Allow eligible scans again after the deadline.
 
----
+#### US-20 — Experience a Boom Trap
 
-### US-19: Experience a Freeze Trap
-
-**Category:** Player &nbsp; · &nbsp; **Priority:** Medium
-
-**User story**
-
-> As an open hunt player,
-> I want clear feedback when I activate a Freeze trap,
-> So I understand why I temporarily cannot continue scanning tags.
+> As an Open Hunt player, I want to see the outcome of hitting a Boom trap.
 
 **Acceptance criteria**
 
-- Scanning a tag configured with a Freeze trap should activate the configured Freeze duration.
-- The player should be shown a dedicated Freeze screen.
-- The Freeze screen should clearly indicate that the player has been frozen.
-- A countdown should display the remaining Freeze duration.
-- While frozen, attempts to scan other Raccon tags should not be counted as successful scans.
-- Scanning another tag during the Freeze period should return the player to the Freeze state and show the remaining time.
-- The Freeze duration should continue from the original activation and should not restart because another tag was scanned.
-- No points or progression should be awarded for scans rejected during the Freeze period.
-- Re-scanning the same freeze tag while already frozen should display the player's existing countdown rather than starting a new Freeze period.
-- Once the countdown reaches zero, the player should automatically become eligible to scan tags again.
+- Show the Boom result and the updated score.
+- Deduct one point from the player who triggered the trap.
+- Keep the score at zero or above.
 
----
+#### US-21 — View Leaderboard
 
-### US-20: Experience a Boom Trap
-
-**Category:** Player &nbsp; · &nbsp; **Priority:** Medium
-
-**User story**
-
-> As an open hunt player,
-> I want the result of a Boom trap to be reflected in my score,
-> So I can understand the consequence of discovering that tag.
+> As a player, I want to see the leaderboard so I can track my position.
 
 **Acceptance criteria**
 
-- Scanning a tag containing a Boom trap should activate its configured point deduction.
-- The configured number of points should be deducted from the player's current score.
-- The player's score should never become negative.
-- If the deduction exceeds the player's current score, the resulting score should be zero.
-- The updated score should be reflected in the player's experience.
-- The leaderboard should reflect the player's updated score.
-- The scan should record that the Boom trap was triggered.
+- Load a ranked snapshot for the current event.
+- Rank by descending score, then ascending scan time, name, and user hash.
+- Display each ranked player's position, name, avatar, and score.
+- Display the signed-in player's rank if they have progress outside the top ten.
+- Stream shared rankings and player-specific position updates.
 
----
 
-### US-21: View Leaderboard
+### Admin Stories
 
-**Category:** Player &nbsp; · &nbsp; **Priority:** Medium
+#### US-22 — Prepare an NFC Package
 
-**User story**
-
-> As a player,
-> I want to view the experience leaderboard,
-> So I can compare my performance with other players.
+> As an administrator, I want to generate and prepare packs so they can be sold and played.
 
 **Acceptance criteria**
 
-- The leaderboard should be accessible from the player's scan-result screen.
-- The leaderboard should be displayed in a scrollable sheet.
-- Each leaderboard entry should display the player's rank, player identity/display name, and score.
-- A player’s sequential leaderboard value should represent the highest consecutively completed sequential tag in the current round.
-- A player's open hunt leaderboard score should reflect one point per first-claimed normal tag, adjusted by Boom penalties, in the current round.
-- The current player's entry should be visually distinguishable from other entries.
-- The leaderboard should reflect changes resulting from valid scans and trap effects.
-- The player's leaderboard information should refresh after their scan affects their score or progression.
+- Restrict inventory generation and factory operations to admins.
+- Generate batches by mode, tag count, and quantity.
+- Create a claim credential and a numbered set of physical tags for each pack.
+- Export raw claim credentials or claim links for fulfillment.
+- Load the selected pack and programming queue in the factory tool.
+- Write the URL as an NDEF URI and mark the tag printed after the write succeeds.
+- Generate batches of single-use rebuild codes.
 
-## Admin Stories
-
-### US-22: Prepare an NFC Package
-
-**Category:** Admin &nbsp; · &nbsp; **Priority:** High
-
-**User story**
-
-> As an admin,
-> I want to program and lock each NFC tag with its assigned URL,
-> So I can prepare a complete physical Raccon package for customers.
-
-**Acceptance criteria**
-
-- The admin should be able to enter a Event ID to load the event configuration and required NFC tags.
-- The programming station should indicate which tag to scan next and display the package's programming progress.
-- If a scanned tag already contains data, the station should display a red warning and play an error sound.
-- A tag containing existing data should not be programmed, and the package's progress should remain unchanged.
-- The station should prompt the admin to scan a blank NFC tag.
-- If the scanned tag is blank, the station should write its assigned unique URL and apply the configured NDEF/password lock.
-- A tag should only be considered successfully programmed after both writing and locking are completed.
-- After successful programming and locking, the station should record the tag as "printed" in the backend.
-- Once the backend confirms the tag's status, the station should play a success sound and advance to the next tag.
-- If programming, locking, or backend recording fails, the station should display an error message and should not count the tag as completed.
-- When all required tags are successfully recorded as printed, the station should display "Order 100% Complete."
-- Admin authentication should use the same account login flow with authorization enforced through the `admin` role.
-- The pack generation operation should assign each pack a master authorization token and each physical tag a unique `static_hash`, UUID, and internal `sequence_num`.
-- The admin should retrieve the master authorization link for distribution through Ramz and the ordered factory URLs for NFC programming.
-- The master authorization link should lead to the claim flow; claiming the pack should create its event only when a customer successfully claims it.
-- Marking a tag as printed must require a successful programming and locking result.
 
 ## Figma Mockups
 
-The [Raccon Figma workspace](https://www.figma.com/design/Hdv2zuWiZN8ltgtFmr4mhZ/Raccon-%25E2%2580%2594-User-Stories--Design-System---Mockups?node-id=325-34&p=f&t=XIrNazSEfBlfXD9l-0) brings together project requirements, design foundations, and interface mockups. Its pages are organized into the following sections:
-
-- **Cover and Index:** Introduce the project and track changes and handoff status.
-- **Admin:** Documents the brief and user stories in English and Arabic, alongside the sitemap, user flows, and architecture.
-- **Foundations:** Defines the brand identity, logo, characters, authentication animation, design tokens for color, typography and spacing, reusable components, and interface copy in Saudi dialect.
-- **Intake:** Collects team requests and feedback, with a sandbox for design explorations.
-
-This structure connects the user stories to the design work and gives the team a shared reference for review and implementation.
+The design workspace will hold the user stories, sitemap, user flows, and interface mockups. Its foundations will define the brand identity, characters, color and typography tokens, reusable components, and interface copy in Saudi dialect. [Raccon Figma workspace](https://www.figma.com/design/Hdv2zuWiZN8ltgtFmr4mhZ/Raccon-%25E2%2580%2594-User-Stories--Design-System---Mockups?node-id=325-34&p=f&t=XIrNazSEfBlfXD9l-0)
 
 ## System Architecture
 
-```mermaid
-flowchart TB
-    Store["Ramz store / purchase fulfillment "]
-    Admin["Admin / factory station"]
-    Owner["Owner on raccon.app"]
-    Player["Player NFC scan"]
-    Link["raccon.link/t/{static_hash}"]
-    React["React frontend / routing / API client"]
-    API["FastAPI: auth, users, admin, packs, events, journey"]
-    JWT["JWT authentication and role checks"]
-    DB[("PostgreSQL: users, packs, tags, events, event_tags, journey_progress")]
-    Admin --> React
-    Owner --> React
-    Store -.->|"Master authorization link"| Owner
-    Player --> Link --> React
-    React -->|"HTTPS JSON / bearer JWT"| API
-    API --> JWT
-    API --> DB
-```
-
-### Architecture Layers
-
 | Layer | Technology | Responsibility |
 |---|---|---|
-| Presentation | React (project frontend) | Owner and player screens, tag-link routing, factory interface, request composition |
-| API | FastAPI, Pydantic | Request validation, authentication, authorization, event lifecycle, tag scanning |
-| Data access | SQLModel / SQLAlchemy | Models, queries, and transactional persistence |
-| Database | PostgreSQL | Users, packs, tags, events, and JSONB event-specific tag content |
-| Migrations | Alembic | Versioned relational schema evolution |
-| External systems | Ramz , NFC writing station | Purchase handoff and physical tag programming |
-
-
-### Operational Data Flow
-
-1. An admin generates a pack and its physical tags before a customer owns it.
-2. The factory station retrieves the ordered `raccon.link` URLs, writes them to tags, and marks successful writes as printed.
-3. Ramz provides the buyer with a master authorization link. The owner authenticates and submits the token to the claim API.
-4. Claiming assigns the pack to the owner and creates an event in `draft` status.
-5. The owner retrieves the event, saves the event-specific tag content, and changes the event to `live` using the update endpoint.
-6. A player opens an NFC link; the frontend submits the unique tag hash and authenticated user's UUID to the journey scan endpoint.
-7. FastAPI checks the JWT user identity, resolves the physical tag, selects the event for the pack, verifies `live` status, and returns content.
-
+| Web application | React on Cloudflare Pages | Feature-based screens for accounts, store, claims, packages, customization, gameplay, and administration. Shared modules provide API access, authentication, layout, and UI components. |
+| API | FastAPI on Render | Domain routers validate requests with Pydantic, services apply business rules, and repositories handle persistence. |
+| Persistence | PostgreSQL, SQLModel, Alembic | Store identity, inventory, configuration, and progress in PostgreSQL. Track schema changes with versioned migrations. |
+| Media | Cloudflare R2 | Store uploaded clue images. Event-tag configuration keeps the image reference. |
+| Live updates | Redis and server-sent events | Publish leaderboard changes and deliver shared rankings and player-specific updates. |
+| NFC factory | Desktop tool and NFC reader/writer | Fetch factory instructions and program tag URLs. |
+| External services | Ramz, Google, email delivery, and Axiom | Handle checkout, Google sign-in, password-reset email, and application logs. |
 
 ### Entity Relationship Diagram
 
 ```mermaid
 erDiagram
-    users |o--o{ packs : owns
-    packs ||--o{ tags : contains
-    packs ||--o{ events : has
-    events ||--o{ event_tags : includes
-    tags ||--o{ event_tags : configured_as
-    events ||--o{ journey_progress : tracks
-    users ||--o{ journey_progress : participates_in
-    users |o--o{ event_tags : claims
-
-    users {
-        uuid id PK
-        string user_hash UK
-        string name
-        string username UK
-        string email UK
-        string phone_number
-        string password "hashed"
-        string role "default: user"
-        int avatar_id "default: 1"
-    }
-
-    packs {
-        uuid id PK
-        uuid owner_id FK "nullable"
-        string mode "open or seq"
-        int tags_count
-        string master_auth_hash UK
-    }
-
-    tags {
-        uuid id PK
-        uuid pack_id FK
-        string static_hash UK
-        int sequence_num
-        boolean is_printed "default: false"
-    }
-
-    events {
-        uuid id PK
-        uuid pack_id FK
-        string title "default: untitled"
-        string status "default: pending"
-        int edits_used "default: 0"
-        boolean hashing_enabled 
-        boolean tags_left_enabled
-    }
-
-    event_tags {
-        uuid id PK
-        uuid event_id FK
-        uuid tag_id FK
-        string tag_type "default: clue"
-        jsonb content
-    }
-
-    journey_progress {
-        uuid id PK
-        uuid event_id FK
-        string user_hash "indexed"
-        int current_sequence "default: 0"
-        int score "default: 0"
-        string status "default: active"
-        datetime frozen_until "nullable"
-        jsonb visited_sequences
-    }
+    USER o|--o{ PACK : owns
+    PACK ||--|{ TAG : contains
+    PACK ||--o| EVENT : backs
+    EVENT ||--o{ EVENT_TAG : configures
+    TAG ||--o{ EVENT_TAG : references
+    EVENT ||--o{ JOURNEY_PROGRESS : tracks
+    USER ||--o{ JOURNEY_PROGRESS : makes
+    EVENT o|--o{ REBUILD_CODE : redeems
+    USER o|--o{ REBUILD_CODE : uses
 ```
-### Database Overview
 
-| Table | Responsibility |
-|---|---|
-| `users` | Stores user credentials, profile information, selected avatars, and account roles. |
-| `packs` | Stores generated NFC packages, ownership information, gameplay modes, and claiming credentials. |
-| `tags` | Stores physical NFC tag identifiers, sequence numbers, and programming status. |
-| `events` | Stores event configurations, editing limits, and event-level settings such as NFC tag hashing. |
-| `event_tags` | Stores event-specific NFC tag content and trap configurations using JSONB. |
-| `journey_progress` | Tracks individual player progress, scores, visited tags, gameplay status, and active trap effects within an event. |
+### Database overview
+
+| Table | Records and relationships | Workflow |
+|---|---|---|
+| `users` | UUID, public user hash, profile, avatar, credentials, and role | Authenticate owners and players and authorize admins. |
+| `packs` | Mode, tag count, claim credential, and optional owner | Generate inventory before sale and associate it with an account at claim time. |
+| `tags` | Pack reference, position, public hash, and printing status | Generate production URLs and track factory programming. |
+| `events` | Pack reference, title, lifecycle status, and edit count | Track the configurable experience and its edit allowance. |
+| `event_tags` | Event and tag references, tag type, and JSONB content | Store clues, trap settings, and round-specific clue claims. |
+| `journey_progress` | Event reference, player hash, score, current sequence, visited sequences, freeze deadline, status, and scan timestamp | Enforce scan eligibility and build player results and rankings. |
+| `rebuild_codes` | Unique code, redemption state, user and event references, and redemption timestamp | Record single-use restores of the event edit allowance. |
+
+### Request flow
+
+1. The React page collects input and calls its domain API client. Protected requests carry the signed-in user's bearer token.
+2. A FastAPI router validates the payload and resolves the authenticated user. An admin operation also checks the user's role.
+3. A domain service applies the workflow rules. An owner event request resolves the pack to verify ownership. A scan request resolves the tag, event, player context, and mode.
+4. Repositories load and persist SQLModel records. The service commits the ownership change, configuration, or progress update as one unit of work for the operation.
+5. The API returns a response for the screen. Accepted gameplay updates can also trigger an asynchronous leaderboard broadcast.
 
 ## High-Level Class Diagram
 
-
 ```mermaid
 classDiagram
-    direction TB
-
-    class User {
-        +UUID id
-        +string user_hash
-        +string name
-        +string username
-        +string email
-        +string phone_number
-        +string password
-        +string role
-        +int avatar_id
-    }
-
-    class Pack {
-        +UUID id
-        +UUID? owner_id
-        +string mode
-        +int tags_count
-        +string master_auth_hash
-    }
-
-    class Tag {
-        +UUID id
-        +UUID pack_id
-        +string static_hash
-        +int sequence_num
-        +bool is_printed
-    }
-
-    class Event {
-        +UUID id
-        +UUID pack_id
-        +string title
-        +string status
-        +int edits_used
-        +JSONB record
-    }
-
-    class EventTag {
-        +UUID id
-        +UUID event_id
-        +UUID tag_id
-        +string tag_type
-        +JSONB content
-    }
-
-    class AdminService {
-        +generatePacks()
-        +markTagPrinted()
-    }
-
-    class PackService {
-        +previewPack()
-        +claimPackAtomically()
-    }
-
-    class EventService {
-        +createEvent()
-        +setupEvent()
-        +openEditingSession()
-        +saveEditingSession()
-        +startRound()
-        +endRound()
-    }
-
-    class JourneyService {
-        +validateScan()
-        +applyScanAtomically()
-        +applyTrap()
-    }
-
-    class LeaderboardService {
-        +getCurrentStandings()
-        +getPlayerState()
-    }
-
-    User "0..1" <-- "0..*" Pack : owns
-    Pack "1" <-- "1..*" Tag : contains
-    Pack "1" <-- "0..*" Event : has
-    Event "1" <-- "0..*" EventTag : configures
-    Tag "1" <-- "0..*" EventTag : configured_as
-
-    AdminService ..> Pack : generates
-    PackService ..> Pack : claims
-    EventService ..> Event : creates_and_updates
-    JourneyService ..> Event : locks_and_updates_record
-    JourneyService ..> EventTag : reads_configuration
-    LeaderboardService ..> Event : reads_record
+    class PackService
+    class EventService
+    class JourneyService
+    class AdminService
+    class PackRepository
+    class EventRepository
+    class EventTagRepository
+    class JourneyProgressRepository
+    class StorageService
+    PackService --> PackRepository : claim inventory
+    PackService --> EventRepository : create draft
+    EventService --> PackRepository : verify ownership
+    EventService --> EventRepository : manage events
+    EventService --> EventTagRepository : save configuration
+    EventService --> JourneyProgressRepository : check participants
+    EventService --> StorageService : manage clue media
+    JourneyService --> EventRepository : load live event
+    JourneyService --> EventTagRepository : apply scan
+    JourneyService --> JourneyProgressRepository : score and rank
+    AdminService --> PackRepository : manage inventory
 ```
-
-### Class Overview
-
-| Class | Responsibility |
-|---|---|
-| `User`, `Pack`, `Tag`, `Event`, `EventTag` | Persisted PostgreSQL entities representing accounts, physical inventory, and event configurations. |
-| `AdminService`, `PackService` | Package generation, factory programming, and secure package claiming. |
-| `EventService` | Event creation, configuration, editing limits, and round lifecycle management. |
-| `JourneyService` | NFC scan validation, Sequential progression, Open Hunt claims, scores, traps, and atomic gameplay updates. |
-| `LeaderboardService` | Retrieves current-round rankings, scores, and player progress from `events.record`. |
-
-
 
 ## High-Level Sequence Diagrams
 
-The following diagrams describe registration, event management, tag configuration, and event. Configuration can be saved during initial `draft` setup or while `paused`, but not while `live`.
-
-### 1. User Registration
+### Registration and authentication
 
 ```mermaid
 sequenceDiagram
-    actor User
-    participant Web as React Frontend
-    participant API as FastAPI
+    actor Visitor
+    participant Web as React
+    participant API as FastAPI Auth
     participant DB as PostgreSQL
-    User->>Web: Submit registration form
+    Visitor->>Web: Submit account details and avatar
     Web->>API: POST /auth/register
-    API->>API: Validate required fields and formats
-    API->>DB: Check unique username and email
-    DB-->>API: Availability result
-    alt Invalid input or duplicate account
-        API-->>Web: 400 or 422 validation error
-        Web-->>User: Display field errors
-    else Valid registration
-        API->>API: Hash password
-        API->>DB: Insert user
-        DB-->>API: User UUID
-        API-->>Web: 200 with message and user_id
-        Web->>API: POST /auth/login
-        API->>DB: Verify account credentials
-        DB-->>API: User record
-        API-->>Web: 200 with bearer JWT
-        Web-->>User: Display home page
-    end
+    API->>DB: Validate uniqueness and save account
+    API-->>Web: Account created
+    Web->>API: POST /auth/login
+    API-->>Web: Bearer access token
+    Web->>API: GET /users/me
+    API-->>Web: User profile
+    Web-->>Visitor: Open welcome flow or resume a scan or claim
 ```
 
-### 2. View and Rename Packages
+### Pack claim and configuration
 
 ```mermaid
 sequenceDiagram
     actor Owner
-    participant Web as React Frontend
+    participant Web as React
     participant API as FastAPI
     participant DB as PostgreSQL
-    Owner->>Web: Open My Packages
-    Web->>API: GET /events with JWT
-    API->>DB: Find events owned through packs
-    DB-->>API: Owned events
-    API-->>Web: 200 with event list
-    Web-->>Owner: Show event titles and statuses
-    Owner->>Web: Select event
-    Web->>API: GET /events/{event_id}
-    API->>DB: Check ownership and load event tags
-    DB-->>API: Event and tags
-    alt Event missing or not owned
-        API-->>Web: 403 or 404
-        Web-->>Owner: Display access error
-    else Owner authorized
-        API-->>Web: 200 with event configuration
-        Web-->>Owner: Display event settings
-        Owner->>Web: Change event title and save
-        Web->>Web: Enforce 20 character limit
-        Web->>API: PATCH /events/{event_id} with title
-        API->>DB: Validate ownership and update title
-        DB-->>API: Updated event
-        API-->>Web: 200 with updated event
-        Web-->>Owner: Confirm title change
-        Note over API,DB: Title changes do not consume configuration edits
-    end
+    Owner->>Web: Open the claim link
+    Web->>API: GET pack preview
+    API-->>Web: Pack details
+    Owner->>Web: Sign in and confirm claim
+    Web->>API: POST /packs/claim
+    API->>DB: Assign pack and create draft event
+    API-->>Web: Claimed pack
+    Owner->>Web: Configure clues or traps
+    Web->>API: PUT /events/{event_id}/setup
+    API->>DB: Store the draft configuration
+    Owner->>Web: Start round
+    Web->>API: PATCH event status to live
 ```
 
-### 3. Configure NFC Tag Content
+### Edit a saved configuration
 
 ```mermaid
 sequenceDiagram
     actor Owner
-    participant Web as React Frontend
-    participant API as FastAPI
+    participant Web as React
+    participant API as FastAPI Events
+    participant Media as Cloudflare R2
     participant DB as PostgreSQL
-    participant R2 as Cloudflare R2
-    Owner->>Web: Open event customization
+    Owner->>Web: Open the paused event for editing
     Web->>API: GET /events/{event_id}
-    API->>DB: Verify ownership and read event status
-    DB-->>API: Event and configured tags
-    API-->>Web: Event configuration
-    alt Event is live
-        Web-->>Owner: Show read-only configuration
-    else Event is draft
-        Web-->>Owner: Allow initial setup
-    else Event is paused
-        Owner->>Web: Select Edit
-        Web->>API: POST /events/{event_id}/editing-session
-        API->>DB: Check remaining edit quota
-        alt Quota exhausted
-            API-->>Web: 409 Conflict
-            Web-->>Owner: Show read-only configuration
-        else Edit available
-            API-->>Web: Session ID and edits remaining
-            Web-->>Owner: Enable editing
-        end
+    API-->>Web: Saved tag configuration and edit allowance
+    opt Reset Open Hunt before editing
+        Web->>API: POST /events/{event_id}/reset
+        API->>DB: Clear round progress and restore Choose traps
     end
-    opt Editing is enabled
-        Owner->>Web: Enter optional hint and select image
-        Web->>Web: Validate text length and image constraints
-        opt Valid image selected
-            Web->>API: POST /events/{event_id}/images
-            API->>R2: Store image
-            R2-->>API: Image reference
-            API-->>Web: Image reference
-        end
-        Owner->>Web: Save full configuration
-        Web->>API: PUT /events/{event_id}/setup
-        API->>DB: Lock event and recheck status and quota
-        alt Event is live or save invalid
-            API-->>Web: Reject save without consuming edit
-            Web-->>Owner: Display error
-        else Valid draft or paused save
-            API->>DB: Replace event tag configuration atomically
-            API->>DB: Count changed edit or move draft to paused
-            DB-->>API: Transaction committed
-            API-->>Web: 200 save confirmation
-            Web-->>Owner: Show updated configuration
-        end
+    Owner->>Web: Stage tag changes and confirm save
+    opt New clue image
+        Web->>API: POST /events/upload-image
+        API->>Media: Store the image
+        API-->>Web: Image reference
     end
+    Web->>API: PUT /events/{event_id}/edit
+    API->>DB: Save configuration and consume one edit
+    API-->>Web: Updated edit allowance
 ```
 
-### 4. Configure NFC Tag Traps
-
-```mermaid
-sequenceDiagram
-    actor Owner
-    participant Web as React Frontend
-    participant API as FastAPI
-    participant DB as PostgreSQL
-    Owner->>Web: Open trap configuration
-    Web->>API: GET /events/{event_id}
-    API->>DB: Check owner, mode, status and edit quota
-    DB-->>API: Event details
-    alt Sequential mode
-        API-->>Web: Trap configuration unavailable
-        Web-->>Owner: Show clue-only options
-    else Event is live
-        API-->>Web: Read-only configuration
-        Web-->>Owner: Editing blocked during live round
-    else Open Hunt event in draft or paused
-        opt Event is paused
-            Owner->>Web: Select Edit
-            Web->>API: POST /events/{event_id}/editing-session
-            API->>DB: Validate available editing session
-            DB-->>API: Editing quota result
-            API-->>Web: Session ID or 409 error
-        end
-        opt Editing is authorized
-            Owner->>Web: Select Freeze, Boom, or Choose
-            alt Freeze
-                Web-->>Owner: Select 30 to 180 seconds in steps of 30
-            else Boom
-                Web-->>Owner: Fixed one-point penalty
-            else Choose
-                Web-->>Owner: Players choose Freeze or Boom during event
-            end
-            Owner->>Web: Save complete tag configuration
-            Web->>API: PUT /events/{event_id}/setup
-            API->>DB: Lock event and validate mode, status and quota
-            alt Invalid configuration or event now live
-                API-->>Web: Reject save
-                Web-->>Owner: Display error
-            else Valid configuration
-                API->>DB: Replace event tag configuration atomically
-                API->>DB: Update edit count or draft status
-                DB-->>API: Transaction committed
-                API-->>Web: 200 confirmation
-                Web-->>Owner: Show saved traps
-            end
-        end
-    end
-```
-
-### 5. NFC Tag Scanning and Event
+### NFC scan and leaderboard
 
 ```mermaid
 sequenceDiagram
     actor Player
-    participant Web as React Frontend
+    participant NFC as NFC redirect
+    participant Web as React
     participant API as FastAPI
     participant DB as PostgreSQL
-    Player->>Web: Scan NFC tag URL on raccon.link
-    Web->>Web: Preserve static_hash
-    opt Player is not signed in
-        Web-->>Player: Display login page
-        Player->>Web: Submit credentials
-        Web->>API: POST /auth/login
-        API-->>Web: Bearer JWT
-        Web->>Web: Restore tag destination
+    participant Redis
+    Player->>NFC: Open the tag URL
+    NFC-->>Web: Redirect to scan or sign-in
+    opt Sign-in required
+        Player->>Web: Authenticate and resume scan
     end
-    Web->>API: POST /journey/scan with tag_hash and injected_user_hash
-    API->>API: Validate JWT and matching player UUID
-    alt Authentication invalid
-        API-->>Web: 401 or 403
-        Web-->>Player: Display authentication error
-    else Identity valid
-        API->>DB: Resolve tag, pack and event
-        DB-->>API: Tag and event details
-        alt Unknown tag or event not live
-            API-->>Web: Reject scan without Event changes
-            Web-->>Player: Display scan error
-        else Event is live
-            API->>DB: Lock event and read active round in events.record
-            DB-->>API: Current player and round state
-            alt Player frozen
-                API-->>Web: Remaining freeze time
-                Web-->>Player: Display freeze countdown
-            else Sequential mode
-                API->>API: Validate next tag in sequence
-                alt Wrong tag order
-                    API-->>Web: Reject out-of-order scan
-                else Correct next tag
-                    API->>DB: Save progress and scan atomically
-                    DB-->>API: Committed
-                    API-->>Web: Tag content and progress
-                end
-            else Open Hunt mode
-                alt Normal clue tag
-                    API->>API: Check current-round claim
-                    alt Tag already claimed
-                        API-->>Web: No additional points
-                    else First valid claim
-                        API->>DB: Save claim, scan and point atomically
-                        DB-->>API: Committed
-                        API-->>Web: Clue, score and progress
-                    end
-                else Freeze or Boom trap
-                    API->>DB: Apply trap and save round state atomically
-                    DB-->>API: Committed
-                    API-->>Web: Trap effect and updated state
-                else Choose trap
-                    API-->>Web: Choice required
-                    Player->>Web: Confirm Freeze or Boom
-                    Web->>API: POST /events/{event_id}/choose-trap
-                    API->>DB: Persist choice and effect atomically
-                    DB-->>API: Committed
-                    API-->>Web: Confirmed trap and updated state
-                end
-            end
-            Web-->>Player: Display scan result
-        end
+    Web->>API: POST /journey/scan
+    API->>DB: Check event and apply scan rules
+    API-->>Web: Outcome, content, and progress
+    opt Scan updates round state
+        API->>Redis: Publish event and player rankings
+        Redis-->>API: Deliver ranking updates
+        API-->>Web: Stream leaderboard events
     end
 ```
 
-### Sequence Diagram Overview
+### Factory programming
 
-| Diagram | Description |
-|---|---|
-| User Registration | Validates account details, creates a user, and logs them in through a separate authentication request. |
-| View and Rename Packages | Lists owned events, checks ownership, and renames an event without consuming configuration edits. |
-| Configure NFC Tag Content | Saves clues and R2 image references, respecting draft setup, paused-only editing, and editing quotas. |
-| Configure NFC Tag Traps | Configures Open Hunt traps with validation and paused-only editing rules. |
-| NFC Tag Scanning and Event | Authenticates players, processes live scans and trap effects, and updates current-round event in `events.record`. |
-
+```mermaid
+sequenceDiagram
+    actor Admin
+    participant Web as Admin UI
+    participant Factory as Factory App
+    participant API as FastAPI Admin
+    participant Tag as NFC Tag
+    Admin->>Web: Select mode, tag count, and quantity
+    Web->>API: POST /admin/generate-packs
+    API-->>Web: Packs, tags, and claim credentials
+    Admin->>Factory: Open a pack by ID
+    Factory->>API: GET /admin/factory/pack/{pack_id}
+    API-->>Factory: Numbered queue of tag URLs and printing statuses
+    loop For each successful write
+        Factory->>Tag: Write the NDEF URI
+        Factory->>API: PATCH /admin/factory/tags/{tag_id}/mark-printed
+        API-->>Factory: Updated printing status
+    end
+```
 
 ## Raccon REST API Documentation
 
-### API conventions
+The API will use JSON for requests and responses except where noted. Protected routes will take an access token in the `Authorization: Bearer` header. Owner and admin operations will also check ownership or role at the API. Event and pack identifiers will use UUIDs. NFC routes will use the tag’s public identifier.
 
-- **Authentication:** Protected endpoints require `Authorization: Bearer <access_token>`. JWTs use HS256, include the user UUID in `sub`, and expire after seven days. 
-- **Admin access:** Admin endpoints additionally require `users.role = "admin"`.
-- **Reference documentation:** FastAPI generates `/openapi.json`, `/docs`, and a Scalar UI at `/scalar`.
-
-### Endpoint Summary
-
-| Method | Path | Access | Purpose |
-|---|---|---|---|
-| `POST` | `/auth/register` | Public | Register account |
-| `POST` | `/auth/login` | Public | Obtain JWT |
-| `POST` | `/auth/logout` | User | Logout acknowledgment |
-| `POST` | `/auth/change-password` | User | Change password |
-| `DELETE` | `/auth/delete-account` | User | Delete account |
-| `GET` | `/users/me` | User | View profile |
-| `PATCH` | `/users/me` | User | Update profile |
-| `POST` | `/admin/generate-packs` | Admin | Generate inventory |
-| `GET` | `/admin/factory/pack/{pack_id}` | Admin | Factory tag URLs |
-| `PATCH` | `/admin/factory/tags/{tag_id}/mark-printed` | Admin | Mark tag programmed |
-| `GET` | `/packs/preview/{master_auth_hash}` | Public | Preview claimable pack |
-| `POST` | `/packs/claim` | User | Claim pack and create draft event |
-| `GET` | `/events` | User | List owned events |
-| `GET` | `/events/{event_id}` | Owner | View event and tag configuration |
-| `PUT` | `/events/{event_id}/setup` | Owner | Replace event tag configuration |
-| `PATCH` | `/events/{event_id}` | Owner | Rename or change event status |
-| `POST` | `/journey/scan` | User | Scan live event tag |
-| `GET` | `/` | Public | Root check |
-| `GET` | `/health/` | Public | Health check |
-| `GET` | `/scalar` | Public | Interactive API reference |
-| `POST` | `/auth/forgot-password` | Public | Begin password recovery |
-| `POST` | `/auth/reset-password` | Public | Finish password recovery |
-| `GET` | `/events/{event_id}/leaderboard` | User | Leaderboard |
-| `POST` | `/journey/set-trap` | User | Confirm a persistent Choose Trap selection |
-| `POST` | `/events/{event_id}/editing-session` | Owner | Explicitly open a configuration editing session |
-| `POST` | `/events/{event_id}/images` | Owner | Upload a tag image to Cloudflare R2 |
-
-# Raccon API Documentation
-
-The API specification is divided into **internal APIs**, which support Raccon's own application and administrative workflows, and **external services and integrations**, which support infrastructure, deployment, observability, and third-party commerce. Internal endpoints are grouped by responsibility and documented consistently using access, request, response, and key rules. UUIDs and example tokens below are illustrative.
-
-## 1. Internal APIs
-
-### 1.1 Authentication and profile
-
-| Endpoint | Access | Request | Successful response | Validation and important behavior |
-|---|---|---|---|---|
-| `POST /auth/register` | Public | JSON: `name`, `username`, `email`, `phone_number`, `avatar_id`, `password` | `200`: `message`, `user_id` (UUID) | Username `^[a-z0-9_]+$`; phone `^\d{9}$`; password max 72 characters; duplicate username/email: `400`. Uniqueness is enforced by the database. |
-| `POST /auth/login` | Public | Form: `username`, `password`; username field accepts a username or email | `200`: `access_token`, `token_type: "bearer"` | Invalid credentials: `400`. The access token is a JWT. |
-| `POST /auth/logout` | Authenticated user | Bearer JWT; no body | `200`: `{"message":"Successfully logged out."}` | The frontend discards the JWT; logout does not revoke an already issued access token. |
-| `POST /auth/change-password` | Authenticated user | JSON: `old_password`, `new_password` | `200`: `{"message":"Password changed successfully"}` | Incorrect current password: `400`; enforce password validation. |
-| `DELETE /auth/delete-account` | Authenticated user | Bearer JWT; no body | `200`: `{"message":"Account deleted successfully"}` | Preserve referential integrity and apply the defined ownership and retention policy. |
-| `GET /users/me` | Authenticated user | No body | `200`: `id`, `name`, `username`, `email`, `phone_number` | Returns the authenticated user's profile. |
-| `PATCH /users/me` | Authenticated user | JSON: optional `name`, `username`, `phone_number` | `200`: updated user profile | `email` and `role` are not editable here; duplicate username is rejected. |
-
-### 1.2 Admin inventory and factory programming
-
-| Endpoint | Access | Request | Successful response | Validation and important behavior |
-|---|---|---|---|---|
-| `POST /admin/generate-packs` | Admin | JSON: `mode` (`open` or `seq`), `tags_count`, `quantity` | `200`: array of generated packs with `pack_id`, `master_auth_hash`, and tags (`id`, `static_hash`, `sequence_num`, `is_printed`) | `quantity ≥ 1`; `tags_count > 0`; each tag has a unique six-character random `static_hash`. |
-| `GET /admin/factory/pack/{pack_id}` | Admin / authorized factory workflow | Path: `pack_id` (UUID) | `200`: `pack_id`, `mode`, ordered `tags_to_program` containing `tag_id`, `sequence_num`, `print_url`, `is_printed` | Unknown pack: `404`; print URL: `https://raccon.link/t/{static_hash}`. |
-| `PATCH /admin/factory/tags/{tag_id}/mark-printed` | Admin / authorized factory workflow | Path: `tag_id` (UUID) | `200`: `status: "success"`, confirmation `message` | Unknown tag: `404`; factory verifies NFC writing and locking before marking printed. |
-
-**Generation request example:**
-
-```json
-{"mode":"open","tags_count":5,"quantity":2}
-```
-
-### 1.3 Pack claiming
-
-| Endpoint | Access | Request | Successful response | Validation and important behavior |
-|---|---|---|---|---|
-| `GET /packs/preview/{master_auth_hash}` | Public | Path: `master_auth_hash` | `200`: `id`, `mode`, `tags_count`, `owner_id` | Invalid token: `404`; claim eligibility is checked before confirmation. |
-| `POST /packs/claim` | Authenticated user | JSON: `master_auth_hash` | `200`: claimed pack `id`, `mode`, `tags_count`, `owner_id` | Token must be valid, single-use, and linked to an unclaimed pack. Assign owner and create exactly one `draft` event in the same database transaction; reject repeated or concurrent claims. |
-
-**Claim request example:**
-
-```json
-{"master_auth_hash":"<master-token-from-purchase-link>"}
-```
-
-The customer follows a Ramz-provided link to the **React frontend** at `GET https://raccon.app/claim?token=...`. After authentication and explicit confirmation, React sends `POST /packs/claim` to FastAPI. Opening the frontend link alone does not claim the pack.
-
-### 1.4 Event configuration and lifecycle
-
-| Endpoint | Access | Request | Successful response | Validation and important behavior |
-|---|---|---|---|---|
-| `GET /events` | Authenticated user | No body | `200`: array of `id`, `pack_id`, `title`, `status`; empty array if none | Returns events belonging to packs owned by the caller. |
-| `GET /events/{event_id}` | Pack owner | Path: `event_id` (UUID) | `200`: `id`, `pack_id`, `title`, `status`, and ordered `tags` with `sequence_num`, `tag_id`, `tag_type`, `content`, `is_configured` | Unknown event: `404`; non-owner: `403`; includes physical tags even if not configured. |
-| `PUT /events/{event_id}/setup` | Pack owner | JSON: `tags_config` array of `tag_id`, `tag_type`, `content` | `200`: `{"status":"success","message":"Event journey setup completed."}` | Setup is permitted only in `draft` (initial setup) or `paused` (subsequent edits); reject requests while `live`. `clue` or `trap`; traps only in `open` mode; trap content needs a non-null `boom`, `freeze`, or `choose`. Initial nonempty setup changes `draft → paused`. Empty list after initial setup rejected. Unknown: `404`; non-owner: `403`; invalid mode: `400`; invalid schema: `422`. |
-| `PATCH /events/{event_id}` | Pack owner | JSON: optional `title`, `status` | `200`: updated `id`, `pack_id`, `title`, `status` | `draft → paused` occurs through setup; owner controls allow `paused ↔ live`; never return to `draft`. Cannot start without valid configuration. Title changes do not consume an editing session. Unknown: `404`; non-owner: `403`; invalid status: `422`. |
-| `POST /events/{event_id}/editing-session` | Event owner | Path: `event_id` (UUID) | `200`: `editing_session_id` (UUID), `edits_remaining` | After initial setup, explicitly opens a session. First successful changed save in the session consumes one of three edits; repeated/no-op saves do not. Session ID accompanies setup submissions. Quota exhausted: `409`. Opening an editing session while `live` is rejected; the owner must end the round and return to `paused` before editing. |
-
-
-
-
-### 1.5 Player journey and Event
-
-| Endpoint | Access | Request | Successful response | Validation and important behavior |
-|---|---|---|---|---|
-| `POST /journey/scan` | Authenticated player | JSON: `tag_hash`, `injected_user_hash` (UUID) | `200`: scan outcome and tag information; event contract includes `result`, `tag_sequence`, `tag_type`, `content`, `round_id`, `points_delta`, `score`, `highest_sequential_tag`, `claimed`, `frozen_until`, `tags_left`, `time_remaining_seconds` | Injected UUID must equal JWT subject (`403` otherwise); unknown hash: `404`; missing event or non-live status: `400`. JWT authenticates identity; supplied UUID does **not** prove physical NFC tapping. |
-| `GET /events/{event_id}/leaderboard` | Authenticated event player | Path: `event_id` | `200`: `round_id`, mode, ranked `players` (UUID, display name, score/progress), caller's rank | Current-round ranking derived from `events.record`. Open Hunt: first-claim points minus Boom penalties; Sequential: highest consecutive tag. |
-| `POST /journey/set-trap` | Authenticated event player | JSON: `tag_id`, `trap_type` (`freeze` or `boom`), `duration_seconds` for Freeze | `200`: confirmed selection and `round_id` | Live Open Hunt round; tag must be configured as `choose`. Selection applies immediately and persists until replaced. Chooser is not immune. Freeze: 30–180 seconds in steps of 30; Boom: minus one point, floor zero. Exact immediate recipient set remains an event decision. Transactional update. |
-
-
-
-### 1.6 Account recovery and store integration
-
-| Endpoint | Access | Request | Successful response | Validation and important behavior |
-|---|---|---|---|---|
-| `POST /auth/forgot-password` | Public | JSON: `email` | Confirmation response, identical whether the account exists or not | For an existing account, send a short-lived, single-use reset token. |
-| `POST /auth/reset-password` | Public | JSON: `reset_token`, `new_password` | Confirmation of password change | Verify token expiration, matching passwords, and password rules. |
-
-### 1.7 Service health and documentation
-
-| Endpoint | Access | Successful response | Purpose |
-|---|---|---|---|
-| `GET /` | Public | `200`: `{"message":"System is running. Database connected!"}` | Basic application/database status message. |
-| `GET /health/` | Public | `200`: `{"status":"ok","message":"Raccon APIs is running!"}` | Health check. |
-| `GET /scalar` | Public or deployment-restricted | Scalar documentation page | Interactive API documentation; FastAPI also provides standard OpenAPI routes. |
-
-
-
-## 2. External APIs and Services
-
-The following services interact with Raccon's platform.
-
-| External service | Integration category | Role in Raccon |
+| Area | Method and path | Contract |
 |---|---|---|
-| **Axiom** | Observability and logging | Collects and supports analysis of application logs and operational events for troubleshooting and monitoring. |
-| **GitHub Actions** | CI/CD automation | Runs automated validation, testing, and deployment workflows when repository events trigger them. |
-| **Cloudflare** | Cloud infrastructure and object storage | Provides Cloudflare R2 for uploaded image objects, with PostgreSQL retaining image references; may also support domain, DNS, and edge delivery configuration. |
+| Authentication | `POST /auth/register` | Create an account from profile fields and a password. |
+| Authentication | `POST /auth/login` | Take form fields `username` and `password`, where the username field also accepts an email. Return a bearer token. |
+| Authentication | `POST /auth/google` | Take a Google `credential` and return a Raccon bearer token. |
+| Authentication | `POST /auth/logout` | Acknowledge logout. The frontend clears its stored session. |
+| Account recovery | `POST /auth/forgot-password`, `POST /auth/reset-password` | Request a reset by email, then submit `token` and `new_password`. |
+| Profile | `GET /users/me`, `PATCH /users/me` | Read or update the authenticated user’s profile. |
+| Profile | `POST /auth/change-password`, `DELETE /auth/delete-account` | Change the password with `old_password` and `new_password`, or delete the authenticated account. |
+| Pack claim | `GET /packs/preview/{master_auth_hash}`, `POST /packs/claim` | Preview pack details publicly. Claim while signed in by submitting `master_auth_hash`. |
+| Events | `GET /events`, `GET /events/{event_id}` | List owned events or retrieve one owned event with tag configuration and edit allowance. |
+| Events | `PUT /events/{event_id}/setup`, `PUT /events/{event_id}/edit` | Submit `tags_config` entries containing `tag_id`, `tag_type`, and `content` for draft setup or a saved edit. |
+| Events | `PATCH /events/{event_id}` | Update the title or status. |
+| Events | `POST /events/{event_id}/reset`, `POST /events/{event_id}/rebuild` | Reset the round, or supply a rebuild `code` to return a paused event to draft. |
+| Media | `POST /events/upload-image` | Accept a multipart image upload and return its reference. |
+| NFC | `GET /t/{tag_hash}` | Redirect the browser to sign-in or the scan screen. |
+| Journey | `POST /journey/scan` | Take `tag_hash` and `injected_user_hash`. Return the scan outcome, tag content, score, remaining tags, and completion state for the player. |
+| Journey | `POST /journey/set-trap` | Take the tag and player identifiers plus `trap_type` and `trap_value` to activate an available Choose trap. |
+| Journey | `GET /journey/progress/{event_id}` | Get the signed-in player’s progress. |
+| Rankings | `GET /journey/leaderboard/{event_id}`, `GET /journey/leaderboard/{event_id}/stream` | Fetch the current rankings and subscribe to updates as `text/event-stream`. |
+| Admin | `POST /admin/generate-packs`, `POST /admin/generate-rebuild-codes` | Generate packs with tags or issue rebuild codes in batches. |
+| Admin | `GET /admin/packs`, `GET /admin/packs/details/{master_auth_hash}`, `GET /admin/users` | List inventory or users and look up pack details. |
+| Admin | `DELETE /admin/delete-pack/{pack_id}`, `DELETE /admin/delete-user/{user_id}` | Remove the specified pack or user. |
+| Factory | `GET /admin/factory/pack/{pack_id}`, `PATCH /admin/factory/tags/{tag_id}/mark-printed` | Fetch tag URLs and printing status, or mark a tag as printed after programming. |
+| Health | `GET /health/` | Return the API health status. |
+
+### Event configuration payloads
+
+Each entry in `tags_config` pairs a physical tag UUID with the event-specific fields to save.
+
+| Tag type | Content keys | Validation |
+|---|---|---|
+| Clue | `hint`, `image` | Both fields are optional. The editor limits hint length and prepares image uploads before saving the returned URL. |
+| Freeze | `freeze` | One trap per tag in Open Hunt. The value is a duration in seconds. |
+| Boom | `boom` | One trap per tag in Open Hunt. The value is one point. |
+| Choose | `choose` | Set to true in the owner configuration. Player activation saves the selected trap and records its Choose origin for reset. |
+
+Event detail responses return tags in sequence order with their configuration status. They also include the current edit count, the maximum allowance, and the edits remaining. Draft saves use the setup endpoint. Paused saves use the edit endpoint. The API verifies that submitted tags belong to the selected pack.
+
+### Scan outcomes and ranking updates
+
+| Case | Service response |
+|---|---|
+| Valid Sequential clue | Return the clue and advance the player's next expected position. The final clue completes the player's journey. |
+| Valid, unclaimed Open Hunt clue | Mark the clue claimed, record the player's visit, and add one point. |
+| Duplicate or ineligible clue | Report the outcome without awarding another point. |
+| Freeze | Set the player's freeze deadline. Return the deadline so the interface can render the countdown. |
+| Boom | Apply the one-point penalty, subject to the zero floor. |
+| Finished Open Hunt round | Return a view-only result without awarding points or activating traps. |
+
+The ranking snapshot includes the top ten and the caller's row when they have a rank outside the top ten. The event stream emits shared `leaderboard` updates and personalized `player` updates. PostgreSQL holds the ranking inputs, and Redis distributes updates to subscribed clients through the API.
 
 ## Technical Justifications
 
-### React and FastAPI
-
-React supports reusable UI components and distinct owner, player, and factory workflows. FastAPI provides typed request/response validation through Pydantic, dependency-based authentication, automatic OpenAPI documentation, and a clear separation of route modules (`auth`, `users`, `admin`, `packs`, `events`, `journey`). SQLModel provides a typed persistence layer for the API.
-
-### PostgreSQL and SQLModel
-
-PostgreSQL provides durable relational integrity for ownership and tag associations, transactional claiming, and native JSONB storage for flexible event-specific tag content. SQLModel combines typed Python models with SQLAlchemy persistence. `event_tags.content` is JSONB because clue and trap payloads have different optional fields while sharing a stable association between event and physical tag.
-
-### Alembic
-
-Alembic records schema changes as versioned migrations, making development and deployment reproducible. The migration strategy covers users, roles, packs, tags, events, event tags, and tag printing fields. Schema migration execution should be part of deployment rather than relying solely on runtime table creation.
-
-### Unique NFC Identifiers and Security
-
-Tag URLs use `https://raccon.link/t/{static_hash}`, not a sequence number or database UUID. A cryptographically secure random generator creates a unique six-character alphanumeric token for each tag, independently of its sequence number. This conceals the sequence number but is not encryption and does not guarantee resistance to brute-force guessing. The token is a public identifier, not proof of a physical tap.
-
-
-The journey endpoint verifies the authenticated user's identity using their JWT and ensures that gameplay requests are associated with the correct user. If a user UUID is submitted by the client, it must match the authenticated JWT's user UUID. This prevents impersonation through a different user identifier, but it does not prove physical NFC contact. Access to non-live events is denied by the API.
-
-### Separate platform and NFC domains
-
-`raccon.app` hosts the application, while `raccon.link` is the stable physical NFC link domain. Separating them protects already-programmed tags from future changes to the application's primary domain, hosting provider, or frontend routing. The frontend must preserve the public `/t/{static_hash}` route and translate it into an authenticated API request.
-
-### Packs versus events
-
-A **pack** is immutable physical inventory generated by an admin; an **event** is the owner's configurable experience. Keeping them separate allows inventory creation before purchase, owner assignment at claim time, and per-event content stored in `event_tags` rather than overwriting the physical `tags` records. Each claimed pack is associated with its event through the claim workflow.
-
-### Event lifecycle and authorization
-
-The `draft` → `paused` ↔ `live` workflow separates unconfigured events, configured but inactive events, and scannable experiences. Event read/write operations verify ownership through the associated pack. JWT subject-based identity and role checks prevent unauthenticated users from generating inventory or editing other owners' events. Status changes are validated against the event lifecycle and the owner’s permissions.
-
+- **React and FastAPI.** Feature folders keep related screens and their state together. FastAPI’s route validation and dependency injection give the backend a common way to validate payloads and enforce access across domains.
+- **PostgreSQL and SQLModel.** Relational records enforce the associations between accounts, packs, tags, and events. JSONB lets the same event-tag model hold clue and trap content. Transactions keep pack assignment and draft creation together and coordinate competing scans.
+- **Separate NFC and application domains.** Physical tags point to `raccon.link` so that the web application can move without reprogramming inventory. The scan service checks the live event and compares the scan’s user context with the authenticated account.
+- **Persistent progress and streamed rankings.** PostgreSQL stores round progress and produces ranked results. Redis distributes updates to the API streams when scores or progress change.
+- **Object storage.** R2 holds uploaded clue images as objects. PostgreSQL keeps their references alongside clue content.
 
 ## Requirements Traceability
 
-| Stories | Relevant API and data model | Supporting design elements |
-|---|---|---|
-| US-01–US-05 | `/auth/*`, `/users/me` | Auto-login, reset flow, avatar, JWT expiration and client-side logout |
-| US-06 | `/packs/preview/{master_auth_hash}`, `/packs/claim` | Ramz link handoff |
-| US-07–US-10 | `/events`, `/events/{event_id}`, `/events/{event_id}/setup` | Editing quota, media upload, UI constraints |
-| US-11–US-13 | `EventTag.content` schema, setup endpoint | Trap execution and placement |
-| US-14–US-15 | Tag/event read endpoints | Frontend previews |
-| US-17–US-20 | Mode/sequence fields and scan response | Participation, scoring, trap runtime |
-| US-21 | `/events/{event_id}/leaderboard` | Leaderboard derived from `events.record`, rankings and tie-breaking |
-| US-22 | `/admin/generate-packs`, `/admin/factory/*` | Hardware writing/locking verification |
-
-# SCM and QA Plans
-
-The following plans define the Source Control Management (SCM) strategy and Quality Assurance (QA) approach for the Raccon platform. They support code stability, team collaboration, and automated validation through Continuous Integration and Continuous Deployment (CI/CD).
-
-### Source Control Management (SCM) Strategy
-
-We use **GitHub** as our centralized version control system, following a structured branching model to isolate feature development from production-ready code.
-
-#### Branching Strategy
-
-Our repository follows a branching workflow that protects production code while supporting parallel development:
-
-- **Production (`main`):** Contains stable, production-ready code. Changes are merged only after testing and approval.
-- **Development (`dev`):** Serves as the integration branch for new features and bug fixes before production release.
-- **Feature Branches:** Created from `dev` for individual features, tasks, or non-critical bug fixes. Completed work is merged into `dev` through pull requests.
-- **Hotfix Branches:** Created from `main` to resolve critical production issues. Fixes are merged back into `main` and synchronized with `dev`.
-
-#### Commit Conventions
-
-We follow consistent commit message prefixes to maintain a readable Git history:
-
-| Prefix | Purpose |
+| Stories | Design and verification |
 |---|---|
-| `feat:` | Introduce a new feature. |
-| `fix:` | Resolve a bug. |
-| `refactor:` | Improve code structure without changing functionality. |
-| `chore:` | Perform maintenance, dependency updates, or configuration changes. |
+| US-01–US-05 | Auth and profile API and screens. Verify validation, session handling, password recovery, profile updates, and account deletion. |
+| US-06–US-07 | Store, claim, and owned packages. Verify the Ramz checkout handoff, claim authentication, pack assignment, and owner-only access. |
+| US-08–US-10 | Customization, media, and event lifecycle. Verify tag selection, saves, edit quota, reset, and rebuild. |
+| US-11–US-13 | Open Hunt trap configuration. Verify valid trap payloads and Choose activation. |
+| US-16–US-20 | NFC redirect, scan, and journey progress. Verify Sequential order, Open Hunt clue claims, freeze expiry, and Boom scoring. |
+| US-21 | Leaderboard snapshot and stream. Verify ranking, tie-breaking, and a player’s rank outside the top ten. |
+| US-22 | Admin inventory and factory workflow. Verify pack generation, claim link export, NFC writing, and printing status. |
 
-#### Pull Request Workflow
+## SCM and QA Plans
 
-Direct commits to `main` and `dev` are restricted. All changes follow this process:
+### Source control and sprint tracking
 
-1. **Open a PR:** Target `dev` for features and regular fixes, or `main` for approved releases and critical hotfixes.
-2. **Pass CI Checks:** All required GitHub Actions checks, including linting and testing, must pass.
-3. **Obtain Peer Review:** At least one team member must review and approve the pull request.
-4. **Squash and Merge:** Commits are squashed to maintain a clean and readable repository history.
+- Use `Dev` as the integration branch and `main` for stable releases. Start each feature or fix from `Dev`, submit a pull request for review, and promote changes from `Dev` to `main` through release pull requests.
+- Use `feat:`, `fix:`, `refactor:`, `chore:`, and `style:` commit prefixes. Use Discord to notify the team of merges to `Dev`.
+- Track user stories and their backend, frontend, and QA checklists on Trello. Move cards through development, review, and user acceptance testing. Track issues discovered during QA in the Bug column. [Raccon Trello board](https://trello.com/b/DQxxyR2i/raccon)
 
-#### Project Management (Trello)
+### Testing and deployment
 
-We follow the **Agile methodology**, organizing development into sprints to support iterative development and team collaboration. We use **Trello** to manage tasks and track progress through five card categories:
-
-| Category | Purpose |
+| Check | Plan |
 |---|---|
-| **Backlog** | Tasks and features awaiting development. |
-| **In Dev** | Tasks currently being implemented. |
-| **Merged** | Completed code changes merged into the development branch. |
-| **Done** | Tasks that have been completed and verified. |
-| **Bugs** | Reported issues requiring investigation or fixes. |
+| Backend unit tests | Use pytest for authentication, pack claiming, event configuration, and scan rules. |
+| Backend route integration tests | Exercise FastAPI routes against a PostgreSQL test database. Run the backend suite on pull requests into `Dev` and `main` and publish the JUnit results with GitHub Actions. |
+| Frontend tests | Use Vitest, React Testing Library, and MSW for validation, components, and page flows. Run the production build to check bundling. |
+| Manual acceptance testing | Run the Trello QA checklists against the deployed app. Cover account, claim, customization, NFC scanning, and admin factory workflows. |
+| Releases and monitoring | Deploy the React frontend on Cloudflare Pages and the FastAPI service on Render. Manage database changes with Alembic, verify API health after deployment, and use Axiom logs for investigation. |
 
-- **Trello Board:** [Raccon Project Board](https://trello.com/invite/b/6ac06add5461463aafee2998/ATTIe0efc74142944a0e5543ee80f3387fe624BD55D9/raccon)
+### Acceptance test plan
 
-### Quality Assurance (QA) and CI/CD Plan
-
-Quality Assurance is integrated into the SCM workflow through **GitHub Actions**, which automatically validates code before it reaches staging or production.
-
-#### Testing Strategy
-
-Raccon uses automated testing to validate the **FastAPI backend, React frontend, PostgreSQL database, and Alembic migrations**.
-
-| Testing Type | Tools | Scope |
+| Flow | Setup and actions | Expected result |
 |---|---|---|
-| **Linting & Formatting** | `pycodestyle`, Black, ESLint | PEP 8 compliance, Python formatting, React code quality, and unused variables. |
-| **Unit Testing** | `pytest` | Authentication, token generation, package creation, editing limits, scan validation, scoring, and trap logic. |
-| **Integration Testing** | `pytest`, FastAPI `TestClient`, PostgreSQL | API responses, JWT authentication, database transactions, package claiming, concurrent scans, and authorization. |
-| **Migration Testing** | Alembic, PostgreSQL | Migration execution, foreign keys, unique constraints, JSONB columns, and schema consistency. |
+| Account registration | Register with an unused username and email, then repeat with a duplicate and with malformed fields. | A valid request creates an account. Duplicates and malformed values are reported on the form. |
+| Sign-in and return destination | Open a claim link or scan URL while signed out, then authenticate. | The account session is established and the original flow resumes. |
+| Password recovery | Request a reset for an existing account, use the link, then retry the same link. | The new password works, and the used link is rejected. |
+| Profile and account deletion | Edit the name and avatar, reopen the profile, then delete through the confirmation dialog. | The profile changes persist. After deletion the session ends and protected pages require a sign-in. |
+| Pack claim | Preview an unclaimed pack, sign in, claim it, and open My Packages. Try the same link from a second account. | The first account sees the draft event. The second account cannot take ownership. |
+| Draft setup | Stage clues on several tags, upload an image, save, and reload the event. | The selected tags preserve their text and image. The owner can start the configured round. |
+| Saved edit | Pause the event, stage multiple changes, and save. Repeat until the allowance is used. | Each saved batch consumes one edit. Title changes remain available when the allowance reaches zero. |
+| Reset and rebuild | Scan an Open Hunt clue, activate a Choose trap, then reset. Pause and redeem a rebuild code. | Reset clears round progress and restores Choose. Rebuild returns the event to draft, restores its edit allowance, and consumes the code. |
+| Sequential scan | Scan ahead of the expected tag, then scan the tags in order. | The out-of-order scan does not advance progress. Ordered scans return clues and complete the player’s journey. |
+| Open Hunt claim | Have two players scan the same clue, then claim the remaining clues. | The first claimant earns a point. The second gets the claimed outcome. Once the round ends, further scans show view-only results. |
+| Trap handling | Trigger Freeze and attempt another scan before expiry. Trigger Boom with a positive score and with a score of zero. | The freeze blocks progress until its deadline. Boom subtracts one point when available and never produces a negative score. |
+| Live rankings | Open the leaderboard on two clients and change a player’s score. Include a player outside the top ten. | Rankings refresh and the player outside the top ten sees their position. |
+| Factory programming | Load a pack by ID and write a tag with the NFC reader. Reopen the pack and tap the tag on a phone. | The tag has its assigned NFC URL and the factory queue shows the saved printing status. |
 
+### Pull request and release checks
 
-
-#### Continuous Integration (CI)
-
-GitHub Actions automatically runs CI on **pushes to `dev` and `main`, and pull requests targeting either branch**, using `.github/workflows/ci.yml`.
-
-| CI Job | Implementation |
-|---|---|
-| **Environment Setup** | `actions/checkout`, `actions/setup-python`, `actions/setup-node`; install dependencies using `pip` and `npm ci`. |
-| **Backend Linting** | Run `pycodestyle` and `black --check` to enforce Python code standards. |
-| **Frontend Linting** | Run `npm run lint` to validate React code. |
-| **Unit Tests** | Run `pytest` to verify authentication, gameplay rules, and utility functions. |
-| **Integration Tests** | Start a PostgreSQL service and run API and database tests using `pytest` and `TestClient`. |
-| **Migration Checks** | Run `alembic upgrade head` and `alembic check` against the test database. |
-| **Build Verification** | Run `npm run build` and build FastAPI/React Docker images. |
-
-**Merge Rules:** Feature branches are merged into `dev` through pull requests. GitHub branch protection requires successful CI checks and peer review before merging into `dev` or `main`.
-
-#### Continuous Deployment (CD)
-
-GitHub Actions uses separate deployment workflows for staging and production.
-
-| Environment | Trigger | Deployment Process |
-|---|---|---|
-| **Staging** | Successful merge into `dev` | Run CI, build Docker images, apply Alembic migrations, deploy containers, and verify health checks. |
-| **Production** | Approved merge into `main` | Run CI, verify database backup, apply reviewed migrations, deploy approved images, and verify health checks. |
-
-Deployment credentials are stored in **GitHub Actions Secrets**. Failed deployments require investigation and application rollback where possible; database recovery is handled separately when necessary.
-
-### Monitoring and Post-Deployment QA
-
-After deployment, monitoring helps the team detect application errors and availability issues.
-
-- **Centralized Logging:** System errors, API requests, and critical application events are sent to **Axiom**, a centralized logging platform, for real-time monitoring and troubleshooting.
+1. Open a pull request from the feature or fix branch into `Dev` and link its Trello card.
+2. Review the user story and acceptance criteria alongside the code changes. Check that the backend workflow has published its JUnit results.
+3. Exercise the affected UI and API flows. Record issues on the card and return the story to user acceptance testing after fixes.
+4. Before promoting `Dev` to `main`, review the release diff and database migration requirements. After deployment, check the health endpoint and exercise sign-in, an owner workflow, and a live scan. Check Axiom for errors encountered during verification.

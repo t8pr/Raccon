@@ -258,7 +258,7 @@ Cards move through **backlog → in dev → code review → UAT → Done → MER
 | Releases to `main` | 0 | 1 | 1 | 1 | 3 |
 | Bugs fixed | 1 | 1 | 5 | 7 | 14 |
 
-**Bug resolution rate:** 14 of 22 bugs found are fixed (64%). The 8 open bugs are minor and do not block the user journey (Section 4.4).
+**Bug resolution rate:** 14 of 17 tracked bugs are fixed (82%). The 3 open bugs are minor and do not block the user journey (Section 4.4).
 
 ### 2.4 Adjustments made
 
@@ -308,7 +308,7 @@ The React frontend calls the FastAPI backend for every feature (accounts, store,
 | Backend integration tests | pytest, PostgreSQL | Auth routes | 2 tests passed |
 | Frontend unit and component tests | Vitest, React Testing Library | Utilities, validation and shared components | Included below |
 | Frontend page tests | Vitest, MSW, user-event | Account, home, store, claim, customization, packages, scan, leaderboard, profile and admin pages | Included below |
-| **Frontend total** | | 57 test files | **595 tests: 591 passed, 4 known bugs written as expected failures** |
+| **Frontend total** | | 57 test files | **595 tests: 591 passed, 4 expected failures** |
 | Production build | react-scripts | Frontend bundle | Builds with no errors |
 
 **Continuous integration:** the backend test workflow has run on 16 pull requests since 5 Nov, and all runs passed. Each run publishes a JUnit report as the **Backend test results** check. Runs: https://github.com/t8pr/Raccon/actions
@@ -335,7 +335,7 @@ npm test
 | US-02 Log In and Log Out | TC-01 valid login; TC-02 invalid username; TC-03 invalid email format; TC-04 empty fields; TC-05 unregistered user; TC-06 redirect after logout | 6 of 6 passed |
 | US-04 Manage Account | TC-01 edit account fields; TC-02 field length validation | 2 of 2 passed (2 bugs found and fixed) |
 | US-08 Customize Tag Content | TC-01 cancel an edit | 1 of 1 passed |
-| US-09 Edit a Saved Package Configuration | TC-01 edit an unfinished Open Hunt event; TC-02 adding an image enables Save; TC-03 reset-required error | 2 of 3 passed (1 minor bug open, K-07) |
+| US-09 Edit a Saved Package Configuration | TC-01 edit an unfinished Open Hunt event; TC-02 adding an image enables Save; TC-03 reset-required error | 2 of 3 passed (1 minor bug open, K-02) |
 | US-12 Configure Choose Trap | TC-01 tag behavior after a trap is chosen | 1 of 1 passed |
 
 ### 4.4 Bug tracking
@@ -361,18 +361,13 @@ Bugs are tracked in three places: the **Bug** column and **QA/Bugs** checklists 
 | B-13 | The Google button showed a loading spinner during a normal sign-up | PR #44 | 4 |
 | B-14 | Scan links lost their signature when switching between login and register | PR #44 | 4 |
 
-**Open (8, none critical)**
+**Open (3, none critical)**
 
 | ID | Bug | Where |
 |---|---|---|
-| K-01 | A short password shows no error message on the login form | Login form |
-| K-02 | The hint image message says 2048 px, but the real limit is 1200 px | Customization |
-| K-03 | Keyboard focus is lost after saving an experience name | Customization |
-| K-04 | Screen readers cannot read the error if logout fails | Profile menu |
-| K-05 | An invalid NFC tag shows a generic error message | Scan page |
-| K-06 | Claiming a pack the user already owns returns HTTP 400 instead of success | Backend |
-| K-07 | The "resetting the Open Hunt event is required" error is not handled | Edit page |
-| K-08 | Google sign-in on raccon.app is blocked (origin_mismatch); username and password sign-in works | Google Cloud OAuth settings |
+| K-01 | The hint image message says 2048 px, but the real limit is 1200 px | Customization |
+| K-02 | The "resetting the Open Hunt event is required" error is not handled | Edit page |
+| K-03 | Google sign-in on raccon.app is blocked (origin_mismatch); username and password sign-in works | Google Cloud OAuth settings |
 
 ### 4.5 Production screenshots
 
