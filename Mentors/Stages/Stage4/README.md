@@ -123,7 +123,57 @@ mindmap
 | Pull requests | Every change reaches `Dev` through a pull request (49 in total). Backend and frontend teams were reviewing their team members' pull requests and merging them. `Dev` is promoted to `main` through release pull requests (#10, #31 and #43). |
 | Commit convention | `feat:`, `fix:`, `refactor:`, `chore:` and `style:`, as defined in our [SCM and QA plan](https://github.com/t8pr/Raccon/blob/main/Mentors/Paper/scm-qa.md). |
 | Continuous integration | [`backend-unit-tests.yml`](https://github.com/t8pr/Raccon/blob/main/.github/workflows/backend-unit-tests.yml) runs the backend tests on every pull request into `Dev` or `main`. [`discord-dev-merge.yml`](https://github.com/t8pr/Raccon/blob/main/.github/workflows/discord-dev-merge.yml) notifies the team on Discord after every merge into `Dev`. |
-| Structure | The backend follows an N-tier structure (routers, services, repositories). The frontend uses a feature-based structure, with shared components, design tokens and tests next to the code. |
+| Structure | The backend follows an N-tier structure and the frontend a feature-based structure (see below). |
+
+**[Repository](https://github.com/t8pr/Raccon)**
+
+```
+Raccon/
+├── backend/            FastAPI API
+├── frontend/raccoon/   React app
+├── factory/            NFC writing tool for high-volume orders
+├── Mentors/            Stage documents
+└── docker-compose.yml
+```
+
+**[Backend (N-tier)](https://github.com/t8pr/Raccon/tree/main/backend)**
+
+```
+backend/
+├── api/            One folder per domain: admin, auth, events, health,
+│   │               journey, nfc, packs, users
+│   └── packs/            Example domain
+│       ├── router.py     Endpoints
+│       └── schemas.py    Request and response validation
+├── services/       Business logic, one service per domain
+├── repositories/   Database access, one repository per table
+├── models/         Database tables
+├── core/           Config, database, security, email, logging
+├── alembic/        Migrations
+└── tests/          Service unit tests and route integration tests
+```
+
+Request flow: **router → service → repository → database**
+
+**[Frontend (feature-based)](https://github.com/t8pr/Raccon/tree/main/frontend/raccoon/src)**
+
+```
+frontend/raccoon/src/
+├── features/       One folder per page: admin, auth, claim, customization,
+│   │               home, journey, packages, profile, store
+│   └── store/            Example feature
+│       ├── StorePage.jsx The page
+│       ├── StorePage.css The page styles
+│       ├── components/   Components used only by this page
+│       └── hooks/        Data fetching and state
+├── shared/         Reused code: ui components, layout, api, auth, utils
+├── app/            Routes
+├── styles/         Design tokens
+├── assets/         Images, fonts and avatars
+└── test/           Mock API (MSW) and test helpers
+```
+
+Request flow: **page → hook → shared api → backend**
 
 ### 1.2 Work delivered per sprint
 
