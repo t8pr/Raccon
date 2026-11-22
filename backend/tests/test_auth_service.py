@@ -1,9 +1,12 @@
+import hashlib
+
 import pytest
 from unittest.mock import Mock, patch
-from fastapi import HTTPException
+from fastapi import BackgroundTasks, HTTPException
 from models import User
 from services.auth_service import AuthService
-from core.security import hash_password, reset_pass_token, verify_password
+from core.email import send_password_reset_email, send_reset_confirmation_email
+from repositories.user_repo import UserRepository
 
 
 @pytest.fixture
@@ -26,9 +29,9 @@ def session():
 @pytest.fixture
 def auth_service(session, user):
     service = AuthService(session=session)
-    service.users = Mock(spec=["get_by_username_or_email", "get_by_id"])
+    service.users = Mock(spec=UserRepository)
     service.users.get_by_username_or_email.return_value = user
-    service.users.get_by_id.return_value = user
+    service.users.get_by_email.return_value = user
     return service
 
 
@@ -64,36 +67,75 @@ def test_successful_login_returns_access_token(auth_service, session, user):
     session.commit.assert_not_called()
 
 
-def test_reset_password_rejects_invalid_token(auth_service, session, user):
-    original_password = user.password
+@pytest.mark.parametrize("issued", [True, False])
+def test_forgot_password_queues_email_only_when_token_is_issued(
+    auth_service, session, user, issued
+):
+    token = "random-reset-token"
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    auth_service.users.try_issue_password_reset.return_value = issued
+    tasks = BackgroundTasks()
 
-    with pytest.raises(HTTPException) as exc:
-        auth_service.reset_password("invalid-token", "new-password")
+    with patch("services.auth_service.secrets.token_urlsafe", return_value=token):
+        auth_service.forgot_password(user.email, tasks)
 
-    assert exc.value.status_code == 400
-    assert exc.value.detail == "Invalid reset token"
-    assert user.password == original_password
-    auth_service.users.get_by_id.assert_not_called()
-    session.commit.assert_not_called()
-
-
-def test_reset_password_rejects_reused_token(auth_service, session, user):
-    user.password = hash_password("old-password")
-    token = reset_pass_token(
-        data={"sub": str(user.id), "pwd": user.password[-10:]}
+    auth_service.users.get_by_email.assert_called_once_with(user.email)
+    auth_service.users.try_issue_password_reset.assert_called_once_with(
+        user.id, token_hash
     )
+    if issued:
+        session.commit.assert_called_once()
+        task, = tasks.tasks
+        assert task.func is send_password_reset_email
+        assert task.args == (user.email, token)
+    else:
+        session.commit.assert_not_called()
+        assert not tasks.tasks
 
-    auth_service.reset_password(token, "new-password")
 
-    assert verify_password("new-password", user.password)
-    session.commit.assert_called_once()
-    updated_password = user.password
-    session.reset_mock()
+def test_forgot_password_ignores_unknown_email(auth_service, session):
+    auth_service.users.get_by_email.return_value = None
+    tasks = BackgroundTasks()
 
-    with pytest.raises(HTTPException) as exc:
-        auth_service.reset_password(token, "another-password")
+    auth_service.forgot_password("unknown@example.com", tasks)
+
+    auth_service.users.try_issue_password_reset.assert_not_called()
+    session.commit.assert_not_called()
+    assert not tasks.tasks
+
+
+def test_reset_password_rejects_invalid_token(auth_service, session):
+    auth_service.users.try_consume_password_reset.return_value = None
+    tasks = BackgroundTasks()
+
+    with patch("services.auth_service.hash_password", return_value="new-hash"):
+        with pytest.raises(HTTPException) as exc:
+            auth_service.reset_password("invalid-token", "new-password", tasks)
 
     assert exc.value.status_code == 400
     assert exc.value.detail == "Invalid reset token"
-    assert user.password == updated_password
     session.commit.assert_not_called()
+    assert not tasks.tasks
+
+
+def test_reset_password_queues_confirmation_after_commit(auth_service, session, user):
+    token = "random-reset-token"
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    auth_service.users.try_consume_password_reset.return_value = user.email
+    tasks = BackgroundTasks()
+
+    def check_commit():
+        assert not tasks.tasks
+
+    session.commit.side_effect = check_commit
+    with patch("services.auth_service.hash_password", return_value="new-hash") as hash_password:
+        auth_service.reset_password(token, "new-password", tasks)
+
+    hash_password.assert_called_once_with("new-password")
+    auth_service.users.try_consume_password_reset.assert_called_once_with(
+        token_hash, "new-hash"
+    )
+    session.commit.assert_called_once()
+    task, = tasks.tasks
+    assert task.func is send_reset_confirmation_email
+    assert task.args == (user.email,)

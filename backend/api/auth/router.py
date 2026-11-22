@@ -73,7 +73,12 @@ def forgot_password(
 @router.post("/reset-password")
 def reset_password(
     user_data: ResetPassword,
+    background_tasks: BackgroundTasks,
     service: AuthService = Depends(),
 ):
-    service.reset_password(**user_data.model_dump())
+    service.reset_password(
+    token=user_data.token,
+    new_password=user_data.new_password,
+    background_tasks=background_tasks,
+    )
     return {"message": "Password reset successful."}

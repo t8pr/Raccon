@@ -155,8 +155,8 @@ backend/
 |---|---|---|---|
 | `config.py` | Loads environment variables into a typed `Settings` object (pydantic-settings, reads `.env`). **The app won't start if a required variable is missing.** | `settings` | Used by `database`, `security`, `email`, `logger`, `nfc/router`, `event_service`, `auth_service` (Google) |
 | `database.py` | Creates the global `engine` (`echo=True`, so SQL is logged). `get_session()` is the FastAPI dependency that yields one `Session` per request. `init_db()` imports the models. | `engine`, `get_session`, `init_db` | Used by every service, `auth/dependencies`, `nfc/router`, `main` |
-| `security.py` | Password hashing with `bcrypt`. JWT creation with HS256: access tokens last **7 days** (`purpose="access"`), reset tokens last **15 min** (`purpose="password_reset"`). | `hash_password`, `verify_password`, `create_access_token`, `reset_pass_token`, `decode_reset_pass_token`, `SECRET_KEY`, `ALGORITHM` | Used by `auth_service`, `auth/dependencies`, `nfc/router` |
-| `email.py` | `send_password_reset_email(to, token)` sends a text + HTML email through **Resend** with the link `{FRONTEND_URL}/reset-password?token=…`. Errors are logged, never raised. | `send_password_reset_email` | Called as a background task by `auth_service.forgot_password` |
+| `security.py` | Password hashing with `bcrypt`. Creates HS256 access JWTs that last **7 days** (`purpose="access"`). | `hash_password`, `verify_password`, `create_access_token`, `SECRET_KEY`, `ALGORITHM` | Used by `auth_service`, `auth/dependencies`, `nfc/router` |
+| `email.py` | Sends Arabic HTML and plain-text messages through **Resend**. Both messages use the shared Jinja template in `templates/reset_email.html`. | `send_password_reset_email`, `send_reset_confirmation_email` | Queued by `AuthService` after a successful database commit |
 | `logger.py` | The `raccon` logger. If `AXIOM_TOKEN` and `AXIOM_DATASET` are set, logs go through a non-blocking queue to Axiom; otherwise to the console. | `logger`, `listener` | Used by services and `email`; `listener` is stopped in `main` |
 
 ### 2.3 `models/`: database tables
@@ -192,7 +192,7 @@ Each service is a class whose `__init__(session = Depends(get_session))` builds 
 
 | File | Public methods | Business rules | Uses |
 |---|---|---|---|
-| `auth_service.py` · `AuthService` | `register_user`, `login`, `google_login`, `change_password`, `delete_account`, `forgot_password`, `reset_password` | Username **or** email must be unique (otherwise 400). Login accepts a username **or** an email and returns 400 on bad credentials. Google login verifies the ID token against `GOOGLE_CLIENT_ID` and auto-creates the user (random username suffix, phone `000000000`). A reset token embeds the last 10 characters of the password hash, so it **becomes invalid once the password changes** (one-time use). Forgot-password always answers the same way, so it doesn't reveal which emails exist. | `UserRepository`, `core.security`, `core.email`, `google.oauth2.id_token` |
+| `auth_service.py` · `AuthService` | `register_user`, `login`, `google_login`, `change_password`, `delete_account`, `forgot_password`, `reset_password` | Username **or** email must be unique (otherwise 400). Login accepts a username **or** an email and returns 400 on bad credentials. Google login verifies the ID token against `GOOGLE_CLIENT_ID` and auto-creates the user (random username suffix, phone `000000000`). Reset links contain an opaque random token. The database stores its SHA-256 digest and request timestamp. Links expire after **15 minutes** and the digest is cleared when the password changes. Forgot-password uses the same confirmation for known, unknown, and throttled addresses. | `UserRepository`, `core.security`, `core.email`, `google.oauth2.id_token` |
 | `user_service.py` · `UserService` | `get_profile`, `update_profile` | A changed username must be free (otherwise 400). Updates only the fields that were sent (`exclude_unset`). | `UserRepository` |
 | `admin_service.py` · `AdminService` | `generate_packs`, `get_factory_pack_config`, `mark_tag_as_printed`, `get_packs` | For each pack: `master_auth_hash = secrets.token_urlsafe(12)`, plus `tags_count` tags with a 6-character `static_hash` and `sequence_num` 1…n. Commits once for the whole batch. The factory view builds `print_url = https://raccon.link/t/{static_hash}`. | `PackRepository`, `TagRepository`, `UserRepository` |
 | `pack_service.py` · `PackService` | `preview_pack`, `claim_pack` | Claim fails if the pack is already owned (different 400 message when it's yours). On claim it sets `owner_id` **and auto-creates an Event** (`"UnTitled Event"`, `draft`) in the same transaction. | `PackRepository`, `EventRepository` |
@@ -554,7 +554,7 @@ await apiRequest("/auth/delete-account", { method: "DELETE", headers: auth(token
 |---|---|
 | 200 | `{ "message": "If an account with this email exists, the reset link is sent." }` (always the same) |
 
-The email is sent **after** the response (as a background task) and contains `…/reset-password?token=<jwt>`, valid for **15 minutes**.
+For a registered address, the API allows one reset email every **two minutes**. It saves the SHA-256 digest and request timestamp, then queues the email with the original token in `{FRONTEND_URL}/reset-password?token=<token>`. The link is valid for **15 minutes**, and issuing a new token replaces the previous one.
 
 ```js
 await apiRequest("/auth/forgot-password", { method: "POST", headers: json, body: JSON.stringify({ email }) });
@@ -569,7 +569,9 @@ await apiRequest("/auth/forgot-password", { method: "POST", headers: json, body:
 | Code | Body |
 |---|---|
 | 200 | `{ "message": "Password reset successful." }` |
-| 400 | `{ "detail": "Invalid reset token" }` (expired, already used, or tampered with) |
+| 400 | `{ "detail": "Invalid reset token" }` (unknown, expired, replaced, or already used) |
+
+A successful reset saves the new password and clears the token digest in the same transaction. The confirmation email is queued after commit.
 
 ```js
 const token = new URLSearchParams(location.search).get("token");
@@ -1150,7 +1152,7 @@ Read these before debugging. They're current behaviours of the code, not bugs in
 | `.env` parsing | `python-dotenv could not parse statement starting at line N` means line N is malformed (spaces around `=`, unclosed quote, unquoted `#`). |
 | Login error code | Bad credentials return **400**, not 401. |
 | Logout | It's stateless: tokens stay valid for 7 days, and the cookie isn't cleared. |
-| Reset email link | `core/email.py` hard-codes `FRONTEND_URL` to the workers.dev deploy instead of `settings.FRONTEND_URL`, so local reset links open the deployed site. |
+| Reset email link | The email links and logo use `FRONTEND_URL`. Set it to the public HTTPS frontend origin in the deployed backend. Local runs default to `http://localhost:3000`. |
 | Factory URL | `print_url` is hard-coded to `https://raccon.link/t/…`. |
 | Google login | No cookie is set, so the NFC redirect treats Google users as logged out until they use password login. |
 | `EventCreateRequest` | Defined but unused. Events are created only by `POST /packs/claim`. |

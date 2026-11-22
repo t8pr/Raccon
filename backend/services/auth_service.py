@@ -1,13 +1,12 @@
 from sqlmodel import Session
 from core.database import get_session
-from core.security import hash_password, verify_password, create_access_token, reset_pass_token, decode_reset_pass_token
-from core.email import send_password_reset_email
+from core.security import hash_password, verify_password, create_access_token
+from core.email import send_password_reset_email, send_reset_confirmation_email
 from fastapi import Depends, HTTPException, BackgroundTasks
 from repositories.user_repo import UserRepository
 from models.user import User
 from core.logger import logger
-import hmac
-import uuid
+import hashlib
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 from email_validator import validate_email, EmailNotValidError
@@ -78,8 +77,7 @@ class AuthService:
         if not verify_password(old_password, user.password):
             raise HTTPException(status_code=400, detail="Incorrect old password")
 
-        user.password = hash_password(new_password)
-        self.users.add_user(user)
+        self.users.update_password(user.id, hash_password(new_password))
         self.session.commit()
 
     def delete_account(self, user: User) -> None:
@@ -92,26 +90,25 @@ class AuthService:
         user = self.users.get_by_email(email)
 
         if user:
-            pass_reset_token = reset_pass_token(data={"sub": str(user.id), "pwd": user.password[-10:]})
-            # send email after returning HTTP response
-            background_tasks.add_task(send_password_reset_email, user.email, pass_reset_token)
-            logger.info(f"User requested password reset (ID: {user.id})")
+            pass_reset_token = secrets.token_urlsafe(32)
+            token_hash = hashlib.sha256(pass_reset_token.encode("utf-8")).hexdigest()
+            if self.users.try_issue_password_reset(user.id, token_hash):
+                self.session.commit()
+                background_tasks.add_task(send_password_reset_email, user.email, pass_reset_token)
+                logger.info(f"User requested password reset (ID: {user.id})")
 
-    def reset_password(self, token: str, new_password: str) -> None:
-        payload = decode_reset_pass_token(token)
-        if not payload:
+    def reset_password(self, token: str, new_password: str, background_tasks: BackgroundTasks) -> None:
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        password_hash = hash_password(new_password)
+
+        user_email = self.users.try_consume_password_reset(token_hash, password_hash)
+        if not user_email:
             raise HTTPException(status_code=400, detail="Invalid reset token")
-
-        user = self.users.get_by_id(uuid.UUID(payload["sub"]))
-        if not user or not hmac.compare_digest(
-            payload.get("pwd", ""), user.password[-10:]
-        ):
-            raise HTTPException(status_code=400, detail="Invalid reset token")
-
-        user.password = hash_password(new_password)
 
         self.session.commit()
-        logger.info(f"Password reset completed (ID: {user.id})")
+
+        background_tasks.add_task(send_reset_confirmation_email, user_email)
+        logger.info(f"Password reset completed (Email: {user_email})")
 
     def google_login(self, token: str) -> str:
         try:

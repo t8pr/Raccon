@@ -2,6 +2,7 @@ import uuid
 import string
 import secrets
 from sqlmodel import SQLModel, Field
+from sqlalchemy import Column, DateTime
 from datetime import datetime, timezone
 
 def generate_user_hash() -> str:
@@ -21,3 +22,5 @@ class User(SQLModel, table=True):
     role: str = Field(default="user")
     avatar_id: int = Field(default=1)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    pass_reset_requested_at: datetime | None = Field(default=None, sa_column=Column(DateTime(timezone=True), nullable=True))
+    pass_reset_token_hash: str | None = Field(default=None, unique=True, index=True)
