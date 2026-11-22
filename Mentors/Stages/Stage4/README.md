@@ -1,5 +1,33 @@
 # Stage 4: MVP Development and Execution
 
+## Table of contents
+
+- [0. Plan and Define Sprints](#0-plan-and-define-sprints)
+  - [0.1 Breaking down user stories](#01-breaking-down-user-stories)
+  - [0.2 Prioritization (MoSCoW)](#02-prioritization-moscow)
+  - [0.3 Sprint plan](#03-sprint-plan)
+- [1. Execute Development Tasks](#1-execute-development-tasks)
+  - [1.1 Coding standards and source control](#11-coding-standards-and-source-control)
+  - [1.2 Work delivered per sprint](#12-work-delivered-per-sprint)
+  - [1.3 QA during each sprint](#13-qa-during-each-sprint)
+- [2. Monitor Progress and Adjust](#2-monitor-progress-and-adjust)
+  - [2.1 Daily stand-ups](#21-daily-stand-ups)
+  - [2.2 Task tracking on Trello](#22-task-tracking-on-trello)
+  - [2.3 Metrics](#23-metrics)
+  - [2.4 Adjustments made](#24-adjustments-made)
+- [3. Sprint Reviews and Retrospectives](#3-sprint-reviews-and-retrospectives)
+  - [3.1 Sprint reviews](#31-sprint-reviews)
+  - [3.2 Retrospectives](#32-retrospectives)
+- [4. Final Integration and QA Testing](#4-final-integration-and-qa-testing)
+  - [4.1 Integration](#41-integration)
+  - [4.2 Automated tests](#42-automated-tests)
+  - [4.3 Manual test plan results](#43-manual-test-plan-results)
+  - [4.4 Bug tracking](#44-bug-tracking)
+  - [4.5 Production screenshots](#45-production-screenshots)
+- [5. Deliverables](#5-deliverables)
+
+---
+
 **Project:** Raccon, an NFC treasure-hunt platform where owners buy and customize tag packs and players scan them in Sequential or Open Hunt mode.
 
 **Team EAGO**
@@ -353,10 +381,6 @@ Taken on https://raccon.app on 21 Nov 2026, at laptop (1440 px) and phone (390 p
 | Page | Laptop | Phone |
 |---|---|---|
 | Login | ![Login, laptop](screenshots/01-login-laptop.jpg) | ![Login, phone](screenshots/01-login-phone.jpg) |
-| Register | ![Register, laptop](screenshots/02-register-laptop.jpg) | |
-| Store | ![Store, laptop](screenshots/03-store-laptop.jpg) | ![Store, phone](screenshots/03-store-phone.jpg) |
-| Home | ![Home, laptop](screenshots/04-home-laptop.jpg) | ![Home, phone](screenshots/04-home-phone.jpg) |
-| Experiences | ![Experiences, laptop](screenshots/05-experiences-laptop.jpg) | ![Experiences, phone](screenshots/05-experiences-phone.jpg) |
 
 ---
 
