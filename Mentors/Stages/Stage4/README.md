@@ -114,8 +114,8 @@ mindmap
 
 | Practice | How it was applied |
 |---|---|
-| Branching | `Dev` is the integration branch and is deployed to production (raccon.app). `main` is the stable release branch. Each user story or fix has its own branch from `Dev` (`US-xx`, `TS-xx`, `fix/...`, `refactor/...`). |
-| Pull requests | Every change reaches `Dev` through a pull request (49 in total). `Dev` is promoted to `main` through release pull requests (#10, #31 and #43). |
+| Branching | `Dev` is the integration branch. During the development phase `Dev` is deployed (raccon.app); after the MVP is complete, only `main` will be deployed. `main` is the stable release branch. Each user story or fix has its own branch from `Dev` (`US-xx`, `TS-xx`, `fix/...`, `refactor/...`). |
+| Pull requests | Every change reaches `Dev` through a pull request (49 in total). Backend and frontend teams were reviewing their team members' pull requests and merging them. `Dev` is promoted to `main` through release pull requests (#10, #31 and #43). |
 | Commit convention | `feat:`, `fix:`, `refactor:`, `chore:` and `style:`, as defined in our [SCM and QA plan](https://github.com/t8pr/Raccon/blob/main/Mentors/Paper/scm-qa.md). |
 | Continuous integration | [`backend-unit-tests.yml`](https://github.com/t8pr/Raccon/blob/main/.github/workflows/backend-unit-tests.yml) runs the backend tests on every pull request into `Dev` or `main`. [`discord-dev-merge.yml`](https://github.com/t8pr/Raccon/blob/main/.github/workflows/discord-dev-merge.yml) notifies the team on Discord after every merge into `Dev`. |
 | Structure | The backend follows an N-tier structure (routers, services, repositories). The frontend uses a feature-based structure, with shared components, design tokens and tests next to the code. |
@@ -148,7 +148,7 @@ The team holds a short stand-up every day, in person at Holberton or in the Disc
 | 4 Nov | Admin page, customization layout and data fetching, NFC factory tool and reset endpoint done | Frontend structure refactor planned with a team walkthrough. Endpoints added for deleting packs and managing users. Tag links made harder to guess. |
 | 10 Nov | Customization, GitHub Actions, dynamic scan journey and image upload done | Store checkout uses Ramz while experiences stay in our backend. A real-time leaderboard was planned without overloading the database. |
 | 11 Nov | Login page, intro animation, store design, Ramz and the Cloudflare integration with raccon.link done | Designs are finalized before implementation starts. Next: scan pages, claim endpoint, real-time leaderboard and stronger forgot-password protection. |
-| 15 Nov | Scan pages, store pages, leaderboard, DNS and Ramz done | Pair session to update npm packages. Next: Google sign-in, admin endpoints, Redis hosting, unit tests and CI/CD, claim preview endpoint. |
+| 15 Nov | Scan pages, store pages, leaderboard, DNS and Ramz done | Pair session to update npm packages. Next: Google sign-in, admin endpoints, unit tests and CI/CD, claim preview endpoint. |
 | 17 Nov | Frontend tests and refactor, register, login, Google sign-in, backend tests, claim preview endpoint and Ramz design done | Next: leaderboard with user ranking, Redis hosting, protection of the forgot-password endpoint and secure sessions with HttpOnly cookies. |
 
 ### 2.2 Task tracking on Trello
@@ -173,9 +173,9 @@ Cards move through **backlog → in dev → code review → UAT → Done → MER
 |---|---|---|---|---|---|
 | Pull requests merged | 5 | 10 | 15 | 15 | 45 |
 | Releases to `main` | 0 | 1 | 1 | 1 | 3 |
-| Bugs fixed | 1 | 1 | 5 | 5 | 12 |
+| Bugs fixed | 1 | 1 | 5 | 7 | 14 |
 
-**Bug resolution rate:** 12 of 20 bugs found are fixed (60%). The 8 open bugs are minor and do not block the user journey (Section 4.4).
+**Bug resolution rate:** 14 of 22 bugs found are fixed (64%). The 8 open bugs are minor and do not block the user journey (Section 4.4).
 
 ### 2.4 Adjustments made
 
@@ -259,7 +259,7 @@ npm test
 
 Bugs are tracked in three places: the **Bug** column and **QA/Bugs** checklists on Trello, `fix:` pull requests on GitHub, and expected-failure tests (`test.fails`) that keep known bugs visible in every test run.
 
-**Fixed (12)**
+**Fixed (14)**
 
 | ID | Bug | Fix | Sprint |
 |---|---|---|---|
@@ -268,13 +268,15 @@ Bugs are tracked in three places: the **Bug** column and **QA/Bugs** checklists 
 | B-03 | Email format was not validated at registration | PR #28, #29 | 3 |
 | B-04 | Wrong title in the CI notification message | PR #30 | 3 |
 | B-05 | Username and name had no maximum length | Trello US-04 | 3 |
-| B-06 | A user could delete their account while they had an event | Trello US-04 | 3 |
+| B-06 | A user could not delete their account while they had an event | Trello US-04 | 3 |
 | B-07 | Adding an image to a tag did not enable the Save button | Trello US-09 | 3 |
-| B-08 | Customization page, session token and Google button problems | PR #45 | 4 |
-| B-09 | After buying a pack, login did not return the user to the claim page | PR #46 | 4 |
-| B-10 | No confirmation was shown before signing out a deleted account | PR #47 | 4 |
-| B-11 | The Google button showed a loading spinner during a normal sign-up | PR #44 | 4 |
-| B-12 | Scan links lost their signature when switching between login and register | PR #44 | 4 |
+| B-08 | On the customization page, saving each tag in edit mode used up one of the pack's available edits | PR #45 | 4 |
+| B-09 | The session token was kept in sessionStorage, so the user was signed out when the tab was closed or the app was opened in a new tab | PR #45 | 4 |
+| B-10 | The Google sign-in button crashed on resize (null reference in its resize observer) | PR #45 | 4 |
+| B-11 | After buying a pack, login did not return the user to the claim page | PR #46 | 4 |
+| B-12 | No confirmation was shown before signing out a deleted account | PR #47 | 4 |
+| B-13 | The Google button showed a loading spinner during a normal sign-up | PR #44 | 4 |
+| B-14 | Scan links lost their signature when switching between login and register | PR #44 | 4 |
 
 **Open (8, none critical)**
 
