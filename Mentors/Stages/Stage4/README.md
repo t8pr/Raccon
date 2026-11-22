@@ -71,6 +71,8 @@ mindmap
     Won't have
       Loyalty program
       Maps and location features
+      AI experience builder
+      Ready-to-play kits
 ```
 
 | Priority | User story | Why this priority | Sprint |
@@ -94,7 +96,10 @@ mindmap
 | **Should** | Google sign-in | Faster sign-up; email sign-in already covers the need. | 2 and 4 |
 | **Could** | US-13, US-14 Preview Sequential and Open Hunt Tag Experience | Helpful for owners, not required to play. | Not in MVP |
 | **Could** | Animations, congratulation screen | Improves the experience but not the core flow. | 4 (animations) |
-| **Won't** | Loyalty program, maps and location-based features | Out of MVP scope. | Not planned |
+| **Won't** | Loyalty program: built later by extending the leaderboard (points and rankings across experiences) | Out of MVP scope; the leaderboard is the base it will grow from. | Future |
+| **Won't** | Maps and location-based features: locations saved in NFC tags, or players tracked on a live map | Out of MVP scope; to be studied in the future. | To be studied |
+| **Won't** | AI experience builder: the user answers a short form and an AI agent generates a ready-to-play experience (mode, tag content, hints and traps) | Planned after the MVP; the MVP covers manual customization first. | Future |
+| **Won't** | Ready-to-play kits: kits sold with a pre-made experience that the user can play right away and still customize | Planned after the MVP; needs a library of ready experiences. | Future |
 
 ### 0.3 Sprint plan
 
