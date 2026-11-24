@@ -25,7 +25,7 @@
   - [4.4 Bug tracking](#44-bug-tracking)
   - [4.5 Production screenshots](#45-production-screenshots)
 - [5. Deliverables](#5-deliverables)
-- [6. Authors](#6-Authors)
+- [6. Authors](#6-authors)
 
 ---
 
