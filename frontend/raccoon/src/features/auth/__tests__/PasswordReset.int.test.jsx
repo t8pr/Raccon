@@ -2,175 +2,300 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { Route, Routes } from "react-router-dom";
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 import { server } from "../../../test/server";
 import { API } from "../../../test/handlers";
+import { testUser } from "../../../test/fixtures";
 import { renderWithProviders } from "../../../test/renderWithProviders";
-import ForgotPasswordPage from "../ForgotPasswordPage";
-import LoginPage from "../LoginPage";
-import ResetPasswordPage from "../ResetPasswordPage";
+import { getToken } from "../../../shared/auth/tokenStore";
+import { rememberClaimReturn } from "../../../shared/utils/claimReturn";
+import RegisterPage from "../RegisterPage";
 
 vi.mock("../components/HeroScanAnimation", () => ({ default: () => null }));
 
-function renderAuth(route) {
+// RegisterPage يطبع تفاصيل خطأ الخادم في الكونسول؛ نسكته عشان ما يزحم النتيجة
+beforeEach(() => {
+  vi.spyOn(console, "error").mockImplementation(() => {});
+});
+
+function renderRegister() {
   return renderWithProviders(
     <Routes>
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/login" element={<p>صفحة الدخول</p>} />
+      <Route path="/claim/:hash" element={<p>صفحة الربط</p>} />
     </Routes>,
-    { token: null, route },
+    { token: null, route: "/register" },
   );
 }
 
-// رابط الإيميل JWT؛ الصفحة تقرأ الجزء الأوسط فقط (purpose و exp)
-function resetToken(payload) {
-  const base64url = (value) => btoa(JSON.stringify(value)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
-  return `${base64url({ alg: "HS256" })}.${base64url(payload)}.signature`;
+test("مستخدم داخل (فيه توكن) يفتح التسجيل: يروح للرئيسية", async () => {
+  const { location } = renderWithProviders(
+    <Routes>
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/home" element={<p>الرئيسية</p>} />
+    </Routes>,
+    { route: "/register" },
+  );
+
+  expect(await screen.findByText("الرئيسية")).toBeInTheDocument();
+  expect(location.current.pathname).toBe("/home");
+});
+
+// يفتح التسجيل وهو جاي من مسح قطعة (ProtectedRoute → الدخول → زر «إنشاء حساب»)
+function renderRegisterFromScan(search) {
+  return renderWithProviders(
+    <Routes>
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/scan" element={<p>صفحة المسح</p>} />
+      <Route path="/home" element={<p>الرئيسية</p>} />
+    </Routes>,
+    { token: null, route: `/register${search}` },
+  );
 }
 
-const inMinutes = (minutes) => Math.floor(Date.now() / 1000) + minutes * 60;
+const valid = {
+  الاسم: "عبدالرحمن",
+  "اسم المستخدم": "abdu",
+  الإيميل: "abdu@example.com",
+  "رقم الجوال": "512345678",
+  "كلمة المرور": "secret123",
+  "تأكيد كلمة المرور": "secret123",
+};
 
-describe("نسيت كلمة المرور", () => {
-  function mockForgot(response = () => HttpResponse.json({ ok: true })) {
-    const bodies = [];
-    server.use(
-      http.post(`${API}/auth/forgot-password`, async ({ request }) => {
-        bodies.push(await request.json());
-        return response();
-      }),
-    );
-    return bodies;
+async function fillForm(values = valid) {
+  for (const [label, value] of Object.entries(values)) {
+    await userEvent.type(screen.getByLabelText(label), value);
   }
+}
 
-  test("يرسل الرابط ويعرض «شيّك على بريدك» بدون ما يكشف وجود الحساب", async () => {
-    const bodies = mockForgot();
-    renderAuth("/forgot-password");
+const submit = () =>
+  userEvent.click(screen.getByRole("button", { name: "أنشئ حسابي" }));
 
-    await userEvent.type(screen.getByLabelText("البريد الإلكتروني"), "abdu@example.com");
-    await userEvent.click(screen.getByRole("button", { name: "أرسل الرابط" }));
+// تسجيل ثم دخول تلقائي
+function mockRegister({
+  register = () => HttpResponse.json({ id: 7 }, { status: 201 }),
+  login,
+} = {}) {
+  const seen = {};
+  server.use(
+    http.post(`${API}/auth/register`, async ({ request }) => {
+      seen.register = await request.json();
+      return register();
+    }),
+    http.post(`${API}/auth/login`, async ({ request }) => {
+      seen.login = Object.fromEntries(
+        new URLSearchParams(await request.text()),
+      );
+      return login ? login() : HttpResponse.json({ access_token: "new-token" });
+    }),
+  );
+  return seen;
+}
 
-    expect(await screen.findByText(/إذا كان فيه حساب مسجّل بـ abdu@example.com/)).toBeInTheDocument();
-    expect(screen.queryByLabelText("البريد الإلكتروني")).not.toBeInTheDocument();
-    expect(bodies).toEqual([{ email: "abdu@example.com" }]);
+test("تسجيل ناجح: يرسل البيانات بدون التأكيد، يدخل تلقائيًا، ويرحّب", async () => {
+  const seen = mockRegister();
+  renderRegister();
+
+  await fillForm();
+  await submit();
+
+  expect(
+    await screen.findByRole("heading", { name: "هلا عبدالرحمن!" }),
+  ).toBeInTheDocument();
+  expect(
+    await screen.findByText("خلاص، حسابك جاهز وأنت داخل"),
+  ).toBeInTheDocument();
+  expect(seen.register).toEqual({
+    name: "عبدالرحمن",
+    username: "abdu",
+    email: "abdu@example.com",
+    phone_number: "512345678",
+    password: "secret123",
+    avatar_id: 1,
+  });
+  expect(seen.login).toMatchObject({ username: "abdu", password: "secret123" });
+  expect(getToken()).toBe("new-token");
+});
+
+test("الزر معطّل حتى تكتمل البيانات، وعدم التطابق يظهر تحت التأكيد", async () => {
+  renderRegister();
+  expect(screen.getByRole("button", { name: "أنشئ حسابي" })).toBeDisabled();
+
+  await fillForm({ ...valid, "تأكيد كلمة المرور": "other1234" });
+
+  expect(screen.getByRole("button", { name: "أنشئ حسابي" })).toBeDisabled();
+  expect(screen.getByText("كلمتا المرور غير متطابقتين.")).toBeInTheDocument();
+});
+
+test("الخطأ يظهر بعد مغادرة الحقل", async () => {
+  renderRegister();
+
+  await userEvent.type(screen.getByLabelText("اسم المستخدم"), "AB");
+  await userEvent.tab();
+
+  expect(screen.getByLabelText("اسم المستخدم")).toHaveAttribute(
+    "aria-invalid",
+    "true",
+  );
+});
+
+describe("أخطاء الخادم", () => {
+  test("400: اسم المستخدم أو البريد مستخدم", async () => {
+    mockRegister({
+      register: () => HttpResponse.json({ detail: "exists" }, { status: 400 }),
+    });
+    renderRegister();
+
+    await fillForm();
+    await submit();
+
+    expect(
+      await screen.findByText(
+        "اسم المستخدم أو البريد الإلكتروني مستخدم مسبقًا",
+      ),
+    ).toBeInTheDocument();
   });
 
-  test("«أرسل الرابط مرة ثانية» يرسل لنفس البريد", async () => {
-    const bodies = mockForgot();
-    renderAuth("/forgot-password");
-    await userEvent.type(screen.getByLabelText("البريد الإلكتروني"), "abdu@example.com");
-    await userEvent.click(screen.getByRole("button", { name: "أرسل الرابط" }));
+  test("422 بقائمة حقول: الخطأ تحت الحقل نفسه", async () => {
+    mockRegister({
+      register: () =>
+        HttpResponse.json(
+          { detail: [{ loc: ["body", "username"], msg: "bad" }] },
+          { status: 422 },
+        ),
+    });
+    renderRegister();
 
-    await userEvent.click(await screen.findByRole("button", { name: "أرسل الرابط مرة ثانية" }));
+    await fillForm();
+    await submit();
 
-    expect(bodies).toHaveLength(2);
-    expect(bodies[1]).toEqual({ email: "abdu@example.com" });
+    expect(
+      await screen.findByText("تحقق من قيمة هذا الحقل"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("اسم المستخدم")).toHaveAttribute(
+      "aria-invalid",
+      "true",
+    );
   });
 
-  test("بريد غلط: الزر معطّل", async () => {
-    renderAuth("/forgot-password");
+  test("422 نصي: خطأ البريد", async () => {
+    mockRegister({
+      register: () =>
+        HttpResponse.json({ detail: "bad email" }, { status: 422 }),
+    });
+    renderRegister();
 
-    await userEvent.type(screen.getByLabelText("البريد الإلكتروني"), "abdu@");
+    await fillForm();
+    await submit();
 
-    expect(screen.getByRole("button", { name: "أرسل الرابط" })).toBeDisabled();
+    expect(
+      await screen.findByText("تعذر التحقق من البريد الإلكتروني."),
+    ).toBeInTheDocument();
   });
 
-  test.each([
-    [422, "أدخل بريدًا إلكترونيًا صحيحًا."],
-    [500, "تعذر إرسال الرابط. حاول مرة ثانية."],
-  ])("خطأ %i", async (status, message) => {
-    mockForgot(() => HttpResponse.json({}, { status }));
-    renderAuth("/forgot-password");
+  test("422 بحقول غير معروفة: رسالة عامة", async () => {
+    mockRegister({
+      register: () =>
+        HttpResponse.json(
+          { detail: [{ loc: ["body", "x"] }] },
+          { status: 422 },
+        ),
+    });
+    renderRegister();
 
-    await userEvent.type(screen.getByLabelText("البريد الإلكتروني"), "abdu@example.com");
-    await userEvent.click(screen.getByRole("button", { name: "أرسل الرابط" }));
+    await fillForm();
+    await submit();
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(message);
+    expect(
+      await screen.findByText("يرجى مراجعة البيانات المدخلة"),
+    ).toBeInTheDocument();
+  });
+
+  test("الخادم طايح", async () => {
+    mockRegister({ register: () => HttpResponse.json({}, { status: 500 }) });
+    renderRegister();
+
+    await fillForm();
+    await submit();
+
+    expect(
+      await screen.findByText(
+        "تعذر الاتصال بالخادم أو إكمال التسجيل. حاول مرة أخرى",
+      ),
+    ).toBeInTheDocument();
   });
 });
 
-describe("إعادة تعيين كلمة المرور", () => {
-  function mockReset(response = () => HttpResponse.json({ ok: true })) {
-    const bodies = [];
-    server.use(
-      http.post(`${API}/auth/reset-password`, async ({ request }) => {
-        bodies.push(await request.json());
-        return response();
-      }),
+test("الحساب انشأ لكن الدخول التلقائي فشل: زر تسجيل الدخول", async () => {
+  mockRegister({ login: () => HttpResponse.json({}, { status: 500 }) });
+  const { location } = renderRegister();
+
+  await fillForm();
+  await submit();
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "تم إنشاء حسابك، لكن تعذر الدخول تلقائيًا.",
+  );
+  await userEvent.click(screen.getByRole("button", { name: "تسجيل الدخول" }));
+  expect(location.current.pathname).toBe("/login");
+});
+
+test("زائر جاي من رابط ربط: يرجع لصفحة الربط بعد التسجيل", async () => {
+  mockRegister();
+  rememberClaimReturn("/claim/abc_1");
+  const { location } = renderRegister();
+
+  await fillForm();
+  await submit();
+
+  expect(await screen.findByText("صفحة الربط")).toBeInTheDocument();
+  expect(location.current.pathname).toBe("/claim/abc_1");
+});
+
+test("زر Google معطّل (قريبًا)", () => {
+  renderRegister();
+
+  expect(screen.getByRole("button", { name: /Google/ })).toBeDisabled();
+});
+
+test("الحساب المسجّل يستخدم بيانات المستخدم من الخادم", async () => {
+  mockRegister();
+  const { queryClient } = renderRegister();
+
+  await fillForm();
+  await submit();
+  await screen.findByText("خلاص، حسابك جاهز وأنت داخل");
+
+  expect(queryClient.getQueryData(["profile", "new-token"])).toEqual(testUser);
+});
+
+describe("جاي من مسح قطعة", () => {
+  test("التسجيل بكلمة مرور يرجّعه لصفحة المسح عشان تنحسب القطعة", async () => {
+    mockRegister();
+    const { location } = renderRegisterFromScan(
+      "?redirect_tag=abc&redirect_sig=xyz",
     );
-    return bodies;
-  }
 
-  async function fillNewPassword(password = "newpass123", confirm = password) {
-    await userEvent.type(screen.getByLabelText("كلمة المرور الجديدة"), password);
-    await userEvent.type(screen.getByLabelText("تأكيد كلمة المرور"), confirm);
-  }
+    await fillForm();
+    await submit();
 
-  test.each([
-    ["بدون توكن", "/reset-password", "الرابط غير صالح أو مستخدم من قبل"],
-    ["توكن تالف", "/reset-password?token=abc", "الرابط غير صالح أو مستخدم من قبل"],
-    ["غرض ثاني", `/reset-password?token=${resetToken({ purpose: "login", exp: inMinutes(10) })}`, "الرابط غير صالح أو مستخدم من قبل"],
-    ["منتهي", `/reset-password?token=${resetToken({ purpose: "password_reset", exp: inMinutes(-1) })}`, "انتهت صلاحية الرابط"],
-  ])("%s: رسالة الرابط بدل النموذج", (_, route, title) => {
-    renderAuth(route);
-
-    expect(screen.getByRole("alert")).toHaveTextContent(title);
-    expect(screen.queryByLabelText("كلمة المرور الجديدة")).not.toBeInTheDocument();
+    expect(await screen.findByText("صفحة المسح")).toBeInTheDocument();
+    expect(location.current.pathname).toBe("/scan");
+    expect(location.current.search).toBe("?tag=abc&sig=xyz");
   });
 
-  test("«اطلب رابط جديد» يودي لنسيت كلمة المرور", async () => {
-    const { location } = renderAuth("/reset-password");
+  test("بدون sig في الرابط: ياخذ user_hash حق الحساب", async () => {
+    mockRegister();
+    const { location } = renderRegisterFromScan("?redirect_tag=abc");
 
-    await userEvent.click(screen.getByRole("button", { name: "اطلب رابط جديد" }));
+    await fillForm();
+    await submit();
 
-    expect(location.current.pathname).toBe("/forgot-password");
-  });
-
-  test("رابط صالح: يحفظ، ثم «ارجع لتسجيل الدخول» يعرض رسالة النجاح هناك", async () => {
-    const token = resetToken({ purpose: "password_reset", exp: inMinutes(10) });
-    const bodies = mockReset();
-    renderAuth(`/reset-password?token=${token}`);
-
-    await fillNewPassword();
-    await userEvent.click(screen.getByRole("button", { name: "احفظ كلمة المرور" }));
-
-    expect(await screen.findByText("تقدر الحين تدخل حسابك بكلمة المرور الجديدة.")).toBeInTheDocument();
-    expect(bodies).toEqual([{ token, new_password: "newpass123" }]);
-
-    await userEvent.click(screen.getByRole("button", { name: "ارجع لتسجيل الدخول" }));
-    expect(await screen.findByText("تم تغيير كلمة المرور. ادخل بكلمة المرور الجديدة.")).toBeInTheDocument();
-  });
-
-  test("كلمتين مختلفتين: الزر معطّل", async () => {
-    renderAuth(`/reset-password?token=${resetToken({ purpose: "password_reset", exp: inMinutes(10) })}`);
-
-    await fillNewPassword("newpass123", "other1234");
-
-    expect(screen.getByRole("button", { name: "احفظ كلمة المرور" })).toBeDisabled();
-  });
-
-  test("400 من الخادم: الرابط مستخدم من قبل", async () => {
-    mockReset(() => HttpResponse.json({ detail: "Invalid reset token" }, { status: 400 }));
-    renderAuth(`/reset-password?token=${resetToken({ purpose: "password_reset", exp: inMinutes(10) })}`);
-
-    await fillNewPassword();
-    await userEvent.click(screen.getByRole("button", { name: "احفظ كلمة المرور" }));
-
-    expect(await screen.findByRole("alert")).toHaveTextContent("الرابط غير صالح أو مستخدم من قبل");
-  });
-
-  test.each([
-    [422, "تأكد إن كلمة المرور من 8 إلى 72 حرفًا."],
-    [500, "تعذر حفظ كلمة المرور. حاول مرة ثانية."],
-  ])("خطأ %i يبقى في النموذج", async (status, message) => {
-    mockReset(() => HttpResponse.json({}, { status }));
-    renderAuth(`/reset-password?token=${resetToken({ purpose: "password_reset", exp: inMinutes(10) })}`);
-
-    await fillNewPassword();
-    await userEvent.click(screen.getByRole("button", { name: "احفظ كلمة المرور" }));
-
-    expect(await screen.findByText(message)).toBeInTheDocument();
-    expect(screen.getByLabelText("كلمة المرور الجديدة")).toBeInTheDocument();
+    expect(await screen.findByText("صفحة المسح")).toBeInTheDocument();
+    expect(location.current.search).toBe(
+      `?${new URLSearchParams({ tag: "abc", sig: testUser.user_hash })}`,
+    );
   });
 });

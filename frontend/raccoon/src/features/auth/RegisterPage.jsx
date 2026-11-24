@@ -10,7 +10,7 @@ import { registerUser, loginUser, googleLogin } from "../../shared/api/authApi";
 import { getCurrentUser } from "../../shared/api/usersApi";
 import { useAuth } from "../../shared/auth/AuthContext";
 import RegisterWelcome from "./components/RegisterWelcome";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { takeClaimReturn } from "../../shared/utils/claimReturn";
 import "./auth.css";
 
@@ -21,7 +21,11 @@ export default function RegisterPage() {
   const [serverError, setServerError] = useState(""); // backend error
   const [fieldErrors, setFieldErrors] = useState({}); // check the logic of auth(name/email/password/..) in backend
   const [successMessage, setSuccessMessage] = useState(""); // message register success
-  const { signIn } = useAuth();
+  const { signIn, accessToken } = useAuth();
+  // داخل من قبل (فيه توكن) لما فتح الصفحة → الرئيسية.
+  // نقراه مرة وحدة عند الفتح بس، عشان الدخول اللي يصير هنا بعد التسجيل
+  // ما يحوّله للرئيسية قبل شاشة الترحيب أو رابط claim.
+  const [signedInOnArrival] = useState(Boolean(accessToken));
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirectTag = searchParams.get("redirect_tag");
@@ -66,6 +70,19 @@ export default function RegisterPage() {
         const profile = await getCurrentUser({ token: result.access_token });
 
         signIn(result.access_token, profile);
+
+        // جاي من مسح قطعة → صفحة المسح عشان تنحسب له القطعة (مثل Google)
+        if (redirectTag) {
+          navigate(
+            `/scan?${new URLSearchParams({
+              tag: redirectTag,
+              sig: redirectSig || profile.user_hash,
+            }).toString()}`,
+            { replace: true },
+          );
+          return;
+        }
+
         const returnTo = takeClaimReturn();
 
         if (returnTo) {
@@ -173,6 +190,10 @@ export default function RegisterPage() {
     setServerError("");
     setFieldErrors({});
     setSuccessMessage("");
+  }
+
+  if (signedInOnArrival) {
+    return <Navigate to="/home" replace />;
   }
 
   //after register nav to welcome page before login

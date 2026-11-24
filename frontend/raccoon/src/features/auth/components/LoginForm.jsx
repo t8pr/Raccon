@@ -118,7 +118,7 @@ export default function LoginForm({
           onChange={handleChange}
           onBlur={handleBlur}
           placeholder="8 حروف أو أكثر"
-          error={touched.identifier ? errors.password || "" : ""}
+          error={touched.password ? errors.password || "" : ""}
           autoComplete="current-password"
         />
       </div>

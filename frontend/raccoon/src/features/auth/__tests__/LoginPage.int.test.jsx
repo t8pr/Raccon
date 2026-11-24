@@ -216,10 +216,8 @@ test("رابط «نسيت كلمة المرور؟» وزر «إنشاء حساب
   );
 });
 
-// خطأ معروف: خطأ كلمة المرور يعتمد على touched.identifier بدل touched.password
-// (LoginForm.jsx)، فلو المستخدم ترك حقل كلمة المرور بقيمة قصيرة ما يطلع له خطأ.
-// test.fails = يصف السلوك الصحيح ويُتوقع فشله حتى ينصلح. بعد الإصلاح احذف .fails
-test.fails("خطأ معروف: ترك حقل كلمة المرور قصير يطلع خطأه", async () => {
+// كان خطأ: خطأ كلمة المرور يعتمد على touched.identifier بدل touched.password
+test("ترك حقل كلمة المرور قصير يطلع خطأه", async () => {
   renderLogin();
 
   await userEvent.type(screen.getByLabelText("كلمة المرور"), "123");
