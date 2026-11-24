@@ -25,6 +25,7 @@
   - [4.4 Bug tracking](#44-bug-tracking)
   - [4.5 Production screenshots](#45-production-screenshots)
 - [5. Deliverables](#5-deliverables)
+- [6. Authors](#6-Authors)
 
 ---
 
@@ -390,3 +391,10 @@ Taken on https://raccon.app on 21 Nov 2026, at laptop (1440 px) and phone (390 p
 | Bug tracking | [Section 4.4](#44-bug-tracking) |
 | Testing evidence and results | [Section 4](#4-final-integration-and-qa-testing) and https://github.com/t8pr/Raccon/actions |
 | Production environment | https://raccon.app (frontend on Cloudflare Pages, backend API on Render) |
+
+---
+## 6. Authors
+* **Eman Hamdan** - [iEmanHamdan](https://github.com/iEmanHamdan)
+* **Ghaida Alsabti** - [Ghaaidda](https://github.com/Ghaaidda)
+* **Abdulrahman Alsalhi** - [ARAlsalhi](https://github.com/ARAlsalhi)
+* **Osama Alhamdan** - [t8pr](https://github.com/t8pr)
