@@ -12,7 +12,7 @@ import RegisterPage from "../features/auth/RegisterPage";
 import LoginPage from "../features/auth/LoginPage";
 import ForgotPasswordPage from "../features/auth/ForgotPasswordPage";
 import ResetPasswordPage from "../features/auth/ResetPasswordPage";
-import { AuthProvider } from "../shared/auth/AuthContext";
+import { AuthProvider, useAuth } from "../shared/auth/AuthContext";
 import ScanPage from "../features/journey/ScanPage";
 // Home
 import HomePage from "../features/home/HomePage";
@@ -38,9 +38,14 @@ import ClaimPage from "../features/claim/ClaimPage";
 
 function AppContent() {
   const location = useLocation(); // work only insdie BrowserRouter and App create useLocation(}
-
+  const { accessToken } = useAuth();
   // Pages without Sidebar and Topbar
-  const authPaths = ["/register", "/login", "/forgot-password", "/reset-password"];
+  const authPaths = [
+    "/register",
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+  ];
   const isAuthPage = authPaths.includes(location.pathname);
 
   return (
@@ -56,7 +61,12 @@ function AppContent() {
             }
           />
           {/* Default Route */}
-          <Route path="/" element={<Navigate to="/register" replace />} />{" "}
+          <Route
+            path="/"
+            element={
+              <Navigate to={accessToken ? "/home" : "/register"} replace />
+            }
+          />
           {/* Element is the jsx file*/}
           {/* Authentication */}
           <Route path="/register" element={<RegisterPage />} />
@@ -128,7 +138,6 @@ function AppContent() {
             }
           />
         </Routes>
-        
       </main>
     </div>
   );
