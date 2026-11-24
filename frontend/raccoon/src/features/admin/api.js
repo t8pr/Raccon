@@ -19,7 +19,7 @@ export function getPacks({ page = 1, size = 9, signal } = {}) {
   return authRequest(
     `/admin/packs?${query}`,
     { method: "GET", signal },
-    "تعذر تحميل التجارب.",
+    "api.loadExperiencesFailed",
   );
 }
 
@@ -33,6 +33,6 @@ export function generatePacks({ mode, tagsCount, quantity }) {
   return authRequest(
     "/admin/generate-packs",
     { method: "POST", json: { mode, tags_count: tagsCount, quantity } },
-    "تعذر إنشاء التجربة.",
+    "api.createExperienceFailed",
   );
 }

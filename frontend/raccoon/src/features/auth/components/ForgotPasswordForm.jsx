@@ -1,23 +1,25 @@
 // Forgot password: the user types the email of their account
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import AuthField from "../../../shared/ui/AuthField";
-import Button from "../../../shared/ui/Button";
-import InlineMessage from "../../../shared/ui/InlineMessage";
-import "./LoginForm.css";
+import AuthField from "../../../shared/ui/AuthField/AuthField";
+import Button from "../../../shared/ui/Button/Button";
+import InlineMessage from "../../../shared/ui/InlineMessage/InlineMessage";
+import "./LoginForm/LoginForm.css";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n";
 
 // Validate Email (same rule as the login form)
 export function validateEmail(value) {
   const email = value.trim();
 
   if (!email) {
-    return "أدخل بريدك الإلكتروني.";
+    return i18n.t("validation.emailRequired");
   }
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(email)) {
-    return "أدخل بريدًا إلكترونيًا صحيحًا.";
+    return i18n.t("validation.emailInvalid");
   }
 
   return "";
@@ -29,6 +31,7 @@ export default function ForgotPasswordForm({
   serverError = "",
   onEdit,
 }) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [touched, setTouched] = useState(false);
 
@@ -59,10 +62,10 @@ export default function ForgotPasswordForm({
     <form className="login-form" onSubmit={handleSubmit} noValidate>
       {/* Header */}
       <div className="login-form__header">
-        <h1 className="login-form__title">نسيت كلمة المرور؟</h1>
+        <h1 className="login-form__title">{t("auth.forgot.title")}</h1>
 
         <p className="login-form__subtitle">
-          اكتب إيميلك المسجّل وبنرسل لك رابط تعيّن فيه كلمة مرور جديدة.
+          {t("auth.forgot.subtitle")}
         </p>
       </div>
 
@@ -73,7 +76,7 @@ export default function ForgotPasswordForm({
       {/* Field */}
       <div className="login-form__fields">
         <AuthField
-          label="البريد الإلكتروني"
+          label={t("auth.fields.emailFull")}
           name="email"
           type="email"
           value={email}
@@ -95,14 +98,15 @@ export default function ForgotPasswordForm({
           disabled={Boolean(emailError)}
           loading={isSubmitting}
         >
-          أرسل الرابط
+          {t("auth.forgot.submit")}
         </Button>
       </div>
 
       {/* Back to Login */}
       <div className="login-form__footer">
         <p>
-          تذكرت كلمة المرور؟ <Link to="/login">ارجع لتسجيل الدخول</Link>
+          {t("auth.forgot.remembered")}{" "}
+          <Link to="/login">{t("auth.backToLogin")}</Link>
         </p>
       </div>
     </form>

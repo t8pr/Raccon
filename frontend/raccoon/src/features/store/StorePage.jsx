@@ -1,13 +1,14 @@
 import { useState } from "react";
 
-import AppNavbar from "../../shared/layout/AppNavbar";
-import ExperiencePackCard from "../../shared/ui/ExperiencePackCard";
+import AppNavbar from "../../shared/layout/AppNavbar/AppNavbar";
+import ExperiencePackCard from "../../shared/ui/ExperiencePackCard/ExperiencePackCard";
 
 import CheckoutDialog from "./components/CheckoutDialog";
 import { StoreFilters } from "./components/StoreToolbar";
 import { useCheckout } from "./hooks/useCheckout";
 import { STORE_PACKAGES, filterAndSort } from "./storeCatalog";
 import "./StorePage.css";
+import { useTranslation } from "react-i18next";
 
 /*
   المتجر (Figma: C. المتجر): ثمانية بكجات ثابتة، والشراء يحوّل لصفحة الدفع في رمز.
@@ -18,6 +19,7 @@ import "./StorePage.css";
     CheckoutDialog    محتوى النافذة
 */
 export default function StorePage() {
+  const { t } = useTranslation();
   const [mode, setMode] = useState("all");
   const [sort, setSort] = useState("default");
 
@@ -26,11 +28,11 @@ export default function StorePage() {
   const visiblePackages = filterAndSort(STORE_PACKAGES, { mode, size: "all", sort });
 
   return (
-    <div className="store-view" dir="rtl">
+    <div className="store-view">
       <AppNavbar />
 
       <section className="store-page" aria-labelledby="store-title">
-        <h1 id="store-title">المتجر</h1>
+        <h1 id="store-title">{t("nav.store")}</h1>
 
         <StoreFilters
           mode={mode}

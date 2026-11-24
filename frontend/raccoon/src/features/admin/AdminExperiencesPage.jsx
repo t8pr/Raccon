@@ -2,17 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import AppNavbar from "../../shared/layout/AppNavbar";
-import ExperiencePackCard from "../../shared/ui/ExperiencePackCard";
-import FilterBar from "../../shared/ui/FilterBar";
-import Pagination from "./components/Pagination";
-import InlineMessage from "../../shared/ui/InlineMessage";
+import AppNavbar from "../../shared/layout/AppNavbar/AppNavbar";
+import ExperiencePackCard from "../../shared/ui/ExperiencePackCard/ExperiencePackCard";
+import FilterBar from "../../shared/ui/FilterBar/FilterBar";
+import Pagination from "./components/Pagination/Pagination";
+import InlineMessage from "../../shared/ui/InlineMessage/InlineMessage";
 import { useAuth } from "../../shared/auth/AuthContext";
 import { getPacks } from "./api";
 import { priceFor } from "../../shared/constants/packSizes";
 import { MODE_OPTIONS, fromBackendMode } from "../../shared/constants/modes";
 import { queryKeys } from "../../shared/constants/queryKeys";
 import "./AdminExperiences.css";
+import { useTranslation } from "react-i18next";
+import i18n from "../../i18n";
 
 /*
 إدارة التجارب — lists the packs from GET /admin/packs (real backend data).
@@ -25,7 +27,15 @@ How the data flows:
    (the backend can't filter yet — see the note at the bottom of this file).
 */
 
-const modeFilters = [{ value: "all", label: "الكل" }, ...MODE_OPTIONS];
+const modeFilters = [
+  {
+    value: "all",
+    get label() {
+      return i18n.t("common.all");
+    },
+  },
+  ...MODE_OPTIONS,
+];
 
 // 8 per page on laptop (2 rows of 4, like Figma), 4 on phone (≤ 767px)
 function usePerPage() {
@@ -52,6 +62,7 @@ function toCard(pack) {
 }
 
 export default function AdminExperiencesPage() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const perPage = usePerPage();
@@ -98,20 +109,20 @@ export default function AdminExperiencesPage() {
   }
 
   return (
-    <div className="admin-exp-view" dir="rtl">
+    <div className="admin-exp-view">
       <AppNavbar />
 
       <main className="admin-exp" aria-labelledby="admin-exp-title">
-        <h1 id="admin-exp-title">إدارة التجارب</h1>
+        <h1 id="admin-exp-title">{t("nav.adminExperiences")}</h1>
 
         {notice && <InlineMessage type="success" message={notice} />}
 
         {/* Figma: filters on the right, outline «إنشاء تجربة جديدة +» on the left */}
         <div className="admin-exp__tools">
-          <FilterBar filters={modeFilters} value={mode} onChange={setMode} label="نوع التجربة" />
+          <FilterBar filters={modeFilters} value={mode} onChange={setMode} label={t("admin.experienceType")} />
 
           <Link to="/admin/experiences/new" className="ui-button ui-button--outline admin-exp__new">
-            <span>إنشاء تجربة جديدة</span>
+            <span>{t("admin.createNew")}</span>
             <Plus size={18} aria-hidden="true" />
           </Link>
         </div>
@@ -119,24 +130,24 @@ export default function AdminExperiencesPage() {
         {/* ---------- loading / error / empty / list ---------- */}
         {packsQuery.isPending ? (
           <p className="admin-exp__state" role="status">
-            جاري تحميل التجارب...
+            {t("admin.loading")}
           </p>
         ) : packsQuery.isError ? (
           <div className="admin-exp__empty" role="alert">
             <p>
               {packsQuery.error.status === 403
-                ? "هذي الصفحة للمشرفين بس."
-                : "تعذر تحميل التجارب. تأكد إن الباك إند شغّال وحاول مرة ثانية."}
+                ? t("admin.adminsOnly")
+                : t("admin.loadFailed")}
             </p>
             <button type="button" className="ui-button ui-button--outline" onClick={() => packsQuery.refetch()}>
-              حاول مرة ثانية
+              {t("common.tryAgain")}
             </button>
           </div>
         ) : total === 0 ? (
           <div className="admin-exp__empty" role="status">
-            <p>ما فيه تجارب للحين.</p>
+            <p>{t("admin.empty")}</p>
             <Link to="/admin/experiences/new" className="ui-button ui-button--primary">
-              أنشئ أول تجربة
+              {t("admin.createFirst")}
             </Link>
           </div>
         ) : visible.length ? (
@@ -147,9 +158,9 @@ export default function AdminExperiencesPage() {
           </div>
         ) : (
           <div className="admin-exp__empty" role="status">
-            <p>ما فيه تجارب بهالفلاتر في هالصفحة.</p>
+            <p>{t("admin.noMatch")}</p>
             <button type="button" className="ui-button ui-button--outline" onClick={clearFilters}>
-              امسح الفلاتر
+              {t("admin.clearFilters")}
             </button>
           </div>
         )}
@@ -161,8 +172,12 @@ export default function AdminExperiencesPage() {
             onChange={goTo}
             summary={
               filtersOn
-                ? `${visible.length} نتيجة في هالصفحة`
-                : `عرض ${from + 1}–${Math.min(from + perPage, total)} من ${total} تجربة`
+                ? t("admin.resultsOnPage", { count: visible.length })
+                : t("admin.showingRange", {
+                    from: from + 1,
+                    to: Math.min(from + perPage, total),
+                    total,
+                  })
             }
           />
         )}

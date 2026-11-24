@@ -1,0 +1,88 @@
+{
+  "nav": {
+    "brandLabel": "راكون — الرئيسية",
+    "mainNav": "التنقل الرئيسي",
+    "soon": "قريبًا",
+    "home": "الرئيسية",
+    "packages": "التجارب",
+    "store": "المتجر",
+    "adminExperiences": "إدارة التجارب",
+    "adminUsers": "إدارة المستخدمين",
+    "logoutError": "تعذر تسجيل الخروج. حاول مرة أخرى."
+  },
+  "profileMenu": {
+    "myAccount": "حسابي",
+    "myAccountSoon": "حسابي — قريبًا",
+    "menuLabel": "قائمة الحساب",
+    "logout": "تسجيل الخروج",
+    "loggingOut": "جارٍ الخروج..."
+  },
+  "authNav": {
+    "label": "الدخول أو إنشاء حساب",
+    "login": "تسجيل الدخول",
+    "register": "إنشاء حساب"
+  },
+  "language": {
+    "switchTo": "English",
+    "label": "تغيير اللغة"
+  },
+  "common": {
+    "or": "أو",
+    "playAnimation": "تشغيل الحركة",
+    "pauseAnimation": "إيقاف الحركة",
+    "loading": "جاري التحميل...",
+    "retry": "إعادة المحاولة",
+    "mode": {
+      "sequential": "تسلسلي",
+      "open": "صيد مفتوح",
+      "unknown": "غير محدد"
+    },
+    "pieces_zero": "{{count}} قطعة",
+    "pieces_one": "{{count}} قطعة",
+    "pieces_two": "{{count}} قطعة",
+    "pieces_few": "{{count}} قطع",
+    "pieces_many": "{{count}} قطعة",
+    "pieces_other": "{{count}} قطعة",
+    "hidePassword": "إخفاء كلمة المرور",
+    "showPassword": "إظهار كلمة المرور",
+    "yes": "نعم",
+    "cancel": "إلغاء",
+    "freeze": {
+      "decrease": "تقليل مدة التجميد ثانية واحدة",
+      "inputLabel": "مدة التجميد بالثواني",
+      "increase": "زيادة مدة التجميد ثانية واحدة",
+      "unit": "ثانية",
+      "rangeError": "أدخل عددًا صحيحًا من {{min}} إلى {{max}} ثانية."
+    },
+    "packTypeFilter": "نوع الباكج",
+    "sortPackages": "ترتيب الباكجات",
+    "sortBy": "ترتيب: {{label}}",
+    "currencyName": "ريال سعودي",
+    "currency": "ر.س",
+    "noPrice": "بدون سعر",
+    "piecesCount": "عدد القطع",
+    "redirectingToPayment": "جاري التحويل للدفع...",
+    "buy": "شراء",
+    "continue": "كمّل",
+    "edit": "تعديل",
+    "editSoon": "التعديل قريبًا",
+    "all": "الكل",
+    "checkingAccount": "جارٍ التحقق من الحساب...",
+    "playMode": "طريقة اللعب",
+    "piecesFlat": "{{count}} قطعة",
+    "brand": "راكون",
+    "refresh": "تحديث",
+    "serverError": "تعذر الاتصال بالخادم. حاول مرة أخرى.",
+    "close": "إغلاق",
+    "saveChanges": "حفظ التغييرات",
+    "goBack": "تراجع",
+    "change": "تغيير",
+    "tryAgain": "حاول مرة ثانية",
+    "increase": "زيادة",
+    "decrease": "إنقاص",
+    "optional": "اختياري",
+    "save": "حفظ",
+    "listSeparator": "، ",
+    "tryAgainOther": "حاول مرة أخرى"
+  }
+}

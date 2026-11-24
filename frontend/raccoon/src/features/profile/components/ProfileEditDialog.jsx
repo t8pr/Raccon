@@ -1,22 +1,24 @@
 import { Dialog } from "radix-ui";
 import { X, Check } from "lucide-react";
 
-import Button from "../../../shared/ui/Button";
-import AuthField from "../../../shared/ui/AuthField";
-import InlineMessage from "../../../shared/ui/InlineMessage";
-import CharacterPicker from "./CharacterPicker";
+import Button from "../../../shared/ui/Button/Button";
+import AuthField from "../../../shared/ui/AuthField/AuthField";
+import InlineMessage from "../../../shared/ui/InlineMessage/InlineMessage";
+import CharacterPicker from "./CharacterPicker/CharacterPicker";
 import {
   DIALOG_TITLES,
   FIELD_LABELS,
   FIELD_MAX_LENGTH,
   PASSWORD_FIELDS,
 } from "../profileFields";
+import { useTranslation } from "react-i18next";
 
 /*
   نافذة واحدة يتغيّر محتواها حسب editing.
   editor: ما يرجّعه useProfileEditor (القيم والدوال).
 */
 export default function ProfileEditDialog({ editor }) {
+  const { t, i18n } = useTranslation();
   const { editing, busy, deleted, trigger, close } = editor;
 
   return (
@@ -31,7 +33,7 @@ export default function ProfileEditDialog({ editor }) {
 
         <Dialog.Content
           className="profile-dialog"
-          dir="rtl"
+          dir={i18n.dir()}
           onCloseAutoFocus={(event) => {
             event.preventDefault();
             trigger.current?.focus();
@@ -48,7 +50,7 @@ export default function ProfileEditDialog({ editor }) {
           <button
             type="button"
             className="profile-dialog__close"
-            aria-label="إغلاق"
+            aria-label={t("common.close")}
             disabled={busy}
             onClick={close}
           >
@@ -64,32 +66,34 @@ export default function ProfileEditDialog({ editor }) {
 
 // نافذة نجاح حذف الحساب
 function DeletedMessage({ onClose }) {
+  const { t } = useTranslation();
   return (
     <div className="profile-deleted">
       <span className="profile-deleted__icon">
         <Check aria-hidden="true" />
       </span>
 
-      <Dialog.Title>تم حذف حسابك</Dialog.Title>
+      <Dialog.Title>{t("profile.deleted.title")}</Dialog.Title>
 
       <Dialog.Description>
-        نشكرك على وقتك معنا. تقدر تفتح حساب جديد في أي وقت.
+        {t("profile.deleted.text")}
       </Dialog.Description>
 
       <Button fullWidth onClick={onClose}>
-        رجوع للصفحة الرئيسية
+        {t("profile.deleted.backHome")}
       </Button>
     </div>
   );
 }
 
-function getDescription(editing) {
-  if (editing === "avatar") return "اختر الشخصية اللي تمثلك في الجولات.";
-  if (editing === "delete") return "بينحذف حسابك نهائيًا. ما نقدر نرجعه بعدين.";
-  return "عدّل بياناتك ثم احفظ التغييرات.";
+function getDescription(editing, t) {
+  if (editing === "avatar") return t("profile.description.avatar");
+  if (editing === "delete") return t("profile.description.delete");
+  return t("profile.description.edit");
 }
 
 function EditForm({ editor }) {
+  const { t } = useTranslation();
   const { user, editing, draft, error, busy, change, setAvatar, save, close } =
     editor;
   const isDelete = editing === "delete";
@@ -106,7 +110,7 @@ function EditForm({ editor }) {
             : "profile-sr-only"
         }
       >
-        {getDescription(editing)}
+        {getDescription(editing, t)}
       </Dialog.Description>
 
       <form onSubmit={save}>
@@ -135,7 +139,7 @@ function EditForm({ editor }) {
             PASSWORD_FIELDS.map(([key, label]) => (
               <AuthField
                 key={key}
-                label={label}
+                label={t(label)}
                 type="password"
                 value={draft[key]}
                 onChange={change(key)}
@@ -149,7 +153,7 @@ function EditForm({ editor }) {
           {/* تأكيد حذف الحساب */}
           {isDelete && (
             <AuthField
-              label={`اكتب اسم المستخدم ${user.username} للتأكيد`}
+              label={t("profile.deleteConfirmLabel", { username: user.username })}
               value={draft.confirmation || ""}
               onChange={change("confirmation")}
               inputDir="ltr"
@@ -170,11 +174,11 @@ function EditForm({ editor }) {
             // زر الحذف لا يعمل حتى يطابق الاسم المكتوب اسم المستخدم
             disabled={isDelete && draft.confirmation !== user.username}
           >
-            {isDelete ? "احذف حسابي نهائيًا" : "حفظ التغييرات"}
+            {isDelete ? t("profile.deleteForever") : t("common.saveChanges")}
           </Button>
 
           <Button variant="outline" disabled={busy} onClick={close}>
-            {isDelete ? "تراجع" : "إلغاء"}
+            {isDelete ? t("common.goBack") : t("common.cancel")}
           </Button>
         </div>
       </form>

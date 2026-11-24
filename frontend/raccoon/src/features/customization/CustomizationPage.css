@@ -500,7 +500,7 @@
   padding: 0;
   border: 0;
 
-  direction: rtl;
+  direction: var(--dir, rtl);
   text-align: start;
 }
 

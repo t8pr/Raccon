@@ -5,46 +5,47 @@ import {
   OwnedByAnotherActions,
   OwnedByMeActions,
 } from "./ClaimActions";
+import { useTranslation } from "react-i18next";
 
 // العنوان والوصف حسب حالة الباكج والمستخدم
-function getHeading(claim) {
+function getHeading(claim, t) {
   const { signedIn, pack, ownedByMe, ownedByAnother, user, claimMutation } =
     claim;
 
   if (ownedByAnother) {
     return {
-      title: "تم ربط الحزمة بمستخدم آخر",
-      description:
-        "كل باكج يرتبط بحساب واحد. إذا استلمته بحسابك الآخر، سجّل الدخول بذلك الحساب.",
+      title: t("claim.heading.otherTitle"),
+      description: t("claim.heading.otherText"),
     };
   }
 
   if (ownedByMe) {
     return {
       title: claimMutation.isSuccess
-        ? "ألف مبروك، تم ربط الحزمة بك!"
-        : "هذه الحزمة مرتبطة بحسابك",
-      description: "تقدر تجهّزها الحين أو ترجع لها لاحقًا من صفحة باقاتي.",
+        ? t("claim.heading.claimedTitle")
+        : t("claim.heading.mineTitle"),
+      description: t("claim.heading.mineText"),
     };
   }
 
   if (signedIn && pack?.owner_id === null) {
     return {
-      title: "حزمتك جاهزة، باقي نربطها باسمك",
-      description: `أنت داخل باسم ${user.name}. اضغط «اربطه بحسابي» لإضافته إلى باقاتك.`,
+      title: t("claim.heading.readyTitle"),
+      description: t("claim.heading.readyText", { name: user.name }),
     };
   }
 
   return {
-    title: "استلم باكجك",
-    description: "أنشئ حسابًا أو سجّل دخولك، وبعدها نربط الباكج بحسابك.",
+    title: t("claim.title"),
+    description: t("claim.heading.guestText"),
   };
 }
 
 // بيانات الباكج والأزرار المناسبة لحالته
 export default function PackDetails({ claim }) {
+  const { t } = useTranslation();
   const { pack, signedIn, ownedByMe, ownedByAnother } = claim;
-  const { title, description } = getHeading(claim);
+  const { title, description } = getHeading(claim, t);
 
   let actions;
   if (!signedIn) actions = <GuestActions claim={claim} />;
@@ -62,26 +63,26 @@ export default function PackDetails({ claim }) {
 
       <dl className="claim-card__info">
         <div>
-          <dt>رقم الباكج</dt>
+          <dt>{t("claim.info.id")}</dt>
           <dd>
             <bdi>{pack.id}</bdi>
           </dd>
         </div>
 
         <div className="claim-card__info-centered">
-          <dt>الطور</dt>
+          <dt>{t("claim.info.mode")}</dt>
           <dd>{getModeLabel(pack.mode)}</dd>
         </div>
 
         <div className="claim-card__info-centered">
-          <dt>قطع NFC</dt>
+          <dt>{t("claim.info.nfcPieces")}</dt>
           <dd>{pack.tags_count}</dd>
         </div>
       </dl>
 
       {actions}
 
-      <p className="claim-card__note">رابط الاستلام يربط الباكج بحساب واحد.</p>
+      <p className="claim-card__note">{t("claim.note")}</p>
     </>
   );
 }

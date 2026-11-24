@@ -9,7 +9,7 @@ export function scanTagData(tagHash, userHash) {
       method: "POST",
       json: { tag_hash: tagHash, injected_user_hash: userHash },
     },
-    "تعذر قراءة القطعة.",
+    "api.scanFailed",
   );
 }
 
@@ -26,7 +26,7 @@ export function setPlayerTrap(tagHash, userHash, trapType, trapValue) {
         trap_value: trapValue,
       },
     },
-    "تعذر تفعيل الفخ.",
+    "api.trapFailed",
   );
 }
 
@@ -34,6 +34,6 @@ export function getLeaderboard(eventId) {
   return authRequest(
     `/journey/leaderboard/${encodeURIComponent(eventId)}`,
     { method: "GET" },
-    "تعذر تحميل لوحة المتصدرين.",
+    "api.leaderboardFailed",
   );
 }

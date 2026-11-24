@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../../shared/auth/AuthContext";
 import { scanTagData } from "../api";
 import { toScanError } from "../utils/scanErrors";
+import i18n from "../../../i18n";
 
 /*
   يمسح القطعة تلقائيًا بمجرد فتح الصفحة.
@@ -30,7 +31,7 @@ export function useAutoScan(tagHash, userHash) {
 
     async function executeAutoScan() {
       if (!tagHash || !userHash) {
-        setError("رابط غير صالح أو بيانات مفقودة.");
+        setError(i18n.t("journey.invalidLinkData"));
         setIsLoading(false);
         return;
       }

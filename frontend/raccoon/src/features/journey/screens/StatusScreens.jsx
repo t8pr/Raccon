@@ -1,46 +1,50 @@
-import ScanLayout from "../components/ScanLayout";
-import InfoCard from "../components/InfoCard";
+import ScanLayout from "../components/ScanLayout/ScanLayout";
+import InfoCard from "../components/InfoCard/InfoCard";
 import { HomeAction } from "../components/ScanActions";
-import { LockBadge, MarkBadge } from "../components/ScanBadges";
+import { LockBadge, MarkBadge } from "../components/ScanBadges/ScanBadges";
+import { useTranslation } from "react-i18next";
 
 // شاشات ما قبل النتيجة: التحميل، الرابط الناقص، ولا بيانات.
 // shell: الخصائص المشتركة لـ ScanLayout (المتصدرون) من ScanPage.
 
 export function LoadingScreen({ shell }) {
+  const { t } = useTranslation();
   return (
     <ScanLayout
       {...shell}
       showStats={false}
-      title="لحظة..."
+      title={t("journey.status.loadingTitle")}
       badge={<MarkBadge />}
-      pill="جاري قراءة القطعة"
+      pill={t("journey.status.loadingPill")}
     />
   );
 }
 
 export function InvalidLinkScreen({ shell, message, onHome }) {
+  const { t } = useTranslation();
   return (
     <ScanLayout
       {...shell}
       showStats={false}
-      title="رابط غير صالح"
+      title={t("journey.status.invalidTitle")}
       badge={<LockBadge />}
-      pill="ما قدرنا نقرأ الرابط"
+      pill={t("journey.status.invalidPill")}
       actions={<HomeAction onHome={onHome} />}
     >
-      <InfoCard title={message} text="امسح القطعة مرة ثانية بجوالك." />
+      <InfoCard title={message} text={t("journey.status.invalidText")} />
     </ScanLayout>
   );
 }
 
 export function EmptyScreen({ shell, onHome }) {
+  const { t } = useTranslation();
   return (
     <ScanLayout
       {...shell}
       showStats={false}
-      title="ما فيه شي"
+      title={t("journey.status.emptyTitle")}
       badge={<MarkBadge />}
-      pill="لا توجد بيانات لعرضها"
+      pill={t("journey.status.emptyPill")}
       actions={<HomeAction onHome={onHome} />}
     />
   );

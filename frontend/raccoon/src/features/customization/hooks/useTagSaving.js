@@ -6,6 +6,7 @@ import {
   uploadHintImage,
 } from "../../../shared/api/eventsApi";
 import { buildAllTagsConfig, buildTagConfig } from "../utils/tagForm";
+import { useTranslation } from "react-i18next";
 
 /*
   حفظ القطع ووضع التعديل. زر «حفظ» واحد له حالتين (الصفحة تقرر أي وحدة):
@@ -27,6 +28,7 @@ export function useTagSaving({
   supportsTraps,
   staging,
 }) {
+  const { t } = useTranslation();
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState("");
   const [saveError, setSaveError] = useState("");
@@ -67,7 +69,7 @@ export function useTagSaving({
     const uploaded = await uploadHintImage(image);
 
     if (typeof uploaded.url !== "string" || !uploaded.url) {
-      throw new Error("لم يرجع الخادم رابط الصورة. حاول مرة أخرى.");
+      throw new Error(t("customization.saving.noImageUrl"));
     }
 
     return { ...config, content: { ...config.content, image: uploaded.url } };
@@ -83,7 +85,7 @@ export function useTagSaving({
     tagForm.reset();
     setSaveError("");
     setSaveSuccess(
-      `انحفظت القطعة ${tagNumber} مؤقتًا. لما تخلص كل القطع اضغط «حفظ» مرة ثانية.`,
+      t("customization.saving.staged", { number: tagNumber }),
     );
   }
 
@@ -125,14 +127,16 @@ export function useTagSaving({
 
       setSaveSuccess(
         isEdit
-          ? "تم حفظ تعديلات الباقة بنجاح."
-          : `تم حفظ جميع القطع (${configs.length}) بنجاح.`,
+          ? t("customization.saving.editsSaved")
+          : t("customization.saving.allSaved", { count: configs.length }),
       );
     } catch (error) {
       // المؤقت يبقى، فيقدر يعيد المحاولة بدون ما يعيد التعديل
       setSaveError(
         error.message ||
-          (isEdit ? "تعذر حفظ التعديلات." : "تعذر حفظ جميع القطع."),
+          (isEdit
+            ? t("customization.saving.editsFailed")
+            : t("customization.saving.allFailed")),
       );
     } finally {
       savingRef.current = false;
@@ -150,7 +154,7 @@ export function useTagSaving({
         await resetEvent(eventId);
         await refetch();
       } catch (error) {
-        setSaveError(error.message || "تعذر إعادة تعيين الجولة.");
+        setSaveError(error.message || t("api.resetRoundFailed"));
         setIsSaving(false);
         return;
       } finally {

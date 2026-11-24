@@ -1,60 +1,68 @@
-import Button from "../../../shared/ui/Button";
-import InlineMessage from "../../../shared/ui/InlineMessage";
+import Button from "../../../shared/ui/Button/Button";
+import InlineMessage from "../../../shared/ui/InlineMessage/InlineMessage";
+import { useTranslation } from "react-i18next";
 
 // محتوى البطاقة قبل وصول بيانات الباكج: رابط خاطئ، تحميل، أو فشل.
 
 export function InvalidLinkState() {
+  const { t } = useTranslation();
   return (
     <>
-      <h1 id="claim-title">رابط الاستلام غير صالح</h1>
+      <h1 id="claim-title">{t("claim.invalidLinkTitle")}</h1>
       <InlineMessage
         type="error"
-        message="تأكد من فتح الرابط الكامل الذي وصلك في الإيميل."
+        message={t("claim.invalidLinkText")}
       />
     </>
   );
 }
 
 export function CheckingState() {
+  const { t } = useTranslation();
   return (
     <>
-      <h1 id="claim-title">استلم باكجك</h1>
-      <InlineMessage message="جارٍ التحقق من الباكج والحساب..." />
+      <h1 id="claim-title">{t("claim.title")}</h1>
+      <InlineMessage message={t("claim.checking")} />
     </>
   );
 }
 
 export function RestoreErrorState({ message }) {
+  const { t } = useTranslation();
   return (
     <>
-      <h1 id="claim-title">تعذر التحقق من الحساب</h1>
+      <h1 id="claim-title">{t("claim.restoreErrorTitle")}</h1>
       <InlineMessage type="error" message={message} />
-      <Button onClick={() => window.location.reload()}>إعادة المحاولة</Button>
+      <Button onClick={() => window.location.reload()}>
+        {t("common.retry")}
+      </Button>
     </>
   );
 }
 
 export function PreviewErrorState({ notFound, retrying, onRetry }) {
+  const { t } = useTranslation();
   return (
     <>
-      <h1 id="claim-title">تعذر تحميل الباكج</h1>
+      <h1 id="claim-title">{t("claim.previewErrorTitle")}</h1>
 
       <InlineMessage
         type="error"
         message={
           notFound
-            ? "الباكج غير موجود. تأكد من رابط الاستلام."
-            : "تعذر الاتصال بالخادم. حاول مرة أخرى."
+            ? t("claim.notFound")
+            : t("common.serverError")
         }
       />
 
       <Button variant="outline" loading={retrying} onClick={onRetry}>
-        إعادة المحاولة
+        {t("common.retry")}
       </Button>
     </>
   );
 }
 
 export function MissingPackState() {
-  return <InlineMessage type="error" message="لم تتوفر معلومات الباكج." />;
+  const { t } = useTranslation();
+  return <InlineMessage type="error" message={t("claim.missingPack")} />;
 }

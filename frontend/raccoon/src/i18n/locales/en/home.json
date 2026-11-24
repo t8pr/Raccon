@@ -1,0 +1,49 @@
+{
+  "user": {
+    "quick": {
+      "title": "Picnic experience",
+      "text": "6 pieces, sequential scanning",
+      "action": "Edit"
+    },
+    "feature": {
+      "title": "Raccoon for events",
+      "text": "Ready-made interactive experiences for exhibitions and festivals",
+      "action": "Request a quote"
+    },
+    "card1": {
+      "title": "The guided sequential experience",
+      "text": "Each piece reveals the secret of the next, on an exciting journey to the finish line."
+    },
+    "card2": {
+      "title": "Free exploration (open hunt)",
+      "text": "All pieces are available at once — explore freely and collect points to top the leaderboard."
+    }
+  },
+  "admin": {
+    "quick": {
+      "title": "Create a new experience",
+      "text": "Pick the type and number of pieces, and we'll prepare the activation and print links",
+      "action": "Create"
+    },
+    "feature": {
+      "title": "Manage experiences",
+      "text": "All experiences and their activation status",
+      "action": "Browse"
+    },
+    "card1": {
+      "title": "Users & permissions",
+      "text": "Manage user accounts and access permissions, and follow the activity log."
+    },
+    "card2": {
+      "title": "Metrics & statistics dashboard",
+      "text": "Live tracking of engagement rates, scan counts, and user performance."
+    }
+  },
+  "hero": {
+    "titleLine1": "Turn any place",
+    "titleLine2": "into an interactive adventure",
+    "lead": "Smart NFC pieces that take visitors on a step-by-step discovery journey: puzzles, challenges, a live leaderboard, and real-time interaction with every scan.",
+    "cta": "Browse the store"
+  },
+  "shortcuts": "Shortcuts"
+}

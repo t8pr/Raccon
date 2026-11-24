@@ -1,0 +1,35 @@
+/* نفس شكل auth-pill الشفاف */
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: #fafcfb;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.lang-switch:hover {
+  background: rgba(198, 236, 219, 0.12);
+}
+
+.lang-switch:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+@media (max-width: 767px) {
+  .lang-switch {
+    min-height: 40px;
+    font-size: 14px;
+  }
+}

@@ -1,6 +1,6 @@
-import ScanLayout from "../components/ScanLayout";
-import HintCard from "../components/HintCard";
-import InfoCard, { ScanNote } from "../components/InfoCard";
+import ScanLayout from "../components/ScanLayout/ScanLayout";
+import HintCard from "../components/HintCard/HintCard";
+import InfoCard, { ScanNote } from "../components/InfoCard/InfoCard";
 import FreezeView from "../components/FreezeView";
 import { ContinueAction, HomeAction } from "../components/ScanActions";
 import {
@@ -10,13 +10,14 @@ import {
   LockBadge,
   MarkBadge,
   NumberBadge,
-} from "../components/ScanBadges";
+} from "../components/ScanBadges/ScanBadges";
 import {
   getClaimerName,
   getExpectedTag,
   getErrorKind,
   padTag,
 } from "../utils/scanErrors";
+import { useTranslation } from "react-i18next";
 
 /*
   الخادم رفض المسح. شاشة لكل سبب:
@@ -30,6 +31,7 @@ import {
     unknown                    أي خطأ آخر
 */
 export default function ScanErrorScreen({ shell, scanError, onHome }) {
+  const { t } = useTranslation();
   // أخطاء اللعب ترجع النقاط والباقي، فنعرضهما إن وُجدا
   const stats = {
     score: scanError.current_score,
@@ -43,17 +45,19 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
         <ScanLayout
           {...shell}
           {...stats}
-          title="حقتك من قبل"
+          title={t("journey.error.alreadyTitle")}
           tone="mint"
           badge={<CheckBadge />}
-          pill="ما تنضاف نقطة ثانية"
-          actions={<ContinueAction onHome={onHome} label="كمّل اللعب" />}
+          pill={t("journey.error.alreadyPill")}
+          actions={
+            <ContinueAction onHome={onHome} label={t("journey.keepPlaying")} />
+          }
         >
           <HintCard
             text={scanError.content?.hint}
             image={scanError.content?.image}
           />
-          <ScanNote>هذا تلميح القطعة مرة ثانية — نقاطك ما تغيّرت.</ScanNote>
+          <ScanNote>{t("journey.error.alreadyNote")}</ScanNote>
         </ScanLayout>
       );
 
@@ -64,23 +68,23 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
         <ScanLayout
           {...shell}
           {...stats}
-          title="سبقك غيرك!"
+          title={t("journey.error.claimedTitle")}
           badge={<FlagBadge />}
-          pill="دوّر على قطعة ثانية بسرعة"
+          pill={t("journey.error.claimedPill")}
           actions={<ContinueAction onHome={onHome} />}
         >
           <ScanNote
             strong={
               claimer ? (
                 <>
-                  <bdi>{claimer}</bdi> سبقك لهذي القطعة
+                  <bdi>{claimer}</bdi> {t("journey.error.claimedBy")}
                 </>
               ) : (
-                "لاعب ثاني سبقك لهذي القطعة"
+                t("journey.error.claimedByOther")
               )
             }
           >
-            ما تغيّرت نقاطك. القطع الثانية لسّا تنتظرك!
+            {t("journey.error.claimedNote")}
           </ScanNote>
         </ScanLayout>
       );
@@ -107,15 +111,16 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
         <ScanLayout
           {...shell}
           {...stats}
-          title="مو بالترتيب!"
+          title={t("journey.error.skippedTitle")}
           tone="mint"
           badge={<NumberBadge value={scanned ?? "؟"} />}
-          pill={`امسح القطعة ${padTag(expected ?? "؟")} أول`}
-          actions={<ContinueAction onHome={onHome} label="كمّل اللعب" />}
+          pill={t("journey.error.skippedPill", { number: padTag(expected ?? "؟") })}
+          actions={
+            <ContinueAction onHome={onHome} label={t("journey.keepPlaying")} />
+          }
         >
           <ScanNote>
-            لازم تمسح القطعة {padTag(expected ?? "؟")} قبل هذي. في الوضع التسلسلي
-            القطع تنفتح بالترتيب، ونقاطك ما تغيّرت.
+            {t("journey.error.skippedNote", { number: padTag(expected ?? "؟") })}
           </ScanNote>
         </ScanLayout>
       );
@@ -126,14 +131,14 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
         <ScanLayout
           {...shell}
           showStats={false}
-          title="استعد!"
+          title={t("journey.error.notLiveTitle")}
           badge={<MarkBadge />}
-          pill="الجولة ما بدأت أو انتهت"
+          pill={t("journey.error.notLivePill")}
           actions={<HomeAction onHome={onHome} />}
         >
           <InfoCard
-            title="ننتظر المنظّم يبدأ الجولة"
-            text="صاحب اللعبة ما شغّلها أو وقّفها مؤقتًا. امسح القطعة مرة ثانية لما تشتغل."
+            title={t("journey.error.notLiveCardTitle")}
+            text={t("journey.error.notLiveCardText")}
           />
         </ScanLayout>
       );
@@ -143,14 +148,14 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
         <ScanLayout
           {...shell}
           showStats={false}
-          title="مو رابطك!"
+          title={t("journey.error.notYoursTitle")}
           badge={<LockBadge />}
-          pill="هذا الرابط مو لك"
+          pill={t("journey.error.notYoursPill")}
           actions={<HomeAction onHome={onHome} />}
         >
           <InfoCard
-            title="امسح القطعة بجوالك عشان تفتحها"
-            text="الروابط ما تنتقل بين اللاعبين، كل مسح ينحسب لصاحبه."
+            title={t("journey.error.notYoursCardTitle")}
+            text={t("journey.error.notYoursCardText")}
           />
         </ScanLayout>
       );
@@ -160,13 +165,13 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
         <ScanLayout
           {...shell}
           showStats={false}
-          title="خلصتها!"
+          title={t("journey.error.completedTitle")}
           badge={<CupBadge />}
-          pill="ما تقدر تمسح قطع جديدة"
+          pill={t("journey.error.completedPill")}
           actions={<HomeAction onHome={onHome} />}
         >
-          <ScanNote strong="أنت خلصت هذي الجولة من قبل">
-            ما فيه قطع جديدة تمسحها في هذي الجولة.
+          <ScanNote strong={t("journey.error.completedStrong")}>
+            {t("journey.error.completedNote")}
           </ScanNote>
         </ScanLayout>
       );
@@ -176,14 +181,14 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
         <ScanLayout
           {...shell}
           showStats={false}
-          title="ما ضبطت!"
+          title={t("journey.error.unknownTitle")}
           badge={<LockBadge />}
-          pill="تعذّر قراءة القطعة"
+          pill={t("journey.error.unknownPill")}
           actions={<HomeAction onHome={onHome} />}
         >
           <InfoCard
-            title={scanError.message || "تعذر قراءة البطاقة."}
-            text="جرّب تمسح القطعة مرة ثانية."
+            title={scanError.message || t("journey.error.readFailed")}
+            text={t("journey.error.unknownText")}
           />
         </ScanLayout>
       );

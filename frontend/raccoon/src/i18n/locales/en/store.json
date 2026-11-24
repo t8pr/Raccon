@@ -1,0 +1,10 @@
+{
+  "sort": {
+    "default": "Size & price",
+    "priceAsc": "Price: low to high",
+    "priceDesc": "Price: high to low"
+  },
+  "confirmTitle": "Are you sure you want to complete this purchase?",
+  "linkUnavailable": "The payment link for this package isn't available right now. Please try later.",
+  "openPaymentFailed": "Couldn't open the payment page. Please try again."
+}

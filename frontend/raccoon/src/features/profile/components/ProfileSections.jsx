@@ -1,26 +1,28 @@
 import { Pencil, LockKeyhole, Trash2 } from "lucide-react";
-import Button from "../../../shared/ui/Button";
+import Button from "../../../shared/ui/Button/Button";
 import {
   FIELD_LABELS,
   INFORMATION_ROWS,
   getDisplayValue,
   getRowLabel,
 } from "../profileFields";
+import { useTranslation } from "react-i18next";
 
 // أقسام صفحة الحساب الثلاثة. كلها عرض فقط؛ onEdit(field, event) يفتح نافذة التعديل.
 
 // القسم الأول: الشخصية
 export function IdentityCard({ user, avatarSrc, onEdit }) {
+  const { t } = useTranslation();
   return (
-    <section className="profile-card profile-identity" aria-label="الشخصية">
+    <section className="profile-card profile-identity" aria-label={t("profile.character")}>
       <div className="profile-identity__person">
         <div className="profile-avatar">
-          <img src={avatarSrc} alt="شخصيتك" />
+          <img src={avatarSrc} alt={t("profile.yourCharacter")} />
 
           <button
             type="button"
             className="profile-avatar__edit"
-            aria-label="تعديل الشخصية"
+            aria-label={t("profile.editCharacter")}
             onClick={(event) => onEdit("avatar", event)}
           >
             <Pencil size={15} aria-hidden="true" />
@@ -34,7 +36,7 @@ export function IdentityCard({ user, avatarSrc, onEdit }) {
       </div>
 
       <Button variant="outline" onClick={(event) => onEdit("avatar", event)}>
-        غيّر الشخصية
+        {t("profile.changeCharacter")}
       </Button>
     </section>
   );
@@ -42,19 +44,20 @@ export function IdentityCard({ user, avatarSrc, onEdit }) {
 
 // القسم الثاني: المعلومات (الإيميل مقفل)
 export function InformationCard({ user, onEdit }) {
+  const { t } = useTranslation();
   return (
     <section
       className="profile-card profile-info"
       aria-labelledby="profile-info-title"
     >
-      <h2 id="profile-info-title">معلوماتي</h2>
+      <h2 id="profile-info-title">{t("profile.myInfo")}</h2>
 
       {INFORMATION_ROWS.map((field) => (
         <div className="profile-info__row" key={field}>
           <span className="profile-info__label">{getRowLabel(field)}</span>
 
           <strong>
-            <bdi dir={field === "name" ? "rtl" : "ltr"}>
+            <bdi dir={field === "name" ? "auto" : "ltr"}>
               {getDisplayValue(field, user)}
             </bdi>
           </strong>
@@ -62,18 +65,18 @@ export function InformationCard({ user, onEdit }) {
           {field === "email" ? (
             <span className="profile-info__locked">
               <LockKeyhole size={13} aria-hidden="true" />
-              ما يتعدّل
+              {t("profile.locked")}
             </span>
           ) : (
             <Button
               variant="outline"
               aria-label={`${
-                field === "password" ? "تغيير" : "تعديل"
-              } ${FIELD_LABELS[field] || "كلمة المرور"}`}
+                field === "password" ? t("common.change") : t("common.edit")
+              } ${FIELD_LABELS[field] || t("auth.fields.password")}`}
               onClick={(event) => onEdit(field, event)}
             >
               <Pencil size={13} aria-hidden="true" />
-              {field === "password" ? "تغيير" : "تعديل"}
+              {field === "password" ? t("common.change") : t("common.edit")}
             </Button>
           )}
         </div>
@@ -84,19 +87,20 @@ export function InformationCard({ user, onEdit }) {
 
 // القسم الثالث: حذف الحساب
 export function DangerCard({ onEdit }) {
+  const { t } = useTranslation();
   return (
     <section
       className="profile-card profile-danger"
       aria-labelledby="profile-delete-title"
     >
       <div>
-        <h2 id="profile-delete-title">حذف الحساب</h2>
-        <p>حذف حسابك نهائي. هذا الإجراء ما يمكن التراجع عنه.</p>
+        <h2 id="profile-delete-title">{t("profile.dialog.delete")}</h2>
+        <p>{t("profile.dangerText")}</p>
       </div>
 
       <Button variant="outline" onClick={(event) => onEdit("delete", event)}>
         <Trash2 size={16} aria-hidden="true" />
-        احذف حسابي
+        {t("profile.deleteMyAccount")}
       </Button>
     </section>
   );

@@ -1,0 +1,56 @@
+{
+  "fields": {
+    "name": "Name",
+    "username": "Username",
+    "phone": "Mobile number",
+    "oldPassword": "Current password"
+  },
+  "dialog": {
+    "avatar": "Change your character",
+    "name": "Edit name",
+    "username": "Edit username",
+    "phone": "Edit mobile number",
+    "password": "Change password",
+    "delete": "Delete account"
+  },
+  "errors": {
+    "sessionExpired": "Your session has expired. Please log in again.",
+    "wrongPassword": "Your current password is incorrect.",
+    "usernameTaken": "That username is taken. Choose another one.",
+    "generic": "The request couldn't be completed. Please try again."
+  },
+  "unavailable": "Account details aren't available. Please log in again.",
+  "subtitle": "Your details and character in one place.",
+  "avatars": {
+    "dehem": "Dehem",
+    "ghamda": "Ghamda",
+    "mento": "Mento",
+    "sakhr": "Sakhr"
+  },
+  "chooseCharacter": "Choose your character",
+  "deleted": {
+    "title": "Your account was deleted",
+    "text": "Thanks for your time with us. You can open a new account anytime.",
+    "backHome": "Back to home"
+  },
+  "description": {
+    "avatar": "Pick the character that represents you in rounds.",
+    "delete": "Your account will be permanently deleted. We can't bring it back.",
+    "edit": "Edit your details, then save your changes."
+  },
+  "deleteConfirmLabel": "Type the username {{username}} to confirm",
+  "deleteForever": "Delete my account permanently",
+  "character": "Character",
+  "yourCharacter": "Your character",
+  "editCharacter": "Edit character",
+  "changeCharacter": "Change character",
+  "myInfo": "My info",
+  "locked": "Can't be changed",
+  "dangerText": "Deleting your account is permanent. This can't be undone.",
+  "deleteMyAccount": "Delete my account",
+  "notice": {
+    "passwordChanged": "Password changed.",
+    "saved": "Changes saved."
+  },
+  "checkInput": "Check the details you entered."
+}

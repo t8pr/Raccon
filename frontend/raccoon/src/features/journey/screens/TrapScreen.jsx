@@ -1,10 +1,11 @@
-import ScanLayout from "../components/ScanLayout";
-import InfoCard from "../components/InfoCard";
+import ScanLayout from "../components/ScanLayout/ScanLayout";
+import InfoCard from "../components/InfoCard/InfoCard";
 import ChooseTrap from "../components/ChooseTrap";
 import FreezeView from "../components/FreezeView";
 import { ContinueAction } from "../components/ScanActions";
-import { BombBadge, FreezeBadge, NumberBadge } from "../components/ScanBadges";
+import { BombBadge, FreezeBadge, NumberBadge } from "../components/ScanBadges/ScanBadges";
 import { padTag } from "../utils/scanErrors";
+import { useTranslation } from "react-i18next";
 
 /*
   اللاعب مسح قطعة فخ. content يحدّد النوع:
@@ -21,6 +22,7 @@ export default function TrapScreen({
   onHome,
   choose,
 }) {
+  const { t } = useTranslation();
   const content = scanResult.content;
   const tagNumber = scanResult.tag_sequence;
   const stats = { score, remaining };
@@ -32,22 +34,25 @@ export default function TrapScreen({
       <ScanLayout
         {...shell}
         {...stats}
-        title="زرعته!"
+        title={t("journey.trap.plantedTitle")}
         badge={isBoom ? <BombBadge /> : <FreezeBadge />}
         pill={
           isBoom
-            ? `فخ بووم على القطعة ${padTag(tagNumber)}`
-            : `فخ تجميد ${content.freeze} ث على القطعة ${padTag(tagNumber)}`
+            ? t("journey.trap.plantedBoomPill", { number: padTag(tagNumber) })
+            : t("journey.trap.plantedFreezePill", {
+                seconds: content.freeze,
+                number: padTag(tagNumber),
+              })
         }
         actions={<ContinueAction onHome={onHome} />}
       >
         <InfoCard
           title={
             isBoom
-              ? "أول واحد يمسحها بعدك يخسر نقطة"
-              : "أول واحد يمسحها بعدك يتجمّد"
+              ? t("journey.trap.plantedBoomCard")
+              : t("journey.trap.plantedFreezeCard")
           }
-          text="كمّل، وخلّه يتفاجأ."
+          text={t("journey.trap.plantedText")}
         />
       </ScanLayout>
     );
@@ -72,15 +77,15 @@ export default function TrapScreen({
       <ScanLayout
         {...shell}
         {...stats}
-        title="بووم!"
+        title={t("journey.trap.boomTitle")}
         badge={<BombBadge value={`−${content.boom}`} />}
-        pill={`خسرت نقطة · صارت نقاطك ${score}`}
+        pill={t("journey.trap.boomPill", { score })}
         actions={<ContinueAction onHome={onHome} />}
       >
         <InfoCard
-          label="تفاصيل الخصم"
-          title={`نقاطك الآن ${score}`}
-          text="النقاط ما تنزل تحت الصفر"
+          label={t("journey.trap.boomLabel")}
+          title={t("journey.trap.boomCardTitle", { score })}
+          text={t("journey.trap.boomCardText")}
           aside={`−${content.boom}`}
         />
       </ScanLayout>
@@ -104,9 +109,9 @@ export default function TrapScreen({
     <ScanLayout
       {...shell}
       {...stats}
-      title="قطعة فخ"
+      title={t("journey.trap.emptyTitle")}
       badge={<NumberBadge value={tagNumber} />}
-      pill="الفخ فاضي"
+      pill={t("journey.trap.emptyPill")}
       actions={<ContinueAction onHome={onHome} />}
     />
   );

@@ -2,10 +2,10 @@ import { useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, MapPin, Minus, Nfc, Plus } from "lucide-react";
-import AppNavbar from "../../shared/layout/AppNavbar";
-import Button from "../../shared/ui/Button";
-import InlineMessage from "../../shared/ui/InlineMessage";
-import ExperiencePackCard from "../../shared/ui/ExperiencePackCard";
+import AppNavbar from "../../shared/layout/AppNavbar/AppNavbar";
+import Button from "../../shared/ui/Button/Button";
+import InlineMessage from "../../shared/ui/InlineMessage/InlineMessage";
+import ExperiencePackCard from "../../shared/ui/ExperiencePackCard/ExperiencePackCard";
 import { generatePacks } from "./api";
 import {
   PACK_SIZES,
@@ -16,6 +16,7 @@ import {
 import { MODE, MODE_LABEL, toBackendMode } from "../../shared/constants/modes";
 import { queryKeys } from "../../shared/constants/queryKeys";
 import "./AdminExperiences.css";
+import { useTranslation } from "react-i18next";
 
 /*
 Create experiences (Figma: Admin · create experience · 1441 / 1442).
@@ -28,8 +29,9 @@ const MIN_QTY = 3;
 const MAX_QTY = 30;
 
 const MODES = [
-  { value: MODE.SEQUENTIAL, title: MODE_LABEL[MODE.SEQUENTIAL], text: "كل قطعة تفتح اللي بعدها", Icon: Nfc },
-  { value: MODE.OPEN, title: MODE_LABEL[MODE.OPEN], text: "كل القطع متاحة بنفس الوقت", Icon: MapPin },
+  // العنوان من MODE_LABEL والوصف مفتاح ترجمة، الاثنين ينقرون وقت العرض
+  { value: MODE.SEQUENTIAL, text: "admin.create.modeSeqText", Icon: Nfc },
+  { value: MODE.OPEN, text: "admin.create.modeOpenText", Icon: MapPin },
 ];
 
 const emptyForm = {
@@ -39,6 +41,7 @@ const emptyForm = {
 };
 
 export default function CreateExperiencePage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -66,17 +69,22 @@ export default function CreateExperiencePage() {
       queryClient.invalidateQueries({ queryKey: queryKeys.adminPacks() });
       const label = `${MODE_LABEL[form.mode]} · ${piecesLabel(form.pieces)}`;
       navigate("/admin/experiences", {
-        state: { notice: `انشأت ${createdPacks.length} تجارب (${label}).` },
+        state: {
+          notice: t("admin.create.createdNotice", {
+            count: createdPacks.length,
+            label,
+          }),
+        },
       });
     },
   });
 
   const errorMessage = createMutation.isError
     ? createMutation.error.status === 403
-      ? "ما عندك صلاحية تنشئ تجارب. لازم يكون حسابك مشرف."
+      ? t("admin.create.noPermission")
       : createMutation.error.status === 422
-        ? "فيه بيانات ناقصة أو غلط. راجع الاختيارات وجرّب مرة ثانية."
-        : "تعذر إنشاء التجربة. تأكد إن الباك إند شغّال وحاول مرة ثانية."
+        ? t("admin.create.invalidData")
+        : t("admin.create.failed")
     : "";
 
   function cancel() {
@@ -84,24 +92,25 @@ export default function CreateExperiencePage() {
     else navigate("/admin/experiences");
   }
 
-  const pageTitle = "إنشاء تجربة جديدة";
+  const pageTitle = t("admin.createNew");
 
   return (
-    <div className="admin-exp-view" dir="rtl">
+    <div className="admin-exp-view">
       <AppNavbar />
 
       <main className="admin-exp admin-create" aria-labelledby="create-title">
         <header className="admin-create__header">
           <div className="admin-exp__heading">
             <p className="admin-exp__crumbs">
-              <Link to="/home">الرئيسية</Link> › <Link to="/admin/experiences">إدارة التجارب</Link> ›{" "}
+              <Link to="/home">{t("nav.home")}</Link> ›{" "}
+              <Link to="/admin/experiences">{t("nav.adminExperiences")}</Link> ›{" "}
               {pageTitle}
             </p>
             <h1 id="create-title">{pageTitle}</h1>
           </div>
           {/* phone: cancel sits next to the title (bottom bar only has room for 2 buttons) */}
           <button type="button" className="admin-create__cancel-top" onClick={cancel}>
-            إلغاء
+            {t("common.cancel")}
           </button>
         </header>
 
@@ -118,13 +127,13 @@ export default function CreateExperiencePage() {
             className={`admin-card ${isSeq ? "admin-card--seq" : "admin-card--open"}`}
             aria-labelledby="exp-data-title"
           >
-            <h2 id="exp-data-title">بيانات التجارب</h2>
-            <p className="admin-card__sub">تحدد طريقة اللعب وعدد القطع في التجربة.</p>
+            <h2 id="exp-data-title">{t("admin.create.dataTitle")}</h2>
+            <p className="admin-card__sub">{t("admin.create.dataSub")}</p>
 
             <fieldset className="admin-field">
-              <legend>نوع التجربة</legend>
+              <legend>{t("admin.experienceType")}</legend>
               <div className="admin-modes">
-                {MODES.map(({ value, title, text, Icon }) => (
+                {MODES.map(({ value, text, Icon }) => (
                   <label key={value} className="admin-mode">
                     <input
                       type="radio"
@@ -134,8 +143,8 @@ export default function CreateExperiencePage() {
                       onChange={() => setField("mode", value)}
                     />
                     <span className="admin-mode__text">
-                      <strong>{title}</strong>
-                      <small>{text}</small>
+                      <strong>{MODE_LABEL[value]}</strong>
+                      <small>{t(text)}</small>
                     </span>
                     <Icon size={22} aria-hidden="true" />
                   </label>
@@ -146,7 +155,8 @@ export default function CreateExperiencePage() {
             <div className="admin-create__row">
               <fieldset className="admin-field admin-sizes-field" aria-describedby="size-hint">
                 <legend>
-                  حجم التجربة <span className="admin-field__hint">السعر ثابت لكل حجم</span>
+                  {t("admin.create.size")}{" "}
+                  <span className="admin-field__hint">{t("admin.create.sizeHint")}</span>
                 </legend>
                 <div className="admin-sizes">
                   {PACK_SIZES.map((size) => (
@@ -160,21 +170,22 @@ export default function CreateExperiencePage() {
                       />
                       <strong>{piecesLabel(size.pieces)}</strong>
                       <span className="admin-size__price">
-                        {size.price} <span aria-label="ريال سعودي">ر.س</span>
+                        {size.price}{" "}
+                        <span aria-label={t("common.currencyName")}>{t("common.currency")}</span>
                       </span>
                     </label>
                   ))}
                 </div>
                 <p id="size-hint" className="admin-field__note">
-                  {PRICE_PER_PIECE} ر.س للقطعة — السعر يتحدد تلقائيًا حسب حجم التجربة.
+                  {t("admin.create.pricePerPiece", { price: PRICE_PER_PIECE })}
                 </p>
               </fieldset>
 
               <div className="admin-field admin-qty-field">
                 <label htmlFor="exp-qty">
-                  عدد التجارب{" "}
+                  {t("admin.create.quantity")}{" "}
                   <span className="admin-field__hint">
-                    من {MIN_QTY} إلى {MAX_QTY}
+                    {t("admin.create.quantityRange", { min: MIN_QTY, max: MAX_QTY })}
                   </span>
                 </label>
                 <div className="admin-stepper">
@@ -182,7 +193,7 @@ export default function CreateExperiencePage() {
                     type="button"
                     onClick={() => setQuantity(form.quantity + 1)}
                     disabled={form.quantity >= MAX_QTY}
-                    aria-label="زيادة"
+                    aria-label={t("common.increase")}
                   >
                     <Plus size={18} aria-hidden="true" />
                   </button>
@@ -199,7 +210,7 @@ export default function CreateExperiencePage() {
                     type="button"
                     onClick={() => setQuantity(form.quantity - 1)}
                     disabled={form.quantity <= MIN_QTY}
-                    aria-label="إنقاص"
+                    aria-label={t("common.decrease")}
                   >
                     <Minus size={18} aria-hidden="true" />
                   </button>
@@ -209,8 +220,9 @@ export default function CreateExperiencePage() {
 
             <p className="admin-summary">
               <Nfc size={18} aria-hidden="true" />
-              كل تجربة تجي بـ {piecesLabel(form.pieces)} NFC
-              {isSeq ? " بترتيب متسلسل." : " متاحة بنفس الوقت."}
+              {t(isSeq ? "admin.create.summarySeq" : "admin.create.summaryOpen", {
+                pieces: piecesLabel(form.pieces),
+              })}
             </p>
           </section>
 
@@ -220,28 +232,31 @@ export default function CreateExperiencePage() {
             aria-labelledby="preview-title"
           >
             <div className="admin-preview__text">
-              <h2 id="preview-title">كذا بتطلع في المتجر</h2>
+              <h2 id="preview-title">{t("admin.create.previewTitle")}</h2>
               <p className="admin-card__sub">
-                المعاينة تتغيّر مع اختياراتك: نوع التجربة يحدد لون الكرت، وحجم التجربة يحدد عدد
-                القطع والسعر.
+                {t("admin.create.previewSub")}
               </p>
               <ul className="admin-preview__checks">
-                {["نوع التجربة", "حجم التجربة", "السعر (تلقائي)"].map((item) => (
+                {["admin.experienceType", "admin.create.size", "admin.create.priceAuto"].map((item) => (
                   <li key={item}>
                     <Check size={14} aria-hidden="true" />
-                    {item}
+                    {t(item)}
                   </li>
                 ))}
               </ul>
               <p className="admin-preview__note">
-                تطلع في المتجر بعد «أنشئ التجربة».
+                {t("admin.create.previewNote")}
               </p>
             </div>
 
             {/* live preview: read-only, announced as one sentence for screen readers */}
             <div className="admin-preview__card">
               <p className="pack-card__sr" aria-live="polite">
-                المعاينة: {MODE_LABEL[form.mode]}، {piecesLabel(form.pieces)}، {price} ريال.
+                {t("admin.create.previewSr", {
+                  mode: MODE_LABEL[form.mode],
+                  pieces: piecesLabel(form.pieces),
+                  price,
+                })}
               </p>
               <div inert aria-hidden="true">
                 <ExperiencePackCard
@@ -260,11 +275,11 @@ export default function CreateExperiencePage() {
             className={`admin-create__bar ${isSeq ? "admin-create__bar--seq" : "admin-create__bar--open"}`}
           >
             <button type="button" className="admin-create__cancel" onClick={cancel}>
-              إلغاء
+              {t("common.cancel")}
             </button>
             <div className="admin-create__actions">
               <Button type="submit" variant="primary" loading={createMutation.isPending}>
-                أنشئ التجربة
+                {t("admin.create.submit")}
               </Button>
               {/* "حفظ كمسودة" comes back when the backend can save drafts (packs have no status yet) */}
             </div>
@@ -273,14 +288,14 @@ export default function CreateExperiencePage() {
       </main>
 
       <dialog ref={leaveRef} className="admin-leave" aria-labelledby="leave-title">
-        <h2 id="leave-title">متأكد تبي تطلع؟</h2>
-        <p>ما راح تنحفظ التغييرات اللي سويتها.</p>
+        <h2 id="leave-title">{t("admin.create.leaveTitle")}</h2>
+        <p>{t("admin.create.leaveText")}</p>
         <div className="admin-leave__actions">
           <Button variant="outline" onClick={() => leaveRef.current?.close()}>
-            كمّل التعديل
+            {t("admin.create.keepEditing")}
           </Button>
           <Button variant="primary" onClick={() => navigate("/admin/experiences")}>
-            اطلع بدون حفظ
+            {t("admin.create.leaveWithoutSaving")}
           </Button>
         </div>
       </dialog>

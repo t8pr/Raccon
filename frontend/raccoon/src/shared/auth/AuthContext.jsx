@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getCurrentUser } from "../api/usersApi";
 import { clearToken, getToken, setToken } from "./tokenStore";
 import { queryKeys } from "../constants/queryKeys";
+import i18n from "../../i18n";
 
 const AuthContext = createContext(null);
 
@@ -52,7 +53,7 @@ export function AuthProvider({ children }) {
     !unauthorized &&
     profileQuery.isError &&
     !profileQuery.data
-      ? "تعذر التحقق من جلسة الدخول. حاول مرة أخرى."
+      ? i18n.t("auth.sessionCheckFailed")
       : "";
 
   const clearSession = useCallback(() => {

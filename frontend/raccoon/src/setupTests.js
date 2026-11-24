@@ -1,7 +1,13 @@
 import "@testing-library/jest-dom/vitest";
 import { configure } from "@testing-library/react";
-import { afterAll, afterEach, beforeAll } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach } from "vitest";
 import { server } from "./test/server";
+import i18n from "./i18n";
+
+// الاختبارات دايم بالعربي (لغة jsdom الافتراضية en-US).
+// مرة وقت التحميل (للقيم اللي تنحسب أثناء import) ومرة قبل كل اختبار.
+i18n.changeLanguage("ar");
+beforeEach(() => i18n.changeLanguage("ar"));
 
 // findBy / waitFor ينتظرون 3 ثواني بدل ثانية: مع تقرير التغطية وكل الملفات مع بعض الجهاز أبطأ
 configure({ asyncUtilTimeout: 3000 });

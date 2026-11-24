@@ -1,8 +1,9 @@
-import Button from "../../../shared/ui/Button";
-import Chip from "../../../shared/ui/Chip";
+import Button from "../../../shared/ui/Button/Button";
+import Chip from "../../../shared/ui/Chip/Chip";
 import HintField from "./HintField";
-import ImageUploader from "./ImageUploader";
+import ImageUploader from "./ImageUploader/ImageUploader";
 import TrapField from "./TrapField";
+import { useTranslation } from "react-i18next";
 
 /*
   محرّر القطعة المختارة: التلميح، الصورة، الفخ، وأزرار الحفظ.
@@ -35,11 +36,14 @@ export default function TagEditor({
   onSave,
   onCancelEditing,
 }) {
+  const { t } = useTranslation();
   return (
     <section className="customization-editor">
       <div className="customization-editor__header">
         <h2 id="tag-title">
-          القطعة {String(tag.sequence_num).padStart(2, "0")}
+          {t("customization.pieceNumber", {
+            number: String(tag.sequence_num).padStart(2, "0"),
+          })}
         </h2>
 
         <div className="customization-editor__edits">
@@ -47,7 +51,7 @@ export default function TagEditor({
               فنحط النص كله في span واحد عشان تبقى المسافة قبل الرقم */}
           <Chip tone="mint" size="sm">
             <span>
-              التعديلات الباقية{" "}
+              {t("customization.editsLeft")}{" "}
               <bdi dir="ltr">
                 {editsRemaining}/{maxEdits}
               </bdi>
@@ -83,12 +87,12 @@ export default function TagEditor({
 
       <div className="customization-editor__actions">
         <Button onClick={onSave} loading={isSaving} disabled={!canSave || busy}>
-          حفظ
+          {t("common.save")}
         </Button>
 
         {isEditing && (
           <Button variant="outline" disabled={busy} onClick={onCancelEditing}>
-            إلغاء التعديل
+            {t("customization.confirm.cancelEditTitle")}
           </Button>
         )}
       </div>

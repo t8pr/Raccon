@@ -2,6 +2,7 @@
 import { MODE, MODE_OPTIONS } from "../../shared/constants/modes";
 import { PACK_SIZES } from "../../shared/constants/packSizes";
 import { CHECKOUT_LINKS } from "./checkoutLinks";
+import i18n from "../../i18n";
 
 // قائمة ثابتة: كل طريقة لعب × كل حجم. لا تعتمد على تجارب الأدمن ولا على الخادم.
 export const STORE_PACKAGES = [MODE.SEQUENTIAL, MODE.OPEN].flatMap((mode) =>
@@ -13,12 +14,20 @@ export const STORE_PACKAGES = [MODE.SEQUENTIAL, MODE.OPEN].flatMap((mode) =>
   })),
 );
 
-export const MODE_FILTERS = [{ value: "all", label: "الكل" }, ...MODE_OPTIONS];
+// label getter: يقرأ الترجمة وقت العرض حسب اللغة الحالية
+const option = (value, key) => ({
+  value,
+  get label() {
+    return i18n.t(key);
+  },
+});
+
+export const MODE_FILTERS = [option("all", "common.all"), ...MODE_OPTIONS];
 
 export const SORTS = [
-  { value: "default", label: "الحجم والسعر" },
-  { value: "price-asc", label: "السعر: الأقل أولًا" },
-  { value: "price-desc", label: "السعر: الأعلى أولًا" },
+  option("default", "store.sort.default"),
+  option("price-asc", "store.sort.priceAsc"),
+  option("price-desc", "store.sort.priceDesc"),
 ];
 
 // يفلتر حسب الطريقة والحجم ثم يرتّب. size نص من القائمة ("all" أو عدد القطع).

@@ -1,7 +1,8 @@
 import { Check, Pencil, X } from "lucide-react";
 
-import Button from "../../../shared/ui/Button";
+import Button from "../../../shared/ui/Button/Button";
 import { EVENT_NAME_MAX_LENGTH } from "../hooks/useEventRename";
+import { useTranslation } from "react-i18next";
 
 /*
   عنوان صفحة التخصيص: اسم الجولة وزر القلم،
@@ -9,6 +10,7 @@ import { EVENT_NAME_MAX_LENGTH } from "../hooks/useEventRename";
   rename: ما يرجّعه useEventRename.
 */
 export default function EventNameEditor({ title, rename }) {
+  const { t } = useTranslation();
   return (
     <header className="customization-heading">
       {rename.editing ? (
@@ -24,7 +26,7 @@ export default function EventNameEditor({ title, rename }) {
         >
           <input
             className="event-name-input"
-            aria-label="اسم التجربة"
+            aria-label={t("customization.rename.inputLabel")}
             value={rename.draft}
             onChange={(event) => rename.setDraft(event.target.value)}
             maxLength={EVENT_NAME_MAX_LENGTH}
@@ -40,8 +42,8 @@ export default function EventNameEditor({ title, rename }) {
             variant="outline"
             className="event-name-action"
             loading={rename.saving}
-            aria-label="حفظ الاسم"
-            title="حفظ الاسم"
+            aria-label={t("customization.rename.save")}
+            title={t("customization.rename.save")}
           >
             <Check size={20} aria-hidden="true" />
           </Button>
@@ -50,8 +52,8 @@ export default function EventNameEditor({ title, rename }) {
             variant="outline"
             className="event-name-action"
             disabled={rename.saving}
-            aria-label="إلغاء تعديل الاسم"
-            title="إلغاء تعديل الاسم"
+            aria-label={t("customization.rename.cancel")}
+            title={t("customization.rename.cancel")}
             onClick={rename.cancel}
           >
             <X size={20} aria-hidden="true" />
@@ -60,7 +62,7 @@ export default function EventNameEditor({ title, rename }) {
       ) : (
         <div className="event-name-row">
           <h1>
-            <bdi>{title?.trim() || "بدون اسم"}</bdi>
+            <bdi>{title?.trim() || t("packages.untitled")}</bdi>
           </h1>
 
           {/* زر عادي بنفس كلاسات Button: الأيقونة مباشرة بدون <span> الداخلي حق Button.
@@ -69,8 +71,8 @@ export default function EventNameEditor({ title, rename }) {
             ref={rename.editButtonRef}
             type="button"
             className="ui-button ui-button--outline event-name-action event-name-edit"
-            aria-label="تعديل اسم التجربة"
-            title="تعديل اسم التجربة"
+            aria-label={t("customization.rename.edit")}
+            title={t("customization.rename.edit")}
             onClick={() => rename.start(title)}
           >
             <Pencil size={20} aria-hidden="true" />

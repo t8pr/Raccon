@@ -1,18 +1,29 @@
 import { Ban, Snowflake, Bomb, Dices } from "lucide-react";
 import DurationStepper from "../../../shared/ui/DurationStepper/DurationStepper";
+import { useTranslation } from "react-i18next";
 const trapOptions = [
-  { value: "none", label: "بدون فخ", description: "قطعة عادية", Icon: Ban },
+  {
+    value: "none",
+    label: "customization.traps.none",
+    description: "customization.traps.noneText",
+    Icon: Ban,
+  },
   {
     value: "freeze",
-    label: "تجميد",
-    description: "يوقف اللاعب عن المسح لمدة",
+    label: "customization.traps.freeze",
+    description: "customization.traps.freezeText",
     Icon: Snowflake,
   },
-  { value: "boom", label: "بووم", description: "يخصم نقطة واحدة", Icon: Bomb },
+  {
+    value: "boom",
+    label: "customization.traps.boom",
+    description: "customization.traps.boomText",
+    Icon: Bomb,
+  },
   {
     value: "choose",
-    label: "اختار فخ",
-    description: " أختار تجميد أو بووم أثناء الجولة",
+    label: "customization.traps.choose",
+    description: "customization.traps.chooseText",
     Icon: Dices,
   },
 ];
@@ -24,10 +35,11 @@ export default function TrapField({
   onFreezeSecondsChange,
   disabled = false,
 }) {
+  const { t } = useTranslation();
   return (
     <fieldset className="trap-field" disabled={disabled}>
       <legend>
-        الفخ <span>اختياري · فخ واحد لكل قطعة</span>
+        {t("customization.traps.title")} <span>{t("customization.traps.hint")}</span>
       </legend>
 
       <div className="trap-field__options">
@@ -50,10 +62,10 @@ export default function TrapField({
                     <Icon size={16} aria-hidden="true" />
                   </span>
 
-                  <strong>{option.label}</strong>
+                  <strong>{t(option.label)}</strong>
                 </span>
 
-                <small>{option.description}</small>
+                <small>{t(option.description)}</small>
               </span>
             </label>
           );
@@ -66,11 +78,10 @@ export default function TrapField({
             <div className="trap-field__duration-heading">
               <h3>
                 <Snowflake size={16} aria-hidden="true" />
-                مدة التجميد
+                {t("customization.traps.freezeDuration")}
               </h3>
               <p id="freeze-duration-help">
-                اللاعب اللي يمسح القطعة ما يقدر يمسح أي قطعة ثانية لين يخلص
-                الوقت.
+                {t("customization.traps.freezeHelp")}
               </p>
             </div>
 

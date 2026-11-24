@@ -1,0 +1,10 @@
+{
+  "untitled": "Untitled",
+  "customizeNamed": "Customize {{name}}",
+  "customize": "Customize",
+  "loginToView": "Log in to see your packages.",
+  "loading": "Loading your packages...",
+  "empty": "There are no packages linked to your account yet.",
+  "explore": "Explore packages",
+  "noMatch": "No packages match this filter."
+}

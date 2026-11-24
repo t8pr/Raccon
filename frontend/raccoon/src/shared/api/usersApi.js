@@ -6,7 +6,7 @@ export function getCurrentUser({ token, signal } = {}) {
   return authRequest(
     "/users/me",
     { method: "GET", token, signal },
-    "تعذر تحميل بيانات الحساب.",
+    "api.loadUserFailed",
   );
 }
 
@@ -15,6 +15,6 @@ export function updateProfile(changes) {
   return authRequest(
     "/users/me",
     { method: "PATCH", json: changes },
-    "تعذر تعديل بيانات الحساب.",
+    "api.updateUserFailed",
   );
 }

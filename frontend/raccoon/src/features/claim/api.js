@@ -10,7 +10,7 @@ export function previewPack(masterAuthHash, { signal } = {}) {
       method: "GET",
       signal,
     },
-    "تعذر تحميل معلومات الباكج.",
+    "api.loadPackFailed",
   );
 }
 
@@ -22,6 +22,6 @@ export function claimPack(masterAuthHash) {
   return authRequest(
     "/packs/claim",
     { method: "POST", json: body },
-    "تعذر ربط الباكج بحسابك.",
+    "api.claimPackFailed",
   );
 }

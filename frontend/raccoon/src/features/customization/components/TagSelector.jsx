@@ -1,6 +1,7 @@
 import ClassTag from "./ClassTag";
 import TagLegend from "./TagLegend";
 import { getTrapType } from "../utils/tagForm";
+import { useTranslation } from "react-i18next";
 
 /*
   قائمة القطع: شريط «القطع الجاهزة»، شبكة القطع، ودليل الألوان.
@@ -19,13 +20,14 @@ export default function TagSelector({
   onSelect,
   children,
 }) {
+  const { t } = useTranslation();
   return (
     <section className="Tag-Selector">
       <div className="tag-progress__label">
-        <span>القطع الجاهزة</span>
+        <span>{t("customization.readyPieces")}</span>
 
         <strong>
-          {configuredCount} من {tags.length}
+          {t("customization.readyCount", { done: configuredCount, total: tags.length })}
         </strong>
       </div>
 
@@ -33,7 +35,7 @@ export default function TagSelector({
         className="tag-progress"
         value={configuredCount}
         max={Math.max(tags.length, 1)}
-        aria-label="القطع الجاهزة"
+        aria-label={t("customization.readyPieces")}
       />
 
       <div className="class-tag-grid">

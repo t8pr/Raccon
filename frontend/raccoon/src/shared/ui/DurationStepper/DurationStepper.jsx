@@ -7,6 +7,7 @@ import {
   isValidFreezeSeconds,
 } from "../../utils/trapRules";
 import styles from "./DurationStepper.module.css";
+import { useTranslation } from "react-i18next";
 
 // عدّاد مدة التجميد: يختار المستخدم أي عدد ثوانٍ يبيه بالزرين أو بالكتابة.
 // مستخدم في مكانين: TrapField (المالك) و TrapPicker (اللاعب).
@@ -18,6 +19,7 @@ export default function DurationStepper({
   size = "md", // "md" لصفحة التخصيص · "lg" لشاشة اللاعب على الجوال
   describedBy,
 }) {
+  const { t } = useTranslation();
   const errorId = useId();
   const valid = isValidFreezeSeconds(value);
   const seconds = Number(value);
@@ -39,7 +41,7 @@ export default function DurationStepper({
           <button
             type="button"
             className={styles.button}
-            aria-label="تقليل مدة التجميد ثانية واحدة"
+            aria-label={t("common.freeze.decrease")}
             disabled={disabled || (valid && seconds <= FREEZE_MIN_SECONDS)}
             onClick={() => step(-1)}
           >
@@ -56,7 +58,7 @@ export default function DurationStepper({
             value={value ?? ""}
             disabled={disabled}
             onChange={(event) => onChange(event.target.value)}
-            aria-label="مدة التجميد بالثواني"
+            aria-label={t("common.freeze.inputLabel")}
             aria-invalid={!valid}
             aria-describedby={describedByIds || undefined}
           />
@@ -64,7 +66,7 @@ export default function DurationStepper({
           <button
             type="button"
             className={styles.button}
-            aria-label="زيادة مدة التجميد ثانية واحدة"
+            aria-label={t("common.freeze.increase")}
             disabled={disabled || (valid && seconds >= FREEZE_MAX_SECONDS)}
             onClick={() => step(1)}
           >
@@ -72,13 +74,15 @@ export default function DurationStepper({
           </button>
         </div>
 
-        <span className={styles.unit}>ثانية</span>
+        <span className={styles.unit}>{t("common.freeze.unit")}</span>
       </div>
 
       {!valid && (
         <p id={errorId} role="alert" className={styles.error}>
-          أدخل عددًا صحيحًا من {FREEZE_MIN_SECONDS} إلى {FREEZE_MAX_SECONDS}{" "}
-          ثانية.
+          {t("common.freeze.rangeError", {
+            min: FREEZE_MIN_SECONDS,
+            max: FREEZE_MAX_SECONDS,
+          })}
         </p>
       )}
     </div>

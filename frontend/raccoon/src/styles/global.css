@@ -117,9 +117,24 @@
   box-sizing: border-box;
 }
 
+/* اتجاه الصفحة حسب اللغة (src/i18n يضبط <html dir>).
+   --dir للعناصر اللي داخل حاوية مضبوطة ltr عشان التخطيط، وترجع لاتجاه اللغة. */
+html[dir="rtl"] {
+  --dir: rtl;
+}
+
+html[dir="ltr"] {
+  --dir: ltr;
+}
+
+/* الأيقونات الاتجاهية (أسهم وشيفرون) مرسومة لـ RTL؛ تنقلب في الإنجليزي */
+html[dir="ltr"] :is(.lucide-chevron-left, .lucide-chevron-right, .lucide-arrow-left, .lucide-arrow-right) {
+  transform: scaleX(-1);
+}
+
 html {
   font-size: 100%;
-  direction: rtl;
+  /* الاتجاه يجي من <html dir> ويتغيّر حسب اللغة (src/i18n) */
   scroll-behavior: smooth;
 }
 
