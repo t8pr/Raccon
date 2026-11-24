@@ -1,4 +1,5 @@
 import { Snowflake, Bomb, Dices } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const trapIcons = {
   freeze: Snowflake,
@@ -16,6 +17,7 @@ export default function ClassTag({
   disabled = false,
   onClick,
 }) {
+  const { t } = useTranslation();
   const TrapIcon = trapIcons[trapType];
 
   const classes = [
@@ -34,9 +36,17 @@ export default function ClassTag({
       disabled={disabled}
       onClick={onClick}
       aria-pressed={selected}
-      aria-label={`القطعة ${number}${
-        TrapIcon ? "، فيها فخ" : ""
-      }، ${staged ? "معدّلة ولم تُحفظ" : configured ? "جاهزة" : "غير محفوظة"}`}
+      aria-label={[
+        t("customization.pieceNumber", { number }),
+        TrapIcon && t("customization.tag.hasTrap"),
+        staged
+          ? t("customization.tag.stagedLong")
+          : configured
+            ? t("customization.legend.ready")
+            : t("customization.legend.unsaved"),
+      ]
+        .filter(Boolean)
+        .join(t("common.listSeparator"))}
     >
       <span className="class-tag__circle">
         {String(number).padStart(2, "0")}
@@ -49,7 +59,11 @@ export default function ClassTag({
       </span>
 
       <span className="class-tag__label">
-        {editing ? "قيد التعديل" : staged ? "معدّلة" : ""}
+        {editing
+          ? t("customization.tag.editing")
+          : staged
+            ? t("customization.tag.staged")
+            : ""}
       </span>
     </button>
   );

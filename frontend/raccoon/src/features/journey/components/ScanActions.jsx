@@ -1,22 +1,26 @@
-import Button from "../../../shared/ui/Button";
+import Button from "../../../shared/ui/Button/Button";
+import { useTranslation } from "react-i18next";
 
 // أزرار أسفل شاشات المسح. كلها ترجع للرئيسية ما عدا «شوف المتصدرين».
 
 export function HomeAction({ onHome }) {
-  return <Button onClick={onHome}>رجوع للرئيسية</Button>;
+  const { t } = useTranslation();
+  return <Button onClick={onHome}>{t("journey.home")}</Button>;
 }
 
-export function ContinueAction({ onHome, label = "كمّل البحث" }) {
-  return <Button onClick={onHome}>{label}</Button>;
+export function ContinueAction({ onHome, label }) {
+  const { t } = useTranslation();
+  return <Button onClick={onHome}>{label ?? t("journey.keepSearching")}</Button>;
 }
 
 // للجولة المنتهية: المتصدرون أولًا، والرئيسية ثانيًا
 export function BoardAndHomeActions({ onBoard, onHome }) {
+  const { t } = useTranslation();
   return (
     <>
-      <Button onClick={onBoard}>شوف المتصدرين</Button>
+      <Button onClick={onBoard}>{t("journey.seeBoard")}</Button>
       <Button variant="outline" onClick={onHome}>
-        ارجع للرئيسية
+        {t("journey.backHome")}
       </Button>
     </>
   );

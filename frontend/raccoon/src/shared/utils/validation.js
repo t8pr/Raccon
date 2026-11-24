@@ -1,51 +1,53 @@
 import { z } from "zod";
+import i18n from "../../i18n";
+// الرسائل هنا مفاتيح ترجمة؛ validateForm يترجمها حسب اللغة الحالية
 // القواعد المشتركة
 
 const nameSchema = z
   .string()
   .trim()
-  .min(1, "أدخل اسمك")
-  .max(30, "الأسم يجب ألا يتجاوز 30 حرفا");
+  .min(1, "validation.nameRequired")
+  .max(30, "validation.nameMax");
 
 const usernameSchema = z
   .string()
   .trim()
-  .min(1, "اختر اسم مستخدم.")
-  .min(3, "اسم المستخدم يجب أن يحتوي على 3 أحرف على الأقل.")
-  .max(20, "اسم المستخدم يجب ألا يتجاوز 20 حرفا")
-  .regex(/^[a-z0-9_]+$/, "استخدم حروفًا إنجليزية صغيرة أو أرقامًا أو _ فقط.");
+  .min(1, "validation.usernameRequired")
+  .min(3, "validation.usernameMin")
+  .max(20, "validation.usernameMax")
+  .regex(/^[a-z0-9_]+$/, "validation.usernameFormat");
 
 // نفس صيغة التحقق الموجودة عندك، حتى لا نغيّر
 // أنواع عناوين البريد المقبولة بإضافة Zod.
 const emailSchema = z
   .string()
   .trim()
-  .min(1, "أدخل بريدك الإلكتروني.")
-  .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "أدخل بريدًا إلكترونيًا صحيحًا.");
+  .min(1, "validation.emailRequired")
+  .regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, "validation.emailInvalid");
 
 const phoneSchema = z
   .string()
   .trim()
-  .min(1, "أدخل رقم جوالك.")
-  .regex(/^5\d{8}$/, "أدخل رقم جوال سعودي صحيحًا من 9 أرقام يبدأ بـ 5.");
+  .min(1, "validation.phoneRequired")
+  .regex(/^5\d{8}$/, "validation.phoneInvalid");
 
 // لا نستخدم trim مع كلمات المرور.
 const newPasswordSchema = z
   .string()
-  .min(1, "أدخل كلمة المرور.")
+  .min(1, "validation.passwordRequired")
   .refine(
     (value) => value.length >= 8,
-    "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل.",
+    "validation.passwordMin",
   )
   .refine(
     (value) => new TextEncoder().encode(value).length <= 72,
-    "كلمة المرور طويلة جدًا. الحد الأقصى 72 بايت.",
+    "validation.passwordMaxBytes",
   );
 
 const avatarSchema = z.custom(
   (value) => Number.isInteger(value) && [1, 2, 3, 4].includes(value),
   {
-    message: "اختر صورة رمزية للمتابعة.",
+    message: "validation.avatarRequired",
   },
 );
 
@@ -55,10 +57,10 @@ const registerPasswordsSchema = z
   .object({
     password: newPasswordSchema,
 
-    confirmPassword: z.string().min(1, "أكد كلمة المرور."),
+    confirmPassword: z.string().min(1, "validation.confirmPasswordRequired"),
   })
   .refine((values) => values.password === values.confirmPassword, {
-    message: "كلمتا المرور غير متطابقتين.",
+    message: "validation.passwordsMismatch",
     path: ["confirmPassword"],
   });
 
@@ -88,7 +90,7 @@ export const registerSchema = z
 const identifierSchema = z
   .string()
   .trim()
-  .min(1, "أدخل اسم المستخدم أو البريد الإلكتروني.")
+  .min(1, "validation.identifierRequired")
   .superRefine((value, context) => {
     if (!value) return;
 
@@ -108,21 +110,21 @@ export const loginSchema = z.object({
   identifier: identifierSchema,
 
   // الدخول لا يفرض شروط إنشاء كلمة مرور جديدة.
-  password: z.string().min(8, "أدخل 8 أحرف أو اكثر"),
+  password: z.string().min(8, "validation.loginPasswordMin"),
 });
 
 // تعديل البروفايل
 
 const changePasswordSchema = z
   .object({
-    old_password: z.string().min(1, "أدخل كلمة المرور الحالية."),
+    old_password: z.string().min(1, "validation.oldPasswordRequired"),
 
     new_password: newPasswordSchema,
 
-    confirmation: z.string().min(1, "أكد كلمة المرور الجديدة."),
+    confirmation: z.string().min(1, "validation.confirmNewPasswordRequired"),
   })
   .refine((values) => values.new_password === values.confirmation, {
-    message: "تأكيد كلمة المرور غير مطابق.",
+    message: "validation.confirmationMismatch",
     path: ["confirmation"],
   })
   .transform((values) => ({
@@ -155,10 +157,10 @@ export function getProfileSchema(kind, username) {
   if (kind === "delete") {
     return z
       .object({
-        confirmation: z.string().min(1, "اكتب اسم المستخدم لتأكيد الحذف."),
+        confirmation: z.string().min(1, "validation.deleteConfirmRequired"),
       })
       .refine((values) => values.confirmation === username, {
-        message: "اسم المستخدم غير مطابق.",
+        message: "validation.deleteConfirmMismatch",
         path: ["confirmation"],
       });
   }
@@ -186,7 +188,7 @@ export function validateForm(schema, values) {
 
     // نعرض أول رسالة لكل حقل.
     if (!errors[field]) {
-      errors[field] = issue.message;
+      errors[field] = i18n.t(issue.message);
     }
   }
 
@@ -200,8 +202,8 @@ export function validateForm(schema, values) {
 // رمز الاستلام الحالي يولّده الباك بصيغة URL-safe
 export const claimHashSchema = z
   .string()
-  .min(1, "رابط الاستلام غير مكتمل.")
-  .regex(/^[A-Za-z0-9_-]+$/, "صيغة رابط الاستلام غير صحيحة.");
+  .min(1, "validation.claimHashRequired")
+  .regex(/^[A-Za-z0-9_-]+$/, "validation.claimHashInvalid");
 
 export const claimRequestSchema = z.object({
   master_auth_hash: claimHashSchema,

@@ -1,0 +1,36 @@
+{
+  "badgeMine": "Linked to your account",
+  "badgeOther": "Linked to another account",
+  "myPackages": "My packages",
+  "prepareNow": "Set it up now",
+  "customizationLinkFailed": "The package is linked to your account, but we couldn't load the customization link.",
+  "eventNotReady": "The customization event hasn't appeared yet. Refresh the data.",
+  "multipleEvents": "There's more than one event for this package. Pick it from My packages.",
+  "linkToMe": "Link it to my account",
+  "sessionExpired": "Your session has expired. Log in to finish linking.",
+  "linkFailed": "Couldn't link the package. Please try again.",
+  "invalidLinkTitle": "Invalid claim link",
+  "invalidLinkText": "Make sure you opened the full link from your email.",
+  "title": "Claim your package",
+  "checking": "Checking the package and your account...",
+  "restoreErrorTitle": "Couldn't verify your account",
+  "previewErrorTitle": "Couldn't load the package",
+  "notFound": "Package not found. Check the claim link.",
+  "missingPack": "Package details aren't available.",
+  "heading": {
+    "otherTitle": "This package is linked to another user",
+    "otherText": "Each package links to one account. If you claimed it with your other account, log in with that account.",
+    "claimedTitle": "Congrats, the package is now yours!",
+    "mineTitle": "This package is linked to your account",
+    "mineText": "You can set it up now or come back to it later from My packages.",
+    "readyTitle": "Your package is ready — let's link it to you",
+    "readyText": "You're logged in as {{name}}. Tap “Link it to my account” to add it to your packages.",
+    "guestText": "Create an account or log in, and we'll link the package to your account."
+  },
+  "info": {
+    "id": "Package ID",
+    "mode": "Mode",
+    "nfcPieces": "NFC pieces"
+  },
+  "note": "The claim link ties the package to a single account."
+}

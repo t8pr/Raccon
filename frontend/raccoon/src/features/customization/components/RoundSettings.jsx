@@ -1,4 +1,5 @@
-import Button from "../../../shared/ui/Button";
+import Button from "../../../shared/ui/Button/Button";
+import { useTranslation } from "react-i18next";
 
 // إعدادات الجولة: بدء/إنهاء الجولة، وطلب تعديل الباقة.
 // عرض فقط: القرارات (canChangeRoundStatus, canRequestEdit) تُحسب في CustomizationPage.
@@ -12,9 +13,10 @@ export default function RoundSettings({
   onToggleRound,
   onRequestEdit,
 }) {
+  const { t } = useTranslation();
   return (
     <section className="Round-settings">
-      <h2>إعدادات الجولة</h2>
+      <h2>{t("customization.round.title")}</h2>
 
       <div className="Round-settings__actions">
         <Button
@@ -24,17 +26,17 @@ export default function RoundSettings({
           variant={isLive ? "outline" : "primary"}
           className={isLive ? "round-stop" : ""}
         >
-          {isLive ? "إنهاء الجولة" : "ابدأ الجولة"}
+          {isLive ? t("customization.round.end") : t("customization.round.start")}
         </Button>
 
         <Button onClick={onRequestEdit} disabled={!canRequestEdit}>
-          تعديل الباقة
+          {t("customization.round.editPackage")}
         </Button>
       </div>
 
       {!isLive && !allTagsReady && (
         <p className="customization-note">
-          احفظ جميع القطع لتتمكن من بدء الجولة، حتى القطع الفارغة
+          {t("customization.round.saveAllFirst")}
         </p>
       )}
 

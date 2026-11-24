@@ -3,6 +3,7 @@
 //   apiRequest  → طلب عام بلا توكن (تسجيل، دخول، معاينة باكج)
 //   authRequest → طلب يحتاج دخول؛ يضيف التوكن تلقائيًا من tokenStore
 import { getToken } from "../auth/tokenStore";
+import i18n from "../../i18n";
 
 const API_URL = process.env.REACT_APP_API_URL?.replace(/\/+$/, "");
 
@@ -14,10 +15,10 @@ const API_URL = process.env.REACT_APP_API_URL?.replace(/\/+$/, "");
 export async function apiRequest(
   path,
   { json, detailAsMessage = false, headers, ...options } = {},
-  errorMessage = "تعذر تنفيذ الطلب.",
+  errorMessage = "api.requestFailed",
 ) {
   if (!API_URL) {
-    throw new Error("عنوان الباك إند غير مضبوط. تحقق من REACT_APP_API_URL.");
+    throw new Error(i18n.t("api.missingApiUrl"));
   }
 
   const request = { ...options, headers: { ...headers } };
@@ -33,7 +34,8 @@ export async function apiRequest(
 
   if (!response.ok) {
     const useDetail = detailAsMessage && typeof data.detail === "string";
-    const error = new Error(useDetail ? data.detail : errorMessage);
+    // errorMessage مفتاح ترجمة (api.*)؛ نترجمه هنا حسب اللغة الحالية
+    const error = new Error(useDetail ? data.detail : i18n.t(errorMessage));
     // الصفحات تعتمد على status لتمييز نوع الخطأ.
     error.status = response.status;
     // التسجيل وشاشات المسح تقرأ detail من الباك إند.

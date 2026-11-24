@@ -137,14 +137,14 @@
 
 .profile-dialog h2 {
   margin: 0 0 18px;
-  padding-left: 28px;
+  padding-inline-end: 28px;
   font: 900 26px/1.5 var(--font-display);
 }
 
 .profile-dialog__close {
   position: absolute;
   top: 29px;
-  left: 24px;
+  inset-inline-end: 24px;
   width: 32px;
   height: 32px;
   display: grid;

@@ -1,25 +1,27 @@
 import { Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "./AuthContext";
+import { useTranslation } from "react-i18next";
 
 export default function ProtectedRoute({ children }) {
+  const { t } = useTranslation();
   const { accessToken, user, isRestoring, restoreError } = useAuth();
   const location = useLocation();
   const [searchParams] = useSearchParams();
 
   if (isRestoring) {
     return (
-      <p dir="rtl" role="status">
-        جاري التحميل...
+      <p role="status">
+        {t("common.loading")}
       </p>
     );
   }
 
   if (restoreError) {
     return (
-      <div dir="rtl" role="alert">
+      <div role="alert">
         <p>{restoreError}</p>
         <button type="button" onClick={() => window.location.reload()}>
-          إعادة المحاولة
+          {t("common.retry")}
         </button>
       </div>
     );

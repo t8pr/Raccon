@@ -1,20 +1,22 @@
 import { useState } from "react";
 
-import AuthLayout from "./components/AuthLayout";
-import AuthPromo from "./components/AuthPromo";
+import AuthLayout from "./components/AuthLayout/AuthLayout";
+import AuthPromo from "./components/AuthPromo/AuthPromo";
 import HeroScanAnimation from "./components/HeroScanAnimation";
-import FoundHero from "./components/FoundHero";
-import RegisterForm from "./components/RegisterForm";
+import FoundHero from "./components/FoundHero/FoundHero";
+import RegisterForm from "./components/RegisterForm/RegisterForm";
 
 import { registerUser, loginUser, googleLogin } from "../../shared/api/authApi";
 import { getCurrentUser } from "../../shared/api/usersApi";
 import { useAuth } from "../../shared/auth/AuthContext";
-import RegisterWelcome from "./components/RegisterWelcome";
+import RegisterWelcome from "./components/RegisterWelcome/RegisterWelcome";
 import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { takeClaimReturn } from "../../shared/utils/claimReturn";
 import "./auth.css";
+import { useTranslation } from "react-i18next";
 
 export default function RegisterPage() {
+  const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false); // is the submitting is load
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false); // busy request came from Google
 
@@ -100,10 +102,10 @@ export default function RegisterPage() {
         message: error.message,
       });
       if (error.status === 400) {
-        setServerError("اسم المستخدم أو البريد الإلكتروني مستخدم مسبقًا");
+        setServerError(t("auth.register.alreadyExists"));
       } else if (error.status === 422 && typeof error.detail === "string") {
         // the backend sends a plain string when the email can't be verified
-        setFieldErrors({ email: "تعذر التحقق من البريد الإلكتروني." });
+        setFieldErrors({ email: t("auth.register.emailUnverifiable") });
       } else if (error.status === 422) {
         const errors = {};
 
@@ -121,7 +123,7 @@ export default function RegisterPage() {
                 "avatar_id",
               ].includes(field)
             ) {
-              errors[field] = "تحقق من قيمة هذا الحقل";
+              errors[field] = t("auth.register.checkField");
             }
           }
         }
@@ -129,10 +131,10 @@ export default function RegisterPage() {
         setFieldErrors(errors);
 
         if (Object.keys(errors).length === 0) {
-          setServerError("يرجى مراجعة البيانات المدخلة");
+          setServerError(t("auth.register.reviewInput"));
         }
       } else {
-        setServerError("تعذر الاتصال بالخادم أو إكمال التسجيل. حاول مرة أخرى");
+        setServerError(t("auth.register.failed"));
       }
     } finally {
       setIsSubmitting(false);
@@ -177,8 +179,8 @@ export default function RegisterPage() {
     } catch (error) {
       setServerError(
         error?.status === 400
-          ? "تعذر التحقق من حساب Google. حاول مرة ثانية."
-          : "تعذر التسجيل باستخدام Google. حاول مرة ثانية.",
+          ? t("auth.google.verifyFailed")
+          : t("auth.google.registerFailed"),
       );
     } finally {
       setIsSubmitting(false);
@@ -213,11 +215,11 @@ export default function RegisterPage() {
         <AuthPromo
           // came from scanning a tag → حصلتها hero, came from the landing → animation
           scene={redirectTag ? <FoundHero /> : <HeroScanAnimation />}
-          mobileTitle={redirectTag ? "حصلتها!" : "أنشئ حسابك"}
+          mobileTitle={redirectTag ? t("auth.found.title") : t("auth.register.title")}
           mobileSubTitle={
             redirectTag
-              ? "أنشئ حساب جديد عشان تنحسب لك"
-              : "أنشئ حسابك واصنع أول تجربة"
+              ? t("auth.register.mobileSubtitleFound")
+              : t("auth.register.mobileSubtitle")
           }
         />
       }
@@ -232,7 +234,7 @@ export default function RegisterPage() {
         onEdit={handleEdit}
         onGoogle={handleGoogle}
         onGoogleError={() =>
-          setServerError("ما اكتمل التسجيل باستخدام Google. حاول مرة ثانية.")
+          setServerError(t("auth.google.registerIncomplete"))
         }
       />
     </AuthLayout>

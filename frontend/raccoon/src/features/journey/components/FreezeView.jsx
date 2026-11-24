@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import Button from "../../../shared/ui/Button";
-import ScanLayout from "./ScanLayout";
-import InfoCard, { ProgressBar } from "./InfoCard";
-import { FreezeBadge, UnlockBadge } from "./ScanBadges";
+import Button from "../../../shared/ui/Button/Button";
+import ScanLayout from "./ScanLayout/ScanLayout";
+import InfoCard, { ProgressBar } from "./InfoCard/InfoCard";
+import { FreezeBadge, UnlockBadge } from "./ScanBadges/ScanBadges";
+import { useTranslation } from "react-i18next";
 
 function secondsUntil(endTime) {
   return Math.max(0, Math.ceil((endTime - Date.now()) / 1000));
@@ -24,6 +25,7 @@ export default function FreezeView({
   freezeSeconds,
   onContinue,
 }) {
+  const { t } = useTranslation();
   const [endTime] = useState(() => {
     if (frozenUntil) return new Date(frozenUntil).getTime();
     if (typeof freezeSeconds === "number") {
@@ -52,14 +54,17 @@ export default function FreezeView({
     return (
       <ScanLayout
         {...shell}
-        title="انفكّ التجميد!"
+        title={t("journey.freeze.unfrozenTitle")}
         badge={<UnlockBadge />}
-        pill="تقدر تمسح الحين"
+        pill={t("journey.freeze.unfrozenPill")}
         score={currentScore}
         remaining={remainingTags}
-        actions={<Button onClick={onContinue}>كمّل البحث</Button>}
+        actions={<Button onClick={onContinue}>{t("journey.keepSearching")}</Button>}
       >
-        <InfoCard title="رجعت للعب!" text="أي قطعة تمسحها من الحين تنحسب لك." />
+        <InfoCard
+          title={t("journey.freeze.backTitle")}
+          text={t("journey.freeze.backText")}
+        />
       </ScanLayout>
     );
   }
@@ -67,26 +72,26 @@ export default function FreezeView({
   return (
     <ScanLayout
       {...shell}
-      title="تجمّدت!"
+      title={t("journey.freeze.frozenTitle")}
       badge={<FreezeBadge seconds={remaining} />}
-      pill="ما تقدر تمسح لين يخلص العدّاد"
+      pill={t("journey.freeze.frozenPill")}
       score={currentScore}
       remaining={remainingTags}
       actions={
         <Button variant="accent" disabled>
-          كمّل اللعب بعد <bdi>{formatClock(remaining)}</bdi>
+          {t("journey.freeze.continueIn")} <bdi>{formatClock(remaining)}</bdi>
         </Button>
       }
     >
       <InfoCard
-        label="العدّاد"
-        title={`باقي ${remaining} ثانية من ${total}`}
-        text="أي قطعة تمسحها الحين ما تنحسب، ارجع لها بعد العدّاد."
+        label={t("journey.freeze.timerLabel")}
+        title={t("journey.freeze.timerTitle", { remaining, total })}
+        text={t("journey.freeze.timerText")}
       >
         <ProgressBar
           value={Math.max(0, total - remaining)}
           max={total}
-          label="الوقت المنقضي من التجميد"
+          label={t("journey.freeze.progressLabel")}
         />
       </InfoCard>
     </ScanLayout>

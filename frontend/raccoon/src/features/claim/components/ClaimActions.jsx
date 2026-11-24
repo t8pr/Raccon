@@ -1,16 +1,20 @@
-import Button from "../../../shared/ui/Button";
-import InlineMessage from "../../../shared/ui/InlineMessage";
+import Button from "../../../shared/ui/Button/Button";
+import InlineMessage from "../../../shared/ui/InlineMessage/InlineMessage";
+import { useTranslation } from "react-i18next";
 
 // أزرار البطاقة حسب ملكية الباكج. عرض فقط؛ claim = ما يرجّعه useClaim.
 
 // زائر: يدخل أو يسجّل أولًا
 export function GuestActions({ claim }) {
+  const { t } = useTranslation();
   return (
     <div className="claim-card__actions">
-      <Button onClick={() => claim.goToAuth("/register")}>إنشاء حساب</Button>
+      <Button onClick={() => claim.goToAuth("/register")}>
+        {t("authNav.register")}
+      </Button>
 
       <Button variant="outline" onClick={() => claim.goToAuth("/login")}>
-        تسجيل الدخول
+        {t("authNav.login")}
       </Button>
     </div>
   );
@@ -18,10 +22,11 @@ export function GuestActions({ claim }) {
 
 // الباكج لمستخدم آخر
 export function OwnedByAnotherActions({ claim }) {
+  const { t } = useTranslation();
   return (
     <div className="claim-card__actions">
       <Button variant="outline" onClick={() => claim.navigate("/packages")}>
-        باقاتي
+        {t("claim.myPackages")}
       </Button>
     </div>
   );
@@ -29,6 +34,7 @@ export function OwnedByAnotherActions({ claim }) {
 
 // الباكج للمستخدم: يجهّزه الحين أو يرجع له من باقاتي
 export function OwnedByMeActions({ claim }) {
+  const { t } = useTranslation();
   const { eventsQuery, matchingEvents, targetEvent } = claim;
 
   return (
@@ -39,11 +45,11 @@ export function OwnedByMeActions({ claim }) {
           loading={eventsQuery.isFetching}
           disabled={!targetEvent}
         >
-          جهّزها الحين
+          {t("claim.prepareNow")}
         </Button>
 
         <Button variant="outline" onClick={claim.openPackages}>
-          باقاتي
+          {t("claim.myPackages")}
         </Button>
       </div>
 
@@ -51,7 +57,7 @@ export function OwnedByMeActions({ claim }) {
         <>
           <InlineMessage
             type="error"
-            message="الباكج مرتبط بحسابك، لكن تعذر تحميل رابط التخصيص."
+            message={t("claim.customizationLinkFailed")}
           />
 
           <Button
@@ -59,7 +65,7 @@ export function OwnedByMeActions({ claim }) {
             loading={eventsQuery.isFetching}
             onClick={() => eventsQuery.refetch()}
           >
-            إعادة المحاولة
+            {t("common.retry")}
           </Button>
         </>
       )}
@@ -70,8 +76,8 @@ export function OwnedByMeActions({ claim }) {
             type="warning"
             message={
               matchingEvents.length === 0
-                ? "حدث التخصيص لم يظهر بعد. حدّث البيانات."
-                : "يوجد أكثر من حدث لهذا الباكج. اختره من صفحة باقاتي."
+                ? t("claim.eventNotReady")
+                : t("claim.multipleEvents")
             }
           />
 
@@ -81,7 +87,7 @@ export function OwnedByMeActions({ claim }) {
               loading={eventsQuery.isFetching}
               onClick={() => eventsQuery.refetch()}
             >
-              تحديث
+              {t("common.refresh")}
             </Button>
           )}
         </>
@@ -92,6 +98,7 @@ export function OwnedByMeActions({ claim }) {
 
 // الباكج بلا مالك والمستخدم داخل: «اربطه بحسابي»
 export function ClaimButton({ claim }) {
+  const { t } = useTranslation();
   const { claimMutation, previewQuery } = claim;
   const sessionExpired = claimMutation.error?.status === 401;
 
@@ -103,7 +110,7 @@ export function ClaimButton({ claim }) {
         disabled={previewQuery.isFetching}
         onClick={claim.claim}
       >
-        اربطه بحسابي
+        {t("claim.linkToMe")}
       </Button>
 
       {claimMutation.isError && (
@@ -112,14 +119,14 @@ export function ClaimButton({ claim }) {
             type="error"
             message={
               sessionExpired
-                ? "انتهت جلسة الدخول. سجّل دخولك لإكمال الربط."
-                : "تعذر ربط الباكج. حاول مرة أخرى."
+                ? t("claim.sessionExpired")
+                : t("claim.linkFailed")
             }
           />
 
           {sessionExpired && (
             <Button variant="outline" onClick={() => claim.goToAuth("/login")}>
-              تسجيل الدخول
+              {t("authNav.login")}
             </Button>
           )}
         </>

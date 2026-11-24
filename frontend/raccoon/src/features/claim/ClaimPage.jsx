@@ -1,6 +1,6 @@
 import { useParams } from "react-router-dom";
 
-import Chip from "../../shared/ui/Chip";
+import Chip from "../../shared/ui/Chip/Chip";
 import Mark from "../../assets/Mark.png";
 import { useAuth } from "../../shared/auth/AuthContext";
 
@@ -14,6 +14,7 @@ import {
   RestoreErrorState,
 } from "./components/ClaimStates";
 import "./ClaimPage.css";
+import { useTranslation } from "react-i18next";
 
 /*
   صفحة استلام الباكج: المستخدم يفتح رابط الإيميل ويربط الباكج بحسابه.
@@ -34,6 +35,7 @@ export default function ClaimPage() {
 }
 
 function ClaimContent({ masterAuthHash, auth }) {
+  const { t } = useTranslation();
   const claim = useClaim(masterAuthHash, auth);
   const { validHash, isRestoring, restoreError, previewQuery, pack } = claim;
 
@@ -68,9 +70,9 @@ function ClaimContent({ masterAuthHash, auth }) {
     (claim.ownedByMe || claim.ownedByAnother);
 
   return (
-    <div className="claim-view" dir="rtl">
+    <div className="claim-view">
       <header className="claim-nav">
-        <img src={Mark} alt="راكون" />
+        <img src={Mark} alt={t("common.brand")} />
       </header>
 
       <section className="claim-page" aria-labelledby="claim-title">
@@ -88,7 +90,9 @@ function ClaimContent({ masterAuthHash, auth }) {
             {showBadge && (
               <div className="claim-card__badge">
                 <Chip tone={claim.ownedByMe ? "mint" : "error"}>
-                  {claim.ownedByMe ? "تم ربطه بحسابك" : "مربوط بحساب آخر"}
+                  {claim.ownedByMe
+                    ? t("claim.badgeMine")
+                    : t("claim.badgeOther")}
                 </Chip>
               </div>
             )}

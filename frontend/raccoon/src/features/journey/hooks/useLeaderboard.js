@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../../shared/auth/AuthContext";
 import { getLeaderboard } from "../api";
+import i18n from "../../../i18n";
 
 // المتصدرون لجولة واحدة. refreshKey: أي قيمة تتغيّر تعيد التحميل (نتيجة المسح هنا).
 export function useLeaderboard(eventId, refreshKey) {
@@ -28,7 +29,7 @@ export function useLeaderboard(eventId, refreshKey) {
         }
       } catch {
         if (active) {
-          setError("تعذر تحميل المتصدرين.");
+          setError(i18n.t("journey.board.loadFailed"));
         }
       } finally {
         if (active) {

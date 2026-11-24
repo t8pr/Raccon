@@ -1,0 +1,138 @@
+.login-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;
+  direction: var(--dir, rtl);
+}
+
+.login-form__header {
+  margin-bottom: 10px;
+}
+
+.login-form__title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.login-form__subtitle {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.login-form__error {
+  min-height: 48px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.login-form__error .inline-message {
+  min-height: 52px;
+  padding: 12px 14px;
+  font-size: 15px;
+}
+
+.login-form__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.login-form__forgot {
+  margin-top: 0px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.login-form__submit {
+  margin-top: 14px;
+}
+
+.login-form__footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  text-align: center;
+}
+
+.login-form__footer p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.login-form__footer a {
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+@media (max-width: 767px) {
+  .login-form {
+      width: 100%;
+      max-width: none;
+  }
+
+  .login-form__header {
+      display: none;
+  }
+
+  .login-form__fields {
+      gap: 6px;
+  }
+
+  .login-form__forgot {
+      margin-top: 10px;
+  }
+
+  .login-form__submit {
+      margin-top: 12px;
+  }
+
+  .login-form__footer {
+      margin-top: 12px;
+      padding-top: 0;
+      border: none;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 800px) {
+  .login-form__header {
+      margin-bottom: 6px;
+  }
+
+  .login-form__error {
+      min-height: 40px;
+  }
+}
+
+/* "Forgot password?" link on the login form */
+.login-form__forgot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px; /* touch target */
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+.login-form__forgot a:hover {
+  text-decoration: underline;
+}
+
+.login-form__forgot a:focus-visible,
+.auth-status__link:focus-visible {
+  outline: none;
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}

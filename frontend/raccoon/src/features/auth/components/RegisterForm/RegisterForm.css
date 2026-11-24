@@ -1,0 +1,196 @@
+.register-form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 440px;
+  direction: var(--dir, rtl);
+}
+
+.register-form__header {
+  margin-bottom: 10px;
+}
+
+.register-form__title {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1.15;
+  color: var(--ink);
+}
+
+.register-form__signin {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.register-form__signin a {
+  font-weight: 700;
+  color: var(--accent-text);
+}
+
+.register-form__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 16px;
+  row-gap: 0px;
+}
+
+.register-form__field-full {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.register-form__submit {
+  margin-top: 6px;
+}
+
+.register-form__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 8px 0 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.register-form__footer p {
+  margin: 0;
+}
+
+.register-form__google {
+  margin-top: 8px;
+}
+
+.register-form__google .ui-button {
+  min-height: 44px;
+  background: var(--surface);
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.register-form__google .ui-button > span:not(.ui-button__spinner) {
+  display: inline-flex;
+  flex-direction: row;
+  direction: var(--dir, rtl);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.register-form__google .ui-button:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.register-form__google-logo {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.register-form__google-logo[hidden] {
+  display: none;
+}
+
+.register-form__feedback {
+  min-height: 10px;
+  display: flex;
+  align-items: center;
+}
+
+.register-form__feedback .inline-message {
+  min-height: 36px;
+  padding: 6px 10px;
+}
+
+@media (max-width: 767px) {
+  .register-form {
+      width: 100%;
+      max-width: none;
+  }
+
+  .register-form__header {
+      display: none;
+  }
+
+  .register-form__fields {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 10px;
+      row-gap: 6px;
+  }
+
+  .register-form__feedback {
+      min-height: 36px;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 900px) {
+  .register-form__title {
+      font-size: 38px;
+  }
+
+  .register-form__header {
+      margin-bottom: 6px;
+  }
+
+  .register-form__fields {
+      row-gap: 6px;
+  }
+}
+
+@media (min-width: 768px) and (max-height: 800px) {
+  .register-form__title {
+      font-size: 32px;
+  }
+
+  .register-form__header {
+      margin-bottom: 0;
+  }
+
+  .register-form__fields {
+      row-gap: 4px;
+  }
+
+  .register-form__feedback {
+      min-height: 8px;
+  }
+
+  .register-form__submit {
+      margin-top: 4px;
+  }
+
+  .register-form__google {
+      margin-top: 6px;
+  }
+
+  .register-form__submit .ui-button,
+    .register-form__google .ui-button {
+      min-height: 40px;
+  }
+
+  .register-form__footer {
+      gap: 2px;
+      font-size: 11px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .register-form__submit {
+      margin-bottom: 10px;
+  }
+
+  .register-form__google {
+      margin-top: 0;
+  }
+}

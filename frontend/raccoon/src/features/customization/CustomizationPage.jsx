@@ -2,14 +2,14 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import "./CustomizationPage.css";
 
-import AppNavbar from "../../shared/layout/AppNavbar";
-import Button from "../../shared/ui/Button";
+import AppNavbar from "../../shared/layout/AppNavbar/AppNavbar";
+import Button from "../../shared/ui/Button/Button";
 import { useAuth } from "../../shared/auth/AuthContext";
 
 import TagEditor from "./components/TagEditor";
 import TagSelector from "./components/TagSelector";
 import RoundSettings from "./components/RoundSettings";
-import CustomizationConfirm from "./components/CustomizationConfirm";
+import CustomizationConfirm from "./components/CustomizationConfirm/CustomizationConfirm";
 import EventNameEditor from "./components/EventNameEditor";
 
 import { useEventDetails } from "./hooks/useEventDetails";
@@ -19,6 +19,7 @@ import { useStagedEdits } from "./hooks/useStagedEdits";
 import { useRoundStatus } from "./hooks/useRoundStatus";
 import { useEventRename } from "./hooks/useEventRename";
 import { getPermissions } from "./utils/permissions";
+import { useTranslation } from "react-i18next";
 
 /*
   صفحة تخصيص الجولة: تختار قطعة، تكتب تلميحها أو تجعلها فخًا، تحفظ، ثم تبدأ الجولة.
@@ -38,6 +39,7 @@ export default function CustomizationPage() {
   const { accessToken } = useAuth();
 
   const eventQuery = useEventDetails(eventId);
+  const { t } = useTranslation();
   const event = eventQuery.data;
   const supportsTraps = event?.mode === "open";
 
@@ -63,24 +65,24 @@ export default function CustomizationPage() {
   let content;
 
   if (!eventId) {
-    content = <p>اختر جولة من صفحة باقاتي.</p>;
+    content = <p>{t("customization.pickRound")}</p>;
   } else if (!accessToken) {
-    content = <p>يرجى تسجيل الدخول.</p>;
+    content = <p>{t("customization.pleaseLogin")}</p>;
   } else if (eventQuery.isPending) {
-    content = <p role="status">جاري تحميل الباقة...</p>;
+    content = <p role="status">{t("customization.loading")}</p>;
   } else if (eventQuery.isError) {
     content = (
       <div role="alert">
         <p>{eventQuery.error.message}</p>
 
-        <Button onClick={() => eventQuery.refetch()}>حاول مرة أخرى</Button>
+        <Button onClick={() => eventQuery.refetch()}>{t("common.tryAgainOther")}</Button>
       </div>
     );
   }
 
   if (content) {
     return (
-      <div className="customization-view" dir="rtl">
+      <div className="customization-view">
         <AppNavbar />
 
         <div className="customization-empty">{content}</div>
@@ -183,7 +185,7 @@ export default function CustomizationPage() {
 
     if (tagForm.hasChanges) {
       const shouldDiscard = window.confirm(
-        "عندك تعديلات غير محفوظة. تبغى تتجاهلها وتنتقل لقطعة ثانية؟",
+        t("customization.discardConfirm"),
       );
 
       if (!shouldDiscard) return;
@@ -193,7 +195,7 @@ export default function CustomizationPage() {
   }
 
   return (
-    <div className="customization-view" dir="rtl">
+    <div className="customization-view">
       <AppNavbar />
 
       {saving.saveSuccess && (

@@ -3,23 +3,24 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { resetPassword } from "../../shared/api/authApi";
-import AuthLayout from "./components/AuthLayout";
-import AuthPromo from "./components/AuthPromo";
+import AuthLayout from "./components/AuthLayout/AuthLayout";
+import AuthPromo from "./components/AuthPromo/AuthPromo";
 import ResetPasswordForm from "./components/ResetPasswordForm";
-import AuthStatus from "./components/AuthStatus";
-import Button from "../../shared/ui/Button";
-import DehmScan from "./components/DehmScan";
+import AuthStatus from "./components/AuthStatus/AuthStatus";
+import Button from "../../shared/ui/Button/Button";
+import DehmScan from "./components/DehmScan/DehmScan";
 import "./auth.css";
+import { useTranslation } from "react-i18next";
 
-// What the user reads for each kind of bad link
+// What the user reads for each kind of bad link (translation keys)
 const LINK_ERRORS = {
   expired: {
-    title: "انتهت صلاحية الرابط",
-    text: "رابط إعادة التعيين صالح لمدة 15 دقيقة بس. اطلب رابط جديد وكمّل.",
+    title: "auth.reset.expiredTitle",
+    text: "auth.reset.expiredText",
   },
   invalid: {
-    title: "الرابط غير صالح أو مستخدم من قبل",
-    text: "كل رابط يشتغل مرة وحدة ولمدة 15 دقيقة. تأكد إنك فتحت آخر رابط وصلك كامل من الإيميل، أو اطلب رابط جديد.",
+    title: "auth.reset.invalidTitle",
+    text: "auth.reset.invalidText",
   },
 };
 
@@ -44,6 +45,7 @@ function readLink(token) {
 }
 
 export default function ResetPasswordPage() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get("token") || "";
@@ -80,9 +82,9 @@ export default function ResetPasswordPage() {
         setLinkError(readLink(token) === "expired" ? "expired" : "invalid");
         setStep("linkError");
       } else if (error.status === 422) {
-        setServerError("تأكد إن كلمة المرور من 8 إلى 72 حرفًا.");
+        setServerError(t("auth.reset.lengthError"));
       } else {
-        setServerError("تعذر حفظ كلمة المرور. حاول مرة ثانية.");
+        setServerError(t("auth.reset.saveFailed"));
       }
     } finally {
       setIsSubmitting(false);
@@ -90,9 +92,9 @@ export default function ResetPasswordPage() {
   }
 
   const mobileTitles = {
-    form: "عيّن كلمة مرور جديدة",
-    success: "تم تغيير كلمة المرور",
-    linkError: LINK_ERRORS[linkError]?.title || LINK_ERRORS.invalid.title,
+    form: t("auth.reset.title"),
+    success: t("auth.reset.successTitle"),
+    linkError: t(LINK_ERRORS[linkError]?.title || LINK_ERRORS.invalid.title),
   };
 
   return (
@@ -119,8 +121,8 @@ export default function ResetPasswordPage() {
         {step === "success" && (
           <AuthStatus
             tone="success"
-            title="تم تغيير كلمة المرور"
-            text="تقدر الحين تدخل حسابك بكلمة المرور الجديدة."
+            title={t("auth.reset.successTitle")}
+            text={t("auth.reset.successText")}
           >
             <Button
               variant="primary"
@@ -129,7 +131,7 @@ export default function ResetPasswordPage() {
                 navigate("/login", { replace: true, state: { passwordReset: true } })
               }
             >
-              ارجع لتسجيل الدخول
+              {t("auth.backToLogin")}
             </Button>
           </AuthStatus>
         )}
@@ -137,19 +139,19 @@ export default function ResetPasswordPage() {
         {step === "linkError" && (
           <AuthStatus
             tone="error"
-            title={(LINK_ERRORS[linkError] || LINK_ERRORS.invalid).title}
-            text={(LINK_ERRORS[linkError] || LINK_ERRORS.invalid).text}
+            title={t((LINK_ERRORS[linkError] || LINK_ERRORS.invalid).title)}
+            text={t((LINK_ERRORS[linkError] || LINK_ERRORS.invalid).text)}
           >
             <Button
               variant="primary"
               fullWidth
               onClick={() => navigate("/forgot-password", { replace: true })}
             >
-              اطلب رابط جديد
+              {t("auth.reset.requestNew")}
             </Button>
 
             <Link className="auth-status__link" to="/login">
-              ارجع لتسجيل الدخول
+              {t("auth.backToLogin")}
             </Link>
           </AuthStatus>
         )}

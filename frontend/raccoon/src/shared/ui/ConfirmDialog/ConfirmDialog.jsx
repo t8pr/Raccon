@@ -1,7 +1,8 @@
 import { useRef } from "react";
 import { Dialog } from "radix-ui";
-import Button from "../Button";
+import Button from "../Button/Button";
 import styles from "./ConfirmDialog.module.css";
+import { useTranslation } from "react-i18next";
 
 export default function ConfirmDialog({
   open,
@@ -10,6 +11,7 @@ export default function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
+  const { t, i18n } = useTranslation();
   const cancelRef = useRef(null);
 
   return (
@@ -23,7 +25,7 @@ export default function ConfirmDialog({
         <Dialog.Overlay className={styles.overlay} />
         <Dialog.Content
           className={styles.content}
-          dir="rtl"
+          dir={i18n.dir()}
           onOpenAutoFocus={(event) => {
             event.preventDefault();
             cancelRef.current?.focus();
@@ -34,9 +36,9 @@ export default function ConfirmDialog({
             {description}
           </Dialog.Description>
           <div className={styles.actions}>
-            <Button onClick={onConfirm}>نعم</Button>
+            <Button onClick={onConfirm}>{t("common.yes")}</Button>
             <Button ref={cancelRef} variant="outline" onClick={onCancel}>
-              إلغاء
+              {t("common.cancel")}
             </Button>
           </div>
         </Dialog.Content>

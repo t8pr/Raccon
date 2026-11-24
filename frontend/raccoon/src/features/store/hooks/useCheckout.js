@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { checkoutUrl } from "../checkoutLinks";
+import { useTranslation } from "react-i18next";
 
 /*
   الشراء: نافذة تأكيد ثم تحويل لصفحة الدفع في رمز (نفس التبويب).
@@ -9,6 +10,7 @@ import { checkoutUrl } from "../checkoutLinks";
     error        رسالة فوق البطاقات
 */
 export function useCheckout() {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState(null);
   const [redirecting, setRedirecting] = useState(null);
   const [error, setError] = useState("");
@@ -60,7 +62,7 @@ export function useCheckout() {
     setError("");
 
     if (!checkoutUrl(pkg.purchaseUrl)) {
-      setError("رابط الدفع لهذا البكج غير متاح حاليًا. حاول لاحقًا.");
+      setError(t("store.linkUnavailable"));
       return;
     }
 
@@ -83,7 +85,7 @@ export function useCheckout() {
     } catch {
       purchaseLockRef.current = false;
       setRedirecting(null);
-      setError("تعذر فتح صفحة الدفع. حاول مرة أخرى.");
+      setError(t("store.openPaymentFailed"));
     }
   }
 

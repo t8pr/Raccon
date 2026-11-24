@@ -1,25 +1,27 @@
 // Reset password: new password + confirm (same rules as the register form)
 import { useState } from "react";
-import AuthField from "../../../shared/ui/AuthField";
-import Button from "../../../shared/ui/Button";
-import InlineMessage from "../../../shared/ui/InlineMessage";
-import "./LoginForm.css";
+import AuthField from "../../../shared/ui/AuthField/AuthField";
+import Button from "../../../shared/ui/Button/Button";
+import InlineMessage from "../../../shared/ui/InlineMessage/InlineMessage";
+import "./LoginForm/LoginForm.css";
+import { useTranslation } from "react-i18next";
+import i18n from "../../../i18n";
 
 export function validateNewPassword(values) {
   const errors = {};
 
   if (!values.password) {
-    errors.password = "أدخل كلمة المرور الجديدة.";
+    errors.password = i18n.t("auth.reset.newPasswordRequired");
   } else if (values.password.length < 8) {
-    errors.password = "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل.";
+    errors.password = i18n.t("validation.passwordMin");
   } else if (values.password.length > 72) {
-    errors.password = "كلمة المرور طويلة، الحد الأعلى 72 حرفًا.";
+    errors.password = i18n.t("auth.reset.passwordMax");
   }
 
   if (!values.confirmPassword) {
-    errors.confirmPassword = "أكد كلمة المرور.";
+    errors.confirmPassword = i18n.t("validation.confirmPasswordRequired");
   } else if (values.confirmPassword !== values.password) {
-    errors.confirmPassword = "كلمتا المرور غير متطابقتين.";
+    errors.confirmPassword = i18n.t("validation.passwordsMismatch");
   }
 
   return errors;
@@ -31,6 +33,7 @@ export default function ResetPasswordForm({
   serverError = "",
   onEdit,
 }) {
+  const { t } = useTranslation();
   const [values, setValues] = useState({ password: "", confirmPassword: "" });
   const [touched, setTouched] = useState({});
 
@@ -76,10 +79,10 @@ export default function ResetPasswordForm({
     <form className="login-form" onSubmit={handleSubmit} noValidate>
       {/* Header */}
       <div className="login-form__header">
-        <h1 className="login-form__title">عيّن كلمة مرور جديدة</h1>
+        <h1 className="login-form__title">{t("auth.reset.title")}</h1>
 
         <p className="login-form__subtitle">
-          اختر كلمة مرور قوية ما استخدمتها قبل.
+          {t("auth.reset.subtitle")}
         </p>
       </div>
 
@@ -90,26 +93,26 @@ export default function ResetPasswordForm({
       {/* Fields */}
       <div className="login-form__fields">
         <AuthField
-          label="كلمة المرور الجديدة"
+          label={t("auth.fields.newPassword")}
           name="password"
           type="password"
           value={values.password}
           onChange={handleChange}
           onBlur={handleBlur}
-          placeholder="8 أحرف أو أكثر"
+          placeholder={t("auth.fields.passwordPlaceholder")}
           error={touched.password ? errors.password || "" : ""}
           autoComplete="new-password"
           autoFocus
         />
 
         <AuthField
-          label="تأكيد كلمة المرور"
+          label={t("auth.fields.confirmPassword")}
           name="confirmPassword"
           type="password"
           value={values.confirmPassword}
           onChange={handleChange}
           onBlur={handleBlur}
-          placeholder="أعد كتابة كلمة المرور"
+          placeholder={t("auth.fields.confirmPasswordPlaceholder")}
           error={touched.confirmPassword ? errors.confirmPassword || "" : ""}
           autoComplete="new-password"
         />
@@ -124,7 +127,7 @@ export default function ResetPasswordForm({
           disabled={!isFormValid}
           loading={isSubmitting}
         >
-          احفظ كلمة المرور
+          {t("auth.reset.submit")}
         </Button>
       </div>
     </form>

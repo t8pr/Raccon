@@ -1,3 +1,4 @@
+import i18n from "../../../i18n";
 // قراءة ردود الخادم في شاشة المسح. دوال خالصة بلا state.
 
 // رقم القطعة بخانتين: 7 → "07"
@@ -12,7 +13,7 @@ export function toScanError(error) {
     return { code: "unknown", message: detail };
   }
 
-  return detail || { code: "unknown", message: "تعذر قراءة البطاقة." };
+  return detail || { code: "unknown", message: i18n.t("journey.error.readFailed") };
 }
 
 /*

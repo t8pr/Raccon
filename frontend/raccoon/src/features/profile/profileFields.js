@@ -1,23 +1,36 @@
 // تعريفات صفحة الحساب: الحقول، العناوين، والقيم الابتدائية لكل نافذة تعديل.
+import i18n from "../../i18n";
+
+// كائن قيمه تنقرا من الترجمة وقت الاستخدام (حسب اللغة الحالية)
+function translatedLabels(keys) {
+  const labels = {};
+  for (const [field, key] of Object.entries(keys)) {
+    Object.defineProperty(labels, field, {
+      enumerable: true,
+      get: () => i18n.t(key),
+    });
+  }
+  return labels;
+}
 
 // الحقول النصية التي يمكن تعديلها منفردة.
-export const FIELD_LABELS = {
-  name: "الاسم",
-  username: "اسم المستخدم",
-  phone_number: "رقم الجوال",
-};
+export const FIELD_LABELS = translatedLabels({
+  name: "profile.fields.name",
+  username: "profile.fields.username",
+  phone_number: "profile.fields.phone",
+});
 
 export const FIELD_MAX_LENGTH = { name: 30, username: 20, phone_number: 9 };
 
 // عنوان النافذة حسب نوع التعديل.
-export const DIALOG_TITLES = {
-  avatar: "غيّر شخصيتك",
-  name: "تعديل الاسم",
-  username: "تعديل اسم المستخدم",
-  phone_number: "تعديل رقم الجوال",
-  password: "تغيير كلمة المرور",
-  delete: "حذف الحساب",
-};
+export const DIALOG_TITLES = translatedLabels({
+  avatar: "profile.dialog.avatar",
+  name: "profile.dialog.name",
+  username: "profile.dialog.username",
+  phone_number: "profile.dialog.phone",
+  password: "profile.dialog.password",
+  delete: "profile.dialog.delete",
+});
 
 // ترتيب صفوف معلومات الحساب.
 export const INFORMATION_ROWS = [
@@ -28,11 +41,11 @@ export const INFORMATION_ROWS = [
   "password",
 ];
 
-// حقول نافذة تغيير كلمة المرور.
+// حقول نافذة تغيير كلمة المرور: [الحقل، مفتاح الترجمة]
 export const PASSWORD_FIELDS = [
-  ["old_password", "كلمة المرور الحالية"],
-  ["new_password", "كلمة المرور الجديدة"],
-  ["confirmation", "تأكيد كلمة المرور"],
+  ["old_password", "profile.fields.oldPassword"],
+  ["new_password", "auth.fields.newPassword"],
+  ["confirmation", "auth.fields.confirmPassword"],
 ];
 
 // القيم التي تبدأ بها النافذة عند فتحها
@@ -66,7 +79,10 @@ export function getDisplayValue(field, user) {
 }
 
 export function getRowLabel(field) {
-  return FIELD_LABELS[field] || (field === "email" ? "الإيميل" : "كلمة المرور");
+  return (
+    FIELD_LABELS[field] ||
+    i18n.t(field === "email" ? "auth.fields.email" : "auth.fields.password")
+  );
 }
 
 // رسالة الخطأ حسب رد الخادم ونوع التعديل.
@@ -77,16 +93,16 @@ export function getRequestErrorMessage(requestError, kind) {
   const { status } = requestError;
 
   if (status === 401) {
-    return "انتهت جلسة الدخول. سجّل الدخول مجددًا.";
+    return i18n.t("profile.errors.sessionExpired");
   }
 
   if (kind === "password" && (status === 400 || status === 409)) {
-    return "كلمة المرور الحالية غير صحيحة.";
+    return i18n.t("profile.errors.wrongPassword");
   }
 
   if (kind === "username" && (status === 400 || status === 409)) {
-    return "اسم المستخدم مستخدم من قبل. اختر اسمًا آخر.";
+    return i18n.t("profile.errors.usernameTaken");
   }
 
-  return "تعذر تنفيذ الطلب. حاول مرة أخرى.";
+  return i18n.t("profile.errors.generic");
 }

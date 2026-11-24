@@ -1,60 +1,62 @@
 import { Link } from "react-router-dom";
 import { ChevronLeft, Nfc } from "lucide-react";
-import AppNavbar from "../../shared/layout/AppNavbar";
-import NfcCoil from "../../shared/ui/NfcCoil";
+import AppNavbar from "../../shared/layout/AppNavbar/AppNavbar";
+import NfcCoil from "../../shared/ui/NfcCoil/NfcCoil";
 import { useAuth } from "../../shared/auth/AuthContext";
 import Dehem from "../../assets/avatars/Dehem.png";
 import "./HomePage.css";
+import { useTranslation } from "react-i18next";
 
+// النصوص مفاتيح ترجمة، تنترجم وقت العرض
 const homeContent = {
   user: {
     quick: {
-      title: "تجربة الكشتة",
-      text: "6 قطع بمسح متسلسل",
-      action: "تعديل",
+      title: "home.user.quick.title",
+      text: "home.user.quick.text",
+      action: "home.user.quick.action",
       to: "/customization",
     },
     feature: {
-      title: "راكون للفعاليات",
-      text: "تجارب تفاعلية جاهزة للمعارض والمهرجانات",
-      action: "اطلب عرض سعر",
+      title: "home.user.feature.title",
+      text: "home.user.feature.text",
+      action: "home.user.feature.action",
       to: "/store",
     },
     cards: [
       {
-        title: "التجربة التسلسلية المنظمة",
-        text: "كل قطعة تكشف سر التي تليها، في رحلة مشوقة تقودك لخط النهاية.",
+        title: "home.user.card1.title",
+        text: "home.user.card1.text",
         to: "/store",
       },
       {
-        title: "استكشاف حر (الصيد المفتوح)",
-        text: "جميع القطع متاحة في آن واحد؛ اكتشف بحرية واجمع النقاط لتتصدر القائمة.",
+        title: "home.user.card2.title",
+        text: "home.user.card2.text",
         to: "/store",
       },
     ],
   },
   admin: {
     quick: {
-      title: "إنشاء تجربة جديدة",
-      text: "اختر النوع وعدد القطع، ونجهّز روابط التفعيل والطباعة",
-      action: "انشئ",
+      title: "home.admin.quick.title",
+      text: "home.admin.quick.text",
+      action: "home.admin.quick.action",
       to: "/admin/experiences/new",
     },
     feature: {
-      title: "إدارة التجارب",
-      text: "كل التجارب وحالة تفعيلها",
-      action: "تصفح",
+      title: "home.admin.feature.title",
+      text: "home.admin.feature.text",
+      action: "home.admin.feature.action",
       to: "/admin/experiences",
     },
     cards: [
       {
-        title: "إدارة المستخدمين والصلاحيات",
-        text: "التحكم بحسابات المستخدمين، صلاحيات الوصول، ومتابعة سجل النشاطات.",
+        title: "home.admin.card1.title",
+        text: "home.admin.card1.text",
         to: "/admin/users",
       },
       {
-        title: "لوحة المؤشرات والإحصائيات",
-        text: "رصد مباشر لنسب التفاعل، عدد المسحات، وأداء المستخدمين.",
+        title: "home.admin.card2.title",
+        text: "home.admin.card2.text",
         to: "/admin/dashboard",
       },
     ],
@@ -62,11 +64,12 @@ const homeContent = {
 };
 
 export default function HomePage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const content = user?.role === "admin" ? homeContent.admin : homeContent.user;
 
   return (
-    <div dir="rtl" className="rc-home-shell">
+    <div className="rc-home-shell">
       <AppNavbar />
 
       <main className={`rc-home ${user?.role === "admin" ? "rc-home--admin" : ""}`}>
@@ -75,22 +78,21 @@ export default function HomePage() {
           <article className="rc-home__hero">
             <div className="rc-home__copy">
               <h1 id="home-title" className="rc-home__title">
-                حوّل أي مكان
-                <span>إلى مغامرة تفاعلية</span>
+                {t("home.hero.titleLine1")}
+                <span>{t("home.hero.titleLine2")}</span>
               </h1>
               <p className="rc-home__lead">
-                قطع NFC ذكية تأخذ الزوار في رحلة استكشافية خطوة بخطوة: ألغاز،
-                تحديات، لوحة صدارة فورية، وتفاعل حي مع كل مسحة.
+                {t("home.hero.lead")}
               </p>
               <Link to="/store" className="rc-home__cta">
-                تصفح المتجر
+                {t("home.hero.cta")}
                 <ChevronLeft size={18} aria-hidden="true" />
               </Link>
             </div>
 
             <div className="rc-home__art" aria-hidden="true">
               <span className="rc-home__chip">
-                حصلتها!
+                {t("auth.found.title")}
                 <Nfc size={16} />
               </span>
               <div className="rc-home__tag">
@@ -104,26 +106,26 @@ export default function HomePage() {
           <div className="rc-home__side">
             <article className="rc-home__quick">
               <div>
-                <h2>{content.quick.title}</h2>
-                <p>{content.quick.text}</p>
+                <h2>{t(content.quick.title)}</h2>
+                <p>{t(content.quick.text)}</p>
               </div>
               <Link to={content.quick.to} className="rc-home__pill">
-                {content.quick.action}
+                {t(content.quick.action)}
                 <ChevronLeft size={14} aria-hidden="true" />
               </Link>
             </article>
 
             <article className="rc-home__feature">
               <div>
-                <h2>{content.feature.title}</h2>
-                <p>{content.feature.text}</p>
+                <h2>{t(content.feature.title)}</h2>
+                <p>{t(content.feature.text)}</p>
               </div>
               <div className="rc-home__feature-row">
                 <span className="rc-home__mini-tag" aria-hidden="true">
                   <NfcCoil line="var(--panel-raised)" chip="var(--panel-raised)" />
                 </span>
                 <Link to={content.feature.to} className="rc-home__pill">
-                  {content.feature.action}
+                  {t(content.feature.action)}
                   <ChevronLeft size={14} aria-hidden="true" />
                 </Link>
               </div>
@@ -132,14 +134,14 @@ export default function HomePage() {
         </section>
 
         {/* Category / tool cards */}
-        <section className="rc-home__cards" aria-label="اختصارات">
+        <section className="rc-home__cards" aria-label={t("home.shortcuts")}>
           {content.cards.map((card) => (
             <Link key={card.title} to={card.to} className="rc-home__card">
               <div className="rc-home__card-head">
-                <h3>{card.title}</h3>
+                <h3>{t(card.title)}</h3>
                 <ChevronLeft size={22} aria-hidden="true" />
               </div>
-              <p>{card.text}</p>
+              <p>{t(card.text)}</p>
             </Link>
           ))}
         </section>

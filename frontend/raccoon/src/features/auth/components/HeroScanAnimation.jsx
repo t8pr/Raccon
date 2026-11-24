@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const ANIMATION_URL = `${process.env.PUBLIC_URL}/animations/raccon-hero.json`;
 const POSTER_URL = `${process.env.PUBLIC_URL}/animations/raccon-hero-poster.png`;
 const STILL_FRAME = 290;
 
 export default function HeroScanAnimation() {
+  const { t } = useTranslation();
   const containerRef = useRef(null);
   const syncPlaybackRef = useRef(null);
   const pausedRef = useRef(false);
@@ -106,7 +108,7 @@ export default function HeroScanAnimation() {
         <button
           type="button"
           className="auth-scan-animation-toggle"
-          aria-label={paused ? "تشغيل الحركة" : "إيقاف الحركة"}
+          aria-label={paused ? t("common.playAnimation") : t("common.pauseAnimation")}
           onClick={() => setPaused((value) => !value)}
         >
           {paused ? (

@@ -1,4 +1,5 @@
 import imageCompression from "browser-image-compression";
+import i18n from "../../../i18n";
 
 // Keep these limits aligned with backend/services/storage_service.py.
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
@@ -31,14 +32,14 @@ function readDimensions(file, signal) {
       };
       cleanup();
       if (!dimensions.width || !dimensions.height) {
-        reject(new Error("تعذر قراءة أبعاد الصورة."));
+        reject(new Error(i18n.t("customization.image.dimensionsFailed")));
       } else {
         resolve(dimensions);
       }
     };
     image.onerror = () => {
       cleanup();
-      reject(new Error("تعذر قراءة الصورة. اختر ملف صورة صالحًا."));
+      reject(new Error(i18n.t("customization.image.readFailed")));
     };
     signal?.addEventListener("abort", abort, { once: true });
     image.src = url;
@@ -47,9 +48,9 @@ function readDimensions(file, signal) {
 
 export async function prepareHintImage(file, { signal } = {}) {
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error("اختر صورة بصيغة JPG أو PNG أو WebP.");
+    throw new Error(i18n.t("customization.image.badType"));
   }
-  if (!file.size) throw new Error("ملف الصورة فارغ.");
+  if (!file.size) throw new Error(i18n.t("customization.image.empty"));
 
   const dimensions = await readDimensions(file, signal);
   if (
@@ -74,14 +75,14 @@ export async function prepareHintImage(file, { signal } = {}) {
     result.size > MAX_IMAGE_BYTES ||
     !ALLOWED_TYPES.includes(result.type)
   ) {
-    throw new Error("تعذر تجهيز الصورة ضمن حد 2 MB. اختر صورة أصغر.");
+    throw new Error(i18n.t("customization.image.tooLarge"));
   }
   const outputDimensions = await readDimensions(result, signal);
   if (
     outputDimensions.width > MAX_IMAGE_DIMENSION ||
     outputDimensions.height > MAX_IMAGE_DIMENSION
   ) {
-    throw new Error("أبعاد الصورة بعد المعالجة تتجاوز 2048 بكسل.");
+    throw new Error(i18n.t("customization.image.tooBig"));
   }
   // Match the filename extension to the actual encoded MIME type.
   const extension = {

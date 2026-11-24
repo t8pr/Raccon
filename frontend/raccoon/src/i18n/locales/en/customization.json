@@ -1,0 +1,91 @@
+{
+  "pickRound": "Pick a round from My packages.",
+  "pleaseLogin": "Please log in.",
+  "loading": "Loading the package...",
+  "discardConfirm": "You have unsaved changes. Discard them and move to another piece?",
+  "round": {
+    "title": "Round settings",
+    "end": "End round",
+    "start": "Start round",
+    "editPackage": "Edit package",
+    "saveAllFirst": "Save all pieces to be able to start the round, even the empty ones"
+  },
+  "confirm": {
+    "saveEditsTitle": "Save changes",
+    "saveAllTitle": "Save all pieces",
+    "saveText": "Do you want to continue and save the changes?",
+    "cancelEditTitle": "Cancel editing",
+    "cancelEditText": "Do you want to cancel editing? Unsaved changes will be lost.",
+    "stopTitle": "Stop round",
+    "stopText": "Are you sure you want to stop the round?",
+    "editText": "Are you sure you want to edit the package? Edits remaining: {{count}}. An edit is counted when you save."
+  },
+  "traps": {
+    "none": "No trap",
+    "noneText": "A regular piece",
+    "freeze": "Freeze",
+    "freezeText": "Stops the player from scanning for a while",
+    "boom": "Boom",
+    "boomText": "Takes away one point",
+    "choose": "Choose a trap",
+    "chooseText": "Pick freeze or boom during the round",
+    "title": "Trap",
+    "hint": "Optional · one trap per piece",
+    "freezeDuration": "Freeze duration",
+    "freezeHelp": "The player who scans this piece can't scan any other piece until the time runs out."
+  },
+  "legend": {
+    "label": "Piece status legend",
+    "ready": "Ready",
+    "current": "Current",
+    "unsaved": "Unsaved",
+    "trapped": "Has a trap"
+  },
+  "hint": {
+    "label": "Hint text",
+    "placeholder": "Write a hint for this piece...",
+    "note": "Shown to players under the piece number."
+  },
+  "saving": {
+    "noImageUrl": "The server didn't return the image URL. Please try again.",
+    "staged": "Piece {{number}} was saved temporarily. When you're done with all pieces, press “Save” again.",
+    "editsSaved": "Package changes saved successfully.",
+    "allSaved": "All pieces ({{count}}) saved successfully.",
+    "editsFailed": "Couldn't save the changes.",
+    "allFailed": "Couldn't save all pieces."
+  },
+  "rename": {
+    "lengthError": "Enter a name of 1 to 20 characters.",
+    "failed": "Couldn't save the name. Please try again.",
+    "inputLabel": "Experience name",
+    "save": "Save name",
+    "cancel": "Cancel renaming",
+    "edit": "Edit experience name"
+  },
+  "image": {
+    "dimensionsFailed": "Couldn't read the image dimensions.",
+    "readFailed": "Couldn't read the image. Choose a valid image file.",
+    "badType": "Choose a JPG, PNG, or WebP image.",
+    "empty": "The image file is empty.",
+    "tooLarge": "Couldn't fit the image within 2 MB. Choose a smaller image.",
+    "tooBig": "The processed image is larger than 2048 pixels.",
+    "prepareFailed": "Couldn't prepare the image. Try another one.",
+    "label": "Hint image",
+    "processing": "Checking and preparing the image...",
+    "alt": "Hint",
+    "remove": "Remove image",
+    "replace": "Replace image",
+    "choose": "Choose a hint image",
+    "maxSize": "Maximum image size:"
+  },
+  "readyPieces": "Ready pieces",
+  "readyCount": "{{done}} of {{total}}",
+  "pieceNumber": "Piece {{number}}",
+  "editsLeft": "Edits left",
+  "tag": {
+    "hasTrap": "has a trap",
+    "stagedLong": "changed, not saved",
+    "editing": "Editing",
+    "staged": "Changed"
+  }
+}

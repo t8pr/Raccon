@@ -2,16 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { loginUser, googleLogin } from "../../shared/api/authApi";
 import { getCurrentUser } from "../../shared/api/usersApi";
 import { useAuth } from "../../shared/auth/AuthContext";
-import AuthLayout from "./components/AuthLayout";
-import AuthPromo from "./components/AuthPromo";
+import AuthLayout from "./components/AuthLayout/AuthLayout";
+import AuthPromo from "./components/AuthPromo/AuthPromo";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import LoginForm from "./components/LoginForm";
+import LoginForm from "./components/LoginForm/LoginForm";
 import HeroScanAnimation from "./components/HeroScanAnimation";
-import FoundHero from "./components/FoundHero";
+import FoundHero from "./components/FoundHero/FoundHero";
 import { takeClaimReturn } from "../../shared/utils/claimReturn";
 import "./auth.css";
+import { useTranslation } from "react-i18next";
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const { signIn, user, accessToken, isRestoring } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -26,7 +28,7 @@ export default function LoginPage() {
   // shown once after a successful password reset (sent from ResetPasswordPage)
   const [notice, setNotice] = useState(
     location.state?.passwordReset
-      ? "تم تغيير كلمة المرور. ادخل بكلمة المرور الجديدة."
+      ? t("auth.login.passwordResetNotice")
       : "",
   );
   const [serverError, setServerError] = useState("");
@@ -92,10 +94,10 @@ export default function LoginPage() {
       () => loginUser(credentials),
       (error) => {
         if (error?.status === 401 || error.status === 400) {
-          return "اسم المستخدم/البريد أو كلمة المرور غير صحيحة.";
+          return t("auth.login.invalidCredentials");
         }
-        if (error?.status === 422) return "يرجى التأكد من البيانات المدخلة.";
-        return "تعذر تسجيل الدخول. حاول مرة أخرى.";
+        if (error?.status === 422) return t("auth.login.checkInput");
+        return t("auth.login.failed");
       },
     );
   }
@@ -108,8 +110,8 @@ export default function LoginPage() {
         () => googleLogin(credential),
         (error) =>
           error?.status === 400
-            ? "تعذر التحقق من حساب Google. حاول مرة ثانية."
-            : "تعذر الدخول باستخدام Google. حاول مرة ثانية.",
+            ? t("auth.google.verifyFailed")
+            : t("auth.google.loginFailed"),
       );
     } finally {
       setIsGoogleSubmitting(false);
@@ -125,10 +127,12 @@ export default function LoginPage() {
           // came from scanning a tag → حصلتها hero, came from the landing → animation
           scene={redirectTag ? <FoundHero /> : <HeroScanAnimation />}
           mobileTitle={
-            redirectTag ? "حصلتها!" : "هلا بالكحيلان حياك الله من جديد"
+            redirectTag ? t("auth.found.title") : t("auth.login.mobileTitle")
           }
           mobileSubTitle={
-            redirectTag ? "ادخل حسابك عشان تنحسب لك" : "ادخل حسابك وتابع تجاربك"
+            redirectTag
+              ? t("auth.login.mobileSubtitleFound")
+              : t("auth.login.mobileSubtitle")
           }
           variant="login"
         />
@@ -144,7 +148,7 @@ export default function LoginPage() {
           onEdit={() => setServerError("")}
           onGoogle={handleGoogle}
           onGoogleError={() =>
-            setServerError("ما اكتمل الدخول باستخدام Google. حاول مرة ثانية.")
+            setServerError(t("auth.google.loginIncomplete"))
           }
         />
       </div>

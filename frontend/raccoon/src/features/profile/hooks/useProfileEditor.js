@@ -10,6 +10,7 @@ import {
   validateForm,
 } from "../../../shared/utils/validation";
 import { getInitialDraft, getRequestErrorMessage } from "../profileFields";
+import { useTranslation } from "react-i18next";
 
 /*
   نافذة التعديل الوحيدة في صفحة الحساب.
@@ -19,6 +20,7 @@ import { getInitialDraft, getRequestErrorMessage } from "../profileFields";
   deleted  الحساب انحذف: النافذة تعرض رسالة النجاح، وإغلاقها يخرج المستخدم
 */
 export function useProfileEditor() {
+  const { t } = useTranslation();
   const { user, updateUser, clearSession, markAccountDeleted } = useAuth();
   const navigate = useNavigate();
 
@@ -65,13 +67,13 @@ export function useProfileEditor() {
       }
 
       if (variables.kind === "password") {
-        setNotice("تم تغيير كلمة المرور.");
+        setNotice(t("profile.notice.passwordChanged"));
       } else {
         // تحديث كاش الحساب من استجابة الباك إند.
         // البروفايل والنافبار يقرآن نفس بيانات المستخدم.
         await updateUser(result);
 
-        setNotice("تم حفظ التغييرات.");
+        setNotice(t("profile.notice.saved"));
       }
 
       setEditing(null);
@@ -149,7 +151,7 @@ export function useProfileEditor() {
 
     if (!result.success) {
       // نحافظ على عرض الخطأ في InlineMessage الحالية.
-      setError(Object.values(result.errors)[0] || "تحقق من البيانات المدخلة.");
+      setError(Object.values(result.errors)[0] || t("profile.checkInput"));
       return;
     }
 

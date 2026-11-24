@@ -5,14 +5,14 @@ const eventPath = (eventId, suffix = "") =>
   `/events/${encodeURIComponent(eventId)}${suffix}`;
 
 export function getMyEvents({ signal } = {}) {
-  return authRequest("/events", { method: "GET", signal }, "تعذر تحميل باقاتك.");
+  return authRequest("/events", { method: "GET", signal }, "api.loadEventsFailed");
 }
 
 export function renameEvent(eventId, title) {
   return authRequest(
     eventPath(eventId),
     { method: "PATCH", json: { title } },
-    "تعذر حفظ اسم الباقة.",
+    "api.renameEventFailed",
   );
 }
 
@@ -20,7 +20,7 @@ export function getEventDetails(eventId) {
   return authRequest(
     eventPath(eventId),
     { method: "GET" },
-    "حدث خطأ عند استرجاع معلومات الباقه.",
+    "api.loadEventFailed",
   );
 }
 
@@ -29,7 +29,7 @@ export function saveTagSetup(eventId, tagsConfig) {
   return authRequest(
     eventPath(eventId, "/setup"),
     { method: "PUT", json: { tags_config: tagsConfig } },
-    "حدث خطأ أثناء حفظ إعدادات القطعة.",
+    "api.saveTagsFailed",
   );
 }
 
@@ -38,7 +38,7 @@ export function saveTagEdits(eventId, tagsConfig) {
   return authRequest(
     eventPath(eventId, "/edit"),
     { method: "PUT", json: { tags_config: tagsConfig } },
-    "تعذر حفظ تعديلات الباقة.",
+    "api.editTagsFailed",
   );
 }
 
@@ -46,7 +46,7 @@ export function updateEventStatus(eventId, status) {
   return authRequest(
     eventPath(eventId),
     { method: "PATCH", json: { status } },
-    "تعذر تحديث حالة الجولة.",
+    "api.updateRoundFailed",
   );
 }
 
@@ -54,7 +54,7 @@ export function resetEvent(eventId) {
   return authRequest(
     eventPath(eventId, "/reset"),
     { method: "POST", detailAsMessage: true },
-    "تعذر إعادة تعيين الجولة.",
+    "api.resetRoundFailed",
   );
 }
 
@@ -66,6 +66,6 @@ export function uploadHintImage(file) {
   return authRequest(
     "/events/upload-image",
     { method: "POST", body: formData, detailAsMessage: true },
-    "تعذر رفع الصورة.",
+    "api.uploadImageFailed",
   );
 }

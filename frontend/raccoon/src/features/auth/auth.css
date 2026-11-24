@@ -177,7 +177,7 @@
   flex-direction: column;
   gap: 16px;
   margin: 0 0 16px;
-  text-align: right;
+  text-align: start;
 }
 .auth-page .register-form__title {
   margin: 0;
@@ -194,7 +194,7 @@
 @media (min-width: 768px) {
   .auth-page--register .register-form__header {
     margin-bottom: 16px;
-    text-align: right;
+    text-align: start;
   }
 }
 
@@ -307,7 +307,7 @@
     margin-inline: auto;
     padding: 16px 16px 0;
     gap: 0;
-    direction: rtl;
+    direction: var(--dir, rtl);
   }
   .auth-page .login-page {
     min-height: 0;
@@ -338,7 +338,7 @@
     min-height: 0;
     padding: 0;
     background: transparent;
-    direction: rtl;
+    direction: var(--dir, rtl);
   }
   .auth-page .auth-promo__scene {
     flex: none;

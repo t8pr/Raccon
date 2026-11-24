@@ -1,0 +1,85 @@
+{
+  "nav": {
+    "brandLabel": "Raccoon — Home",
+    "mainNav": "Main navigation",
+    "soon": "Coming soon",
+    "home": "Home",
+    "packages": "Experiences",
+    "store": "Store",
+    "adminExperiences": "Manage experiences",
+    "adminUsers": "Manage users",
+    "logoutError": "Couldn't log out. Please try again."
+  },
+  "profileMenu": {
+    "myAccount": "My account",
+    "myAccountSoon": "My account — coming soon",
+    "menuLabel": "Account menu",
+    "logout": "Log out",
+    "loggingOut": "Logging out..."
+  },
+  "authNav": {
+    "label": "Log in or sign up",
+    "login": "Log in",
+    "register": "Sign up"
+  },
+  "language": {
+    "switchTo": "العربية",
+    "label": "Change language"
+  },
+  "common": {
+    "or": "or",
+    "playAnimation": "Play animation",
+    "pauseAnimation": "Pause animation",
+    "loading": "Loading...",
+    "retry": "Try again",
+    "mode": {
+      "sequential": "Sequential",
+      "open": "Open hunt",
+      "unknown": "Unspecified"
+    },
+    "pieces_one": "{{count}} piece",
+    "pieces_other": "{{count}} pieces",
+    "hidePassword": "Hide password",
+    "showPassword": "Show password",
+    "yes": "Yes",
+    "cancel": "Cancel",
+    "freeze": {
+      "decrease": "Decrease freeze duration by one second",
+      "inputLabel": "Freeze duration in seconds",
+      "increase": "Increase freeze duration by one second",
+      "unit": "sec",
+      "rangeError": "Enter a whole number from {{min}} to {{max}} seconds."
+    },
+    "packTypeFilter": "Package type",
+    "sortPackages": "Sort packages",
+    "sortBy": "Sort: {{label}}",
+    "currencyName": "Saudi riyal",
+    "currency": "SAR",
+    "noPrice": "No price",
+    "piecesCount": "Pieces",
+    "redirectingToPayment": "Redirecting to payment...",
+    "buy": "Buy",
+    "continue": "Continue",
+    "edit": "Edit",
+    "editSoon": "Editing coming soon",
+    "all": "All",
+    "checkingAccount": "Checking your account...",
+    "playMode": "Play mode",
+    "piecesFlat_one": "{{count}} piece",
+    "piecesFlat_other": "{{count}} pieces",
+    "brand": "Raccoon",
+    "refresh": "Refresh",
+    "serverError": "Couldn't reach the server. Please try again.",
+    "close": "Close",
+    "saveChanges": "Save changes",
+    "goBack": "Go back",
+    "change": "Change",
+    "tryAgain": "Try again",
+    "increase": "Increase",
+    "decrease": "Decrease",
+    "optional": "Optional",
+    "save": "Save",
+    "listSeparator": ", ",
+    "tryAgainOther": "Try again"
+  }
+}

@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { renameEvent } from "../../../shared/api/eventsApi";
 import { useAuth } from "../../../shared/auth/AuthContext";
 import { queryKeys } from "../../../shared/constants/queryKeys";
+import { useTranslation } from "react-i18next";
 
 export const EVENT_NAME_MAX_LENGTH = 20;
 
@@ -15,6 +16,7 @@ export const EVENT_NAME_MAX_LENGTH = 20;
   editButtonRef: زر القلم، يرجع له التركيز بعد الحفظ أو الإلغاء.
 */
 export function useEventRename(eventId) {
+  const { t } = useTranslation();
   const { accessToken, user } = useAuth();
   const queryClient = useQueryClient();
 
@@ -53,7 +55,7 @@ export function useEventRename(eventId) {
     const title = draft.trim();
 
     if (!title || title.length > EVENT_NAME_MAX_LENGTH) {
-      setError("اكتب اسمًا من حرف إلى 20 حرفًا.");
+      setError(t("customization.rename.lengthError"));
       return;
     }
 
@@ -88,7 +90,7 @@ export function useEventRename(eventId) {
       setEditing(false);
       focusEditButton();
     } catch {
-      setError("تعذر حفظ الاسم. حاول مرة أخرى.");
+      setError(t("customization.rename.failed"));
     } finally {
       saveLockRef.current = false;
       setSaving(false);

@@ -1,12 +1,14 @@
+import { useTranslation } from "react-i18next";
 export default function TagLegend() {
+  const { t } = useTranslation();
   return (
-    <div className="tag-legend" aria-label="دليل حالات القطع">
+    <div className="tag-legend" aria-label={t("customization.legend.label")}>
       <span>
         <i
           className="tag-legend__dot tag-legend__dot--saved"
           aria-hidden="true"
         />
-        جاهزة
+        {t("customization.legend.ready")}
       </span>
 
       <span>
@@ -14,7 +16,7 @@ export default function TagLegend() {
           className="tag-legend__dot tag-legend__dot--current"
           aria-hidden="true"
         />
-        الحالية
+        {t("customization.legend.current")}
       </span>
 
       <span>
@@ -22,7 +24,7 @@ export default function TagLegend() {
           className="tag-legend__dot tag-legend__dot--empty"
           aria-hidden="true"
         />
-        غير محفوظة
+        {t("customization.legend.unsaved")}
       </span>
 
       <span>
@@ -30,7 +32,7 @@ export default function TagLegend() {
           className="tag-legend__dot tag-legend__dot--trap"
           aria-hidden="true"
         />
-        فيها فخ
+        {t("customization.legend.trapped")}
       </span>
     </div>
   );

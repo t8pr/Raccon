@@ -1,8 +1,10 @@
-import Button from "../../../shared/ui/Button";
+import Button from "../../../shared/ui/Button/Button";
 import { getModeLabel } from "../../../shared/constants/modes";
+import { useTranslation } from "react-i18next";
 
 // نافذة تأكيد الشراء. checkout: ما يرجّعه useCheckout.
 export default function CheckoutDialog({ checkout }) {
+  const { t } = useTranslation();
   const { dialogRef, selected } = checkout;
 
   return (
@@ -17,22 +19,23 @@ export default function CheckoutDialog({ checkout }) {
       }}
     >
       <div className="store-modal__body">
-        <h2 id="store-modal-title">هل أنت متأكد من إتمام عملية الشراء؟</h2>
+        <h2 id="store-modal-title">{t("store.confirmTitle")}</h2>
 
         {selected && (
           <p>
-            {getModeLabel(selected.mode)} · {selected.pieces} قطعة ·{" "}
-            {selected.price} ر.س
+            {getModeLabel(selected.mode)} ·{" "}
+            {t("common.piecesFlat", { count: selected.pieces })} · {selected.price}{" "}
+            {t("common.currency")}
           </p>
         )}
 
         <div className="store-modal__actions">
           <Button fullWidth onClick={checkout.buy}>
-            شراء
+            {t("common.buy")}
           </Button>
 
           <Button fullWidth variant="outline" onClick={checkout.close} autoFocus>
-            إلغاء
+            {t("common.cancel")}
           </Button>
         </div>
       </div>

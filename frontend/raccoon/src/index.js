@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./styles/global.css"; // المتغيّرات (tokens) + الأساسيات العامة (base)
+import "./i18n"; // تهيئة الترجمة قبل رسم التطبيق
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import App from "./app/App";
 import reportWebVitals from "./reportWebVitals";

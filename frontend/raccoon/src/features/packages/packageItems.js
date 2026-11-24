@@ -1,7 +1,9 @@
 // تحويل جولات المستخدم إلى بطاقات «باقاتي»، والفلترة حسب طريقة اللعب. دوال خالصة.
 
 import { MODE_OPTIONS, normalizeMode } from "../../shared/constants/modes";
+import i18n from "../../i18n";
 
+// قيمة داخلية للجولة بدون اسم؛ البطاقة تعرضها مترجمة (packages.untitled)
 export const UNTITLED = "بدون اسم";
 
 // الأسماء الافتراضية من الخادم تُعرض «بدون اسم».
@@ -34,7 +36,12 @@ export function toPackageItem(event) {
 }
 
 export const PACKAGE_FILTERS = [
-  { value: "all", label: "الكل" },
+  {
+    value: "all",
+    get label() {
+      return i18n.t("common.all");
+    },
+  },
   ...MODE_OPTIONS,
 ];
 
