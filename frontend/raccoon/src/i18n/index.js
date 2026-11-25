@@ -14,6 +14,7 @@ import arCustomization from "./locales/ar/customization.json";
 import arJourney from "./locales/ar/journey.json";
 import arProfile from "./locales/ar/profile.json";
 import arAdmin from "./locales/ar/admin.json";
+import arLanding from "./locales/ar/landing.json";
 
 import enCommon from "./locales/en/common.json";
 import enValidation from "./locales/en/validation.json";
@@ -27,6 +28,7 @@ import enCustomization from "./locales/en/customization.json";
 import enJourney from "./locales/en/journey.json";
 import enProfile from "./locales/en/profile.json";
 import enAdmin from "./locales/en/admin.json";
+import enLanding from "./locales/en/landing.json";
 
 // كل ملف feature يصير قسم باسمه: auth.json → t("auth.…")
 // ما عدا common.json: مفاتيحه في الجذر (nav, common, language …)
@@ -37,6 +39,7 @@ const ar = {
   auth: arAuth,
   home: arHome,
   packages: arPackages,
+  landing: arLanding,
   store: arStore,
   claim: arClaim,
   customization: arCustomization,
@@ -49,6 +52,7 @@ const en = {
   ...enCommon,
   validation: enValidation,
   api: enApi,
+  landing: enLanding,
   auth: enAuth,
   home: enHome,
   packages: enPackages,

@@ -1,0 +1,57 @@
+{
+  "nav": {
+    "howItWorks": "How it works",
+    "modes": "Game Modes",
+    "traps": "Traps",
+    "store": "Store",
+    "login": "Log in",
+    "register": "Get Started",
+    "dashboard": "Home"
+  },
+  "hero": {
+    "badge": "Interactive NFC Experience",
+    "titleLine1": "Turn any space",
+    "titleLine2": "into a real adventure",
+    "lead": "Raccon connects physical NFC tags with a live digital game. Craft clues, plant clever traps, and track the race in real time.",
+    "primaryCta": "Browse Packs",
+    "secondaryCta": "Create Free Account"
+  },
+  "steps": {
+    "eyebrow": "Three simple steps",
+    "title": "How Raccon works",
+    "step1Title": "1. Pick your pack",
+    "step1Desc": "Choose the tag count and game mode that fit your event, then claim it to your account in seconds.",
+    "step2Title": "2. Customize clues & traps",
+    "step2Desc": "Add text hints, images, and strategic traps to each tag right from your customization dashboard.",
+    "step3Title": "3. Hide & launch",
+    "step3Desc": "Place the physical tags around your venue, go live, and let players scan and compete with their phones."
+  },
+  "modes": {
+    "eyebrow": "Game Modes",
+    "title": "Choose the challenge style",
+    "openTag": "Open Hunt",
+    "openTitle": "Open Hunt",
+    "openDesc": "A fast-paced race to claim tags in any order—complete with traps to slow down rivals and shake up the scoreboard.",
+    "seqTag": "Sequential",
+    "seqTitle": "Sequential",
+    "seqDesc": "A guided step-by-step journey where every scanned tag unlocks the clue to the next one until the finish."
+  },
+  "traps": {
+    "eyebrow": "Live competition",
+    "title": "Smart traps & real-time leaderboard",
+    "subtitle": "Keep every scan unpredictable in Open Hunt mode with built-in traps and instant rank updates.",
+    "boomTitle": "Boom Trap",
+    "boomDesc": "Deducts a point on scan to shake up the standings.",
+    "freezeTitle": "Freeze Trap",
+    "freezeDesc": "Temporarily freezes the player from scanning for a set duration.",
+    "chooseTitle": "Choose Trap",
+    "chooseDesc": "Lets the player pick a trap effect to activate against rivals.",
+    "leaderboardTitle": "Live Leaderboard",
+    "leaderboardDesc": "Instant score and rank updates for every participant."
+  },
+  "cta": {
+    "title": "Ready to build your first experience?",
+    "desc": "Browse ready-to-play NFC packs or create a free account to get started.",
+    "button": "Explore Store"
+  }
+}

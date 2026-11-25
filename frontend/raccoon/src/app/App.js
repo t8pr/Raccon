@@ -36,6 +36,9 @@ import CustomizationPage from "../features/customization/CustomizationPage";
 // ClaimPackage
 import ClaimPage from "../features/claim/ClaimPage";
 
+// Landing Page
+import LandingPage from "../features/landing/LandingPage";
+
 function AppContent() {
   const location = useLocation(); // work only insdie BrowserRouter and App create useLocation(}
   const { accessToken } = useAuth();
@@ -60,13 +63,8 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          {/* Default Route */}
-          <Route
-            path="/"
-            element={
-              <Navigate to={accessToken ? "/home" : "/register"} replace />
-            }
-          />
+          {/* Default Route — Public Landing Page */}
+          <Route path="/" element={<LandingPage />} />
           {/* Element is the jsx file*/}
           {/* Authentication */}
           <Route path="/register" element={<RegisterPage />} />
