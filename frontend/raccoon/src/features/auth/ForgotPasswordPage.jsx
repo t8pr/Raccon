@@ -7,7 +7,7 @@ import AuthPromo from "./components/AuthPromo/AuthPromo";
 import ForgotPasswordForm from "./components/ForgotPasswordForm";
 import AuthStatus from "./components/AuthStatus/AuthStatus";
 import Button from "../../shared/ui/Button/Button";
-import DehmScan from "./components/DehmScan/DehmScan";
+import HeroScanAnimation from "./components/HeroScanAnimation";
 import "./auth.css";
 import { useTranslation } from "react-i18next";
 
@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
       showTabs={false}
       promo={
         <AuthPromo
-          scene={<DehmScan />}
+          scene={<HeroScanAnimation />}
           mobileTitle={sentTo ? t("auth.forgot.checkEmail") : t("auth.forgot.title")}
           mobileSubTitle={
             sentTo ? "" : t("auth.forgot.mobileSubtitle")
