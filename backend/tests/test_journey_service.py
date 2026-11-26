@@ -5,6 +5,7 @@ from unittest.mock import Mock
 from models import Event, EventTag, JourneyProgress, Pack, Tag, User
 from services.journey_service import JourneyService
 from fastapi import HTTPException
+from api.journey.schemas import TagScanResponse
 
 
 # Each test case gets a new test user.
@@ -148,7 +149,7 @@ def test_scan_error_when_lookup_returns_none(
 
 
 def test_completed_sequential_scan_reports_zero_remaining(
-    journey_service, user, tag, pack, event, journey_progress
+    journey_service, user, tag, pack, event, event_tag, journey_progress
 ):
     event.status = "live"
     journey_progress.status = "completed"
@@ -159,9 +160,12 @@ def test_completed_sequential_scan_reports_zero_remaining(
 
     assert exc.value.status_code == 400
     assert exc.value.detail == {
+        "code": "completed",
         "message": "You have already completed this event!",
         "mode": "seq",
+        "total_tags": pack.tags_count,
         "remaining_tags": 0,
+        "content": event_tag.content,
     }
 
 
@@ -410,6 +414,11 @@ def test_final_open_claim_completes_round(
 
     assert result["status"] == "success"
     assert result["event_finished"] is True
+    response = TagScanResponse.model_validate(result).model_dump()
+    assert response["code"] == "completed"
+    assert response["total_tags"] == 1
+    assert response["mode"] == "open"
+    assert response["content"]["hint"] == "myhint"
     assert result["remaining_tags"] == 0
     assert result["current_score"] == 1
     assert event_tag.content["claimed_by"] == user.user_hash
@@ -421,6 +430,24 @@ def test_final_open_claim_completes_round(
     )
     session.flush.assert_called_once()
     session.commit.assert_called_once()
+
+
+def test_finished_open_round_view_only_includes_completion_fields(
+    journey_service, user, tag, event, pack
+):
+    event.status = "live"
+    pack.mode = "open"
+    journey_service.event_tags.count_clues_status.return_value = (1, 0)
+
+    result = journey_service.scan_tag(user, tag.static_hash, user.user_hash)
+    response = TagScanResponse.model_validate(result).model_dump()
+
+    assert response["status"] == "view_only"
+    assert response["event_finished"] is True
+    assert response["code"] == "completed"
+    assert response["total_tags"] == pack.tags_count
+    assert response["mode"] == "open"
+    assert response["content"]["hint"] == "myhint"
 
 
 @pytest.mark.parametrize(("trap_type", "trap_value"), [("boom", 1), ("freeze", 30)])

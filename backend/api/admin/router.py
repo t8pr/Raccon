@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from services.admin_service import AdminService
 from models.user import User
-from api.admin.schemas import PackGenerateRequest, PackGenerateResponse, FactoryPackResponse, AdminPackDetailResponse
+from api.admin.schemas import AdminPackDetailResponse, FactoryPackResponse, PackAddTagsRequest, PackAddTagsResponse, PackGenerateRequest, PackGenerateResponse)
 from api.packs.schemas import PackResponse
 from api.users.schemas import UserResponse
 from api.auth.dependencies import get_current_admin
@@ -33,6 +33,15 @@ def generate_packs(
         )
 
     return packs
+
+@router.post("/packs/{pack_id}/tags", response_model=PackAddTagsResponse)
+def add_pack_tags(
+    pack_id: uuid.UUID,
+    request: PackAddTagsRequest,
+    service: AdminService = Depends(),
+    admin_user: User = Depends(get_current_admin),
+):
+    return service.add_pack_tags(admin_user, pack_id, request.tags_count)
 
 @router.post("/generate-rebuild-codes")
 def generate_rebuild_codes(

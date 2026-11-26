@@ -42,15 +42,7 @@ class AdminService:
             self.packs.add_pack(new_pack)
             self.session.flush() 
 
-            generated_tags = []
-            for i in range(tags_count):
-                new_tag = Tag(
-                    pack_id=new_pack.id,
-                    static_hash=generate_short_hash(6),
-                    sequence_num=i + 1
-                )
-                self.tags.add_tag(new_tag)
-                generated_tags.append(new_tag)
+            generated_tags = self._generate_tags(new_pack.id, 1, tags_count)
             
             self.session.flush() 
 
@@ -68,6 +60,47 @@ class AdminService:
         self.session.commit()
         logger.info(f"Admin {admin_user.username} generated {quantity} new packs (Mode: {mode})")
         return all_generated_packs
+
+    def _generate_tags(
+        self, pack_id: uuid.UUID, first_sequence: int, tags_count: int
+    ) -> list[Tag]:
+        tags = []
+        for sequence_num in range(first_sequence, first_sequence + tags_count):
+            tag = Tag(
+                pack_id=pack_id,
+                static_hash=generate_short_hash(6),
+                sequence_num=sequence_num,
+            )
+            self.tags.add_tag(tag)
+            tags.append(tag)
+        return tags
+
+    def add_pack_tags(self, admin_user: User, pack_id: uuid.UUID, tags_count: int) -> dict:
+        pack = self.packs.lock_pack(pack_id)
+        if pack is None:
+            raise HTTPException(status_code=404, detail="Pack not found")
+
+        first_sequence = self.tags.get_last_sequence(pack_id) + 1
+        tags = self._generate_tags(pack_id, first_sequence, tags_count)
+        pack.tags_count += tags_count
+        response = {
+            "pack_id": pack_id,
+            "tags_count": pack.tags_count,
+            "tags": [
+                {
+                    "id": tag.id,
+                    "static_hash": tag.static_hash,
+                    "sequence_num": tag.sequence_num,
+                    "is_printed": tag.is_printed,
+                }
+                for tag in tags
+            ],
+        }
+        self.session.commit()
+        logger.info(
+            "Admin %s added %s tags to pack %s", admin_user.username, tags_count, pack_id
+        )
+        return response
 
     def get_factory_pack_config(self, admin_user: User, pack_id: uuid.UUID):
         pack = self.packs.get_pack(pack_id)

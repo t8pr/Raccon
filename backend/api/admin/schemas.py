@@ -19,6 +19,14 @@ class PackGenerateResponse(BaseModel):
     master_auth_hash: str
     tags: List[TagInfo]
 
+class PackAddTagsRequest(BaseModel):
+    tags_count: int = Field(gt=0, strict=True)
+
+class PackAddTagsResponse(BaseModel):
+    pack_id: uuid.UUID
+    tags_count: int
+    tags: List[TagInfo]
+
 class FactoryTagView(BaseModel):
     sequence_num: int
     tag_id: uuid.UUID

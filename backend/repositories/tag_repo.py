@@ -1,4 +1,5 @@
 from sqlmodel import Session, select
+from sqlalchemy import func
 from models import Tag
 import uuid
 from typing import List
@@ -16,5 +17,10 @@ class TagRepository:
     
     def get_by_static_hash(self, tag_hash: str) -> Tag | None:
         return self.session.exec(select(Tag).where(Tag.static_hash == tag_hash)).first()
+
+    def get_last_sequence(self, pack_id: uuid.UUID) -> int:
+        statement = select(func.max(Tag.sequence_num)).where(Tag.pack_id == pack_id)
+        return self.session.exec(statement).one() or 0
+
     def add_tag(self, new_tag: Tag) -> None:
         self.session.add(new_tag)

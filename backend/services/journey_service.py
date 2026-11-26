@@ -53,9 +53,11 @@ class JourneyService:
         if pack.mode == "open" and self.is_complete(event.id):
             result = {
                 "status": "view_only",
+                "code": "completed",
                 "message": "The round has finished.",
                 "event_id": event.id,
                 "mode": pack.mode,
+                "total_tags": pack.tags_count,
                 "tag_sequence": tag.sequence_num,
                 "tag_type": event_tag.tag_type if event_tag else None,
                 "content": event_tag.content if event_tag else None,
@@ -75,12 +77,26 @@ class JourneyService:
         if progress.status == "completed":
             raise HTTPException(
                 status_code=400, 
-                detail=
-                    {"message": "You have already completed this event!", 
-                     "mode": pack.mode, 
-                     "remaining_tags": self.get_remaining_tags(pack, progress),
-                     }
+                    detail={
+                        "code": "completed",
+                        "message": "You have already completed this event!",
+                        "mode": pack.mode,
+                        "total_tags": pack.tags_count,
+                        "remaining_tags": self.get_remaining_tags(pack, progress),
+                        "content": event_tag.content if event_tag else None,
+                    }
                 )
+
+        if event_tag is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "tag_not_configured",
+                    "message": "This tag has not been configured for this event.",
+                    "mode": pack.mode,
+                    "remaining_tags": self.get_remaining_tags(pack, progress),
+                },
+            )
 
         if progress.frozen_until and progress.frozen_until > datetime.now(timezone.utc):
             raise HTTPException(
@@ -252,6 +268,7 @@ class JourneyService:
 
         return {
             "status": "success",
+            "code": "completed" if event_finished else None,
             "message": f"Tag {tag.sequence_num} scanned successfully!",
             "event_id": event.id,
             "mode": pack.mode,
@@ -261,7 +278,8 @@ class JourneyService:
             "current_score": progress.score,
             "remaining_tags": self.get_remaining_tags(pack, progress),
             "frozen_until": progress.frozen_until,
-            "event_finished": event_finished
+            "event_finished": event_finished,
+            "total_tags": pack.tags_count if event_finished else None,
         }
     
     def get_progress(self, user: User, event_id: uuid.UUID):
