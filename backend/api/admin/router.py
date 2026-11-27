@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from services.admin_service import AdminService
 from models.user import User
-from api.admin.schemas import AdminPackDetailResponse, FactoryPackResponse, PackAddTagsRequest, PackAddTagsResponse, PackGenerateRequest, PackGenerateResponse)
+from api.admin.schemas import AdminPackDetailResponse, FactoryPackResponse, PackAddTagsRequest, PackAddTagsResponse, PackGenerateRequest, PackGenerateResponse
 from api.packs.schemas import PackResponse
 from api.users.schemas import UserResponse
 from api.auth.dependencies import get_current_admin
