@@ -25,23 +25,26 @@ class JourneyService:
         
     def scan_tag(self, user: User, tag_hash: str, injected_user_hash: str) -> dict:
         if injected_user_hash != user.user_hash:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Security Violation: Link sharing detected.")
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail={"message": "Security Violation: Link sharing detected.", "mode": None})
             
         tag = self.tags.get_by_static_hash(tag_hash)
         if not tag:
-            raise HTTPException(status_code=404, detail="Invalid Tag.")
+            raise HTTPException(status_code=404, detail={"message": "Invalid Tag.", "mode": None})
 
+        pack = self.packs.get_pack(tag.pack_id)
+        
+        if not pack:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"message": "pack not found.", "mode": None, "remaining_tags": None})
+        
         event = self.events.get_by_pack_id(tag.pack_id)
             
         if not event:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No event found.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"message": "No event found.", "mode": pack.mode, "remaining_tags": pack.tags_count})
 
         event = self.events.lock_event(event.id)
 
         if not event or event.status != "live":
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This event is not live.")
-
-        pack = self.packs.get_pack(event.pack_id)
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"message": "This event is not live.", "mode": pack.mode, "remaining_tags": pack.tags_count})
 
         event_tag = self.event_tags.get_exisiting_event_tag(event.id, tag.id)
 
@@ -50,9 +53,11 @@ class JourneyService:
         if pack.mode == "open" and self.is_complete(event.id):
             result = {
                 "status": "view_only",
+                "code": "completed",
                 "message": "The round has finished.",
                 "event_id": event.id,
                 "mode": pack.mode,
+                "total_tags": pack.tags_count,
                 "tag_sequence": tag.sequence_num,
                 "tag_type": event_tag.tag_type if event_tag else None,
                 "content": event_tag.content if event_tag else None,
@@ -70,7 +75,28 @@ class JourneyService:
             self.journey_progress_repo.add_progress(progress)
 
         if progress.status == "completed":
-            raise HTTPException(status_code=400, detail="You have already completed this event!")
+            raise HTTPException(
+                status_code=400, 
+                    detail={
+                        "code": "completed",
+                        "message": "You have already completed this event!",
+                        "mode": pack.mode,
+                        "total_tags": pack.tags_count,
+                        "remaining_tags": self.get_remaining_tags(pack, progress),
+                        "content": event_tag.content if event_tag else None,
+                    }
+                )
+
+        if event_tag is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "tag_not_configured",
+                    "message": "This tag has not been configured for this event.",
+                    "mode": pack.mode,
+                    "remaining_tags": self.get_remaining_tags(pack, progress),
+                },
+            )
 
         if progress.frozen_until and progress.frozen_until > datetime.now(timezone.utc):
             raise HTTPException(
@@ -80,7 +106,9 @@ class JourneyService:
                 "message": "You are currently frozen and cannot scan tags.",
                 "frozen_until": progress.frozen_until.isoformat(),
                 "current_score": progress.score,
-                "tag_sequence": tag.sequence_num
+                "tag_sequence": tag.sequence_num,
+                "remaining_tags": self.get_remaining_tags(pack, progress),
+                "mode": pack.mode # To make frontend handeling easier
                 }
             )
 
@@ -96,7 +124,8 @@ class JourneyService:
                     "message": "You already triggered this trap.",
                     "content": content,
                     "current_score": progress.score,
-                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    "remaining_tags": self.get_remaining_tags(pack, progress),
+                    "mode": pack.mode
                     }
                 )
 
@@ -149,7 +178,8 @@ class JourneyService:
                     "message": "You have already scanned this tag.",
                     "content": event_tag.content,
                     "current_score": progress.score,
-                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    "remaining_tags": self.get_remaining_tags(pack, progress),
+                    "mode": pack.mode
                     }
                 )
             if tag.sequence_num != progress.current_sequence + 1:
@@ -159,7 +189,8 @@ class JourneyService:
                     "code": "skipped_tag",
                     "message": f"Skipped tag! You must scan tag {progress.current_sequence + 1} first.",
                     "current_score": progress.score,
-                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    "remaining_tags": self.get_remaining_tags(pack, progress),
+                    "mode": pack.mode
                     }
                 )
             
@@ -182,7 +213,8 @@ class JourneyService:
                         "code": "already_scanned",
                         "message": "You already claimed this tag.",
                         "current_score": progress.score,
-                        "remaining_tags": self.get_remaining_tags(pack, progress)
+                        "remaining_tags": self.get_remaining_tags(pack, progress),
+                        "mode": pack.mode
                         }
                     )
                 
@@ -194,7 +226,8 @@ class JourneyService:
                     "code": "claimed_by_another_player",
                     "message": f"Sorry, {claimer_name} claimed this tag before you!",
                     "current_score": progress.score,
-                    "remaining_tags": self.get_remaining_tags(pack, progress)
+                    "remaining_tags": self.get_remaining_tags(pack, progress),
+                    "mode": pack.mode
                     }
                 )
                 
@@ -205,7 +238,8 @@ class JourneyService:
                         "code": "already_scanned",
                         "message": "You already claimed this tag.",
                         "current_score": progress.score,
-                        "remaining_tags": self.get_remaining_tags(pack, progress)
+                        "remaining_tags": self.get_remaining_tags(pack, progress),
+                        "mode": pack.mode
                         }
                     )
 
@@ -234,6 +268,7 @@ class JourneyService:
 
         return {
             "status": "success",
+            "code": "completed" if event_finished else None,
             "message": f"Tag {tag.sequence_num} scanned successfully!",
             "event_id": event.id,
             "mode": pack.mode,
@@ -243,7 +278,8 @@ class JourneyService:
             "current_score": progress.score,
             "remaining_tags": self.get_remaining_tags(pack, progress),
             "frozen_until": progress.frozen_until,
-            "event_finished": event_finished
+            "event_finished": event_finished,
+            "total_tags": pack.tags_count if event_finished else None,
         }
     
     def get_progress(self, user: User, event_id: uuid.UUID):
@@ -275,7 +311,7 @@ class JourneyService:
         event = self.events.get_by_pack_id(tag.pack_id)
                     
         if not event:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No event found.")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"message": "No event found."})
         
         event = self.events.lock_event(event.id)
 

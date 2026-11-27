@@ -21,6 +21,8 @@ class TagScanResponse(BaseModel):
     remaining_tags: int
     frozen_until: datetime | None = None
     event_finished: bool = False
+    code: Literal["completed"] | None = None
+    total_tags: int | None = None
 
 class SetTrapRequest(BaseModel):
     tag_hash: str

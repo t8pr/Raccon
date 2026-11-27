@@ -5,6 +5,7 @@ from unittest.mock import Mock
 from models import Event, EventTag, JourneyProgress, Pack, Tag, User
 from services.journey_service import JourneyService
 from fastapi import HTTPException
+from api.journey.schemas import TagScanResponse
 
 
 # Each test case gets a new test user.
@@ -112,9 +113,60 @@ def test_link_sharing_violation(journey_service, session, user, tag):
         )
 
     assert exc.value.status_code == 403
-    assert exc.value.detail == "Security Violation: Link sharing detected."
+    assert exc.value.detail == {
+        "message": "Security Violation: Link sharing detected.",
+        "mode": None,
+    }
     journey_service.tags.get_by_static_hash.assert_not_called()
     session.commit.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("repository", "lookup", "status_code", "message"),
+    [
+        ("tags", "get_by_static_hash", 404, "Invalid Tag."),
+        ("packs", "get_pack", 400, "pack not found."),
+        ("events", "get_by_pack_id", 400, "No event found."),
+        ("events", "lock_event", 400, "This event is not live."),
+    ],
+)
+def test_scan_error_when_lookup_returns_none(
+    journey_service, session, user, tag, pack, repository, lookup, status_code, message
+):
+    getattr(getattr(journey_service, repository), lookup).return_value = None
+
+    with pytest.raises(HTTPException) as exc:
+        journey_service.scan_tag(user, tag.static_hash, user.user_hash)
+
+    assert exc.value.status_code == status_code
+    assert exc.value.detail["message"] == message
+    assert exc.value.detail["mode"] == (pack.mode if repository == "events" else None)
+    if status_code == 400:
+        assert exc.value.detail["remaining_tags"] == (
+            pack.tags_count if repository == "events" else None
+        )
+    session.commit.assert_not_called()
+
+
+def test_completed_sequential_scan_reports_zero_remaining(
+    journey_service, user, tag, pack, event, event_tag, journey_progress
+):
+    event.status = "live"
+    journey_progress.status = "completed"
+    journey_progress.current_sequence = pack.tags_count
+
+    with pytest.raises(HTTPException) as exc:
+        journey_service.scan_tag(user, tag.static_hash, user.user_hash)
+
+    assert exc.value.status_code == 400
+    assert exc.value.detail == {
+        "code": "completed",
+        "message": "You have already completed this event!",
+        "mode": "seq",
+        "total_tags": pack.tags_count,
+        "remaining_tags": 0,
+        "content": event_tag.content,
+    }
 
 
 def test_valid_open_mode_claim(
@@ -165,7 +217,7 @@ def test_valid_open_mode_claim(
 # Pytest will run the test once for each status
 @pytest.mark.parametrize("event_status", ["draft", "paused"])
 def test_non_live_event_scan_rejection(
-    journey_service, session, user, tag, event, event_status
+    journey_service, session, user, tag, event, pack, event_status
 ):
     event.status = event_status
 
@@ -177,7 +229,11 @@ def test_non_live_event_scan_rejection(
         )
 
     assert exc.value.status_code == 400
-    assert exc.value.detail == "This event is not live."
+    assert exc.value.detail == {
+        "message": "This event is not live.",
+        "mode": pack.mode,
+        "remaining_tags": pack.tags_count,
+    }
     session.commit.assert_not_called()
 
 @pytest.mark.parametrize(
@@ -358,6 +414,11 @@ def test_final_open_claim_completes_round(
 
     assert result["status"] == "success"
     assert result["event_finished"] is True
+    response = TagScanResponse.model_validate(result).model_dump()
+    assert response["code"] == "completed"
+    assert response["total_tags"] == 1
+    assert response["mode"] == "open"
+    assert response["content"]["hint"] == "myhint"
     assert result["remaining_tags"] == 0
     assert result["current_score"] == 1
     assert event_tag.content["claimed_by"] == user.user_hash
@@ -369,6 +430,24 @@ def test_final_open_claim_completes_round(
     )
     session.flush.assert_called_once()
     session.commit.assert_called_once()
+
+
+def test_finished_open_round_view_only_includes_completion_fields(
+    journey_service, user, tag, event, pack
+):
+    event.status = "live"
+    pack.mode = "open"
+    journey_service.event_tags.count_clues_status.return_value = (1, 0)
+
+    result = journey_service.scan_tag(user, tag.static_hash, user.user_hash)
+    response = TagScanResponse.model_validate(result).model_dump()
+
+    assert response["status"] == "view_only"
+    assert response["event_finished"] is True
+    assert response["code"] == "completed"
+    assert response["total_tags"] == pack.tags_count
+    assert response["mode"] == "open"
+    assert response["content"]["hint"] == "myhint"
 
 
 @pytest.mark.parametrize(("trap_type", "trap_value"), [("boom", 1), ("freeze", 30)])

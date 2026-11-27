@@ -9,6 +9,15 @@ class PackRepository:
     
     def get_pack(self, pack_id: uuid.UUID) -> Pack | None:
         return self.session.get(Pack, pack_id)
+
+    def lock_pack(self, pack_id: uuid.UUID) -> Pack | None:
+        statement = (
+            select(Pack)
+            .where(Pack.id == pack_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
+        return self.session.exec(statement).first()
     
     def get_by_master_auth(self, master_auth_hash: str) -> Pack | None:
         return self.session.exec(select(Pack).where(Pack.master_auth_hash == master_auth_hash)).first()
