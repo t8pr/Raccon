@@ -23,14 +23,16 @@ def session():
 @pytest.mark.parametrize(
     ("player_count", "current_rank", "expected_ranks"),
     [
-        (14, 3, [1, 2, 3]),
-        (14, 14, [1, 2, 14]),
+        (14, 3, list(range(1, 11))),
+        (14, 10, list(range(1, 11))),
+        (14, 11, [*range(1, 11), 11]),
+        (14, 14, [*range(1, 11), 14]),
         (2, 2, [1, 2]),
         (1, 1, [1]),
-        (14, None, [1, 2, 3]),
+        (14, None, list(range(1, 11))),
     ],
 )
-def test_leaderboard_returns_at_most_three_players(
+def test_leaderboard_returns_top_plus_current_player(
     session, player_count, current_rank, expected_ranks
 ):
     pack = Pack(mode="seq", tags_count=20, master_auth_hash="test-pack")

@@ -72,7 +72,7 @@ async def broadcast_latest_leaderboard(
         published = await publish_leaderboard(
             redis_client,
             event_id,
-            players[:3],
+            players[:10],
         )
 
         if not published:

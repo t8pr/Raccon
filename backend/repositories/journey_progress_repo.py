@@ -43,7 +43,7 @@ class JourneyProgressRepository:
             .where(JourneyProgress.event_id == event_id)
         )
 
-        top_query = statement.order_by(*ordering).limit(3)
+        top_query = statement.order_by(*ordering).limit(10)
 
         players = [dict(row) for row in self.session.exec(top_query).mappings().all()]
 
@@ -69,7 +69,7 @@ class JourneyProgressRepository:
         current_player = self.session.execute(user_query).mappings().one_or_none()
 
         if current_player is not None:
-            return [*players[:2], dict(current_player)] # replace the third player
+            return [*players, dict(current_player)] # replace the third player
 
         return players
     
