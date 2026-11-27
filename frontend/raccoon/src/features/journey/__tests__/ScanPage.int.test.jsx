@@ -23,17 +23,18 @@ function renderScan(route = `/scan?tag=tag3&sig=${ME}`) {
 
 // رد المسح، والمتصدرين للجولة e1
 function mockScan(scan, { players = [] } = {}) {
-  const trapRequests = [];
   server.use(
     http.post(`${API}/journey/scan`, () =>
       typeof scan === "function" ? scan() : HttpResponse.json(scan),
     ),
     http.get(`${API}/journey/leaderboard/e1`, () => HttpResponse.json(players)),
   );
-  return trapRequests;
 }
 
-const scanError = (detail, status = 400) => () => HttpResponse.json({ detail }, { status });
+const scanError =
+  (detail, status = 400) =>
+  () =>
+    HttpResponse.json({ detail }, { status });
 
 const base = {
   status: "success",
@@ -46,87 +47,132 @@ const base = {
   content: { hint: "تحت الكرسي" },
 };
 
-const players = [
-  { user_hash: "x1", name: "نورة", score: 7 },
-  { user_hash: ME, name: "عبدالرحمن", score: 5 },
-];
+const player = (rank, overrides = {}) => ({
+  user_hash: `u${rank}`,
+  name: `لاعب ${rank}`,
+  avatar_id: 1,
+  score: 40 - rank,
+  rank,
+  ...overrides,
+});
 
 const title = (name) => screen.findByRole("heading", { level: 1, name });
+const progress = () =>
+  screen.getByRole("img", { name: /^خلصت \d+ من \d+ قطع$/ });
 
 test("أثناء القراءة: «لحظة...»", async () => {
   mockScan(async () => delay("infinite"));
   renderScan();
 
   expect(await title("لحظة...")).toBeInTheDocument();
-  expect(screen.getByText("جاري قراءة القطعة")).toBeInTheDocument();
 });
 
-test("رابط ناقص: رسالة وزر الرئيسية", async () => {
-  const { location } = renderScan("/scan?tag=tag3");
+test("رابط ناقص: «رابط غير صالح»", async () => {
+  renderScan("/scan?tag=tag3");
 
   expect(await title("رابط غير صالح")).toBeInTheDocument();
-  expect(screen.getByText("رابط غير صالح أو بيانات مفقودة.")).toBeInTheDocument();
-
-  await userEvent.click(screen.getByRole("button", { name: "رجوع للرئيسية" }));
-  expect(location.current.pathname).toBe("/home");
+  expect(
+    screen.getByRole("region", { name: "رابط غير صالح أو بيانات مفقودة." }),
+  ).toBeInTheDocument();
 });
 
 describe("مسح ناجح", () => {
-  test("صيد مفتوح: «حصلتها!» والتلميح والنقاط", async () => {
+  test("«حصلتها!» برقم القطعة وتلميحها", async () => {
     mockScan(base);
     renderScan();
 
     expect(await title("حصلتها!")).toBeInTheDocument();
-    expect(screen.getByText("القطعة 03 صارت لك")).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "تلميح القطعة" })).toHaveTextContent("تحت الكرسي");
-    expect(screen.getByText(/نقاطك/)).toHaveTextContent("نقاطك 5");
-    expect(screen.getByText(/باقي/)).toHaveTextContent("باقي 4 قطع");
+    expect(screen.getByText("03")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "تلميح القطعة" }),
+    ).toHaveTextContent("تحت الكرسي");
     expect(screen.getByText("جولة راكون")).toBeInTheDocument();
   });
 
-  test("تسلسلي: رقم القطعة من المجموع", async () => {
-    mockScan({ ...base, mode: "seq" });
+  test("شريط التقدّم: المجموع = النقاط + الباقي لو الخادم ما أرسل total_tags", async () => {
+    mockScan(base); // 5 نقاط + 4 باقية
     renderScan();
 
-    expect(await screen.findByText("القطعة 5 من 9")).toBeInTheDocument();
+    await title("حصلتها!");
+    const dots = progress();
+    expect(dots).toHaveAccessibleName("خلصت 5 من 9 قطع");
+    // eslint-disable-next-line testing-library/no-node-access -- النقاط زخرفة بلا role
+    expect(dots.children).toHaveLength(9);
   });
 
-  test("المتصدرون: الإكليل يعرض ترتيبي، والقائمة تميّزني بـ«أنت»", async () => {
-    mockScan(base, { players });
+  test("شريط التقدّم: total_tags من الخادم يغلب", async () => {
+    mockScan({ ...base, current_score: 3, remaining_tags: 5, total_tags: 10 });
     renderScan();
 
-    const rank = await screen.findByRole("button", { name: "المتصدرون — ترتيبك 2" });
-    expect(rank).toHaveAttribute("aria-expanded", "false");
-    await userEvent.click(rank);
+    await title("حصلتها!");
+    expect(progress()).toHaveAccessibleName("خلصت 5 من 10 قطع");
+    // eslint-disable-next-line testing-library/no-node-access -- النقاط زخرفة بلا role
+    expect(progress().children).toHaveLength(10);
+  });
 
-    const sheet = await screen.findByRole("dialog", { name: "المتصدرون" });
-    const rows = within(sheet).getAllByRole("listitem");
-    expect(rows[0]).toHaveTextContent("نورة");
-    expect(rows[1]).toHaveTextContent("أنت");
-    expect(rows[1]).toHaveAttribute("aria-current", "true");
+  test("آخر قطعة في التسلسلي: «خلصت!» بالكأس والتهنئة والمتصدرين", async () => {
+    mockScan(
+      {
+        ...base,
+        mode: "seq",
+        event_finished: true,
+        code: "completed",
+        current_score: 9,
+        remaining_tags: 0,
+        total_tags: 9,
+      },
+      { players: [player(1), player(2, { user_hash: ME })] },
+    );
+    renderScan();
 
-    await userEvent.click(within(sheet).getByRole("button", { name: "إغلاق" }));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(await title("خلصت!")).toBeInTheDocument();
+    expect(progress()).toHaveAccessibleName("خلصت 9 من 9 قطع");
+    await waitFor(() =>
+      expect(
+        screen.getByRole("region", { name: "المتصدرون" }),
+      ).toHaveTextContent("أنت"),
+    );
+    expect(screen.getByText("9/9")).toBeInTheDocument();
+    expect(screen.getByText("ألف مبروووك! لقيت كل القطع")).toBeInTheDocument();
+    expect(
+      screen.getByText("الآن خلصت الجولة، شوف ترتيبك في المتصدرين."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("حصلتها!")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "تلميح القطعة" }),
+    ).not.toBeInTheDocument();
+  });
+
+  test("آخر قطعة في المفتوح: «خلصت!» بدون عدد (القطع موزّعة)", async () => {
+    mockScan({
+      ...base,
+      event_finished: true,
+      code: "completed",
+      current_score: 4,
+      remaining_tags: 0,
+      total_tags: 9,
+    });
+    renderScan();
+
+    expect(await title("خلصت!")).toBeInTheDocument();
+    expect(
+      screen.getByText("ألف مبروووك! آخر قطعة كانت من نصيبك"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("9/9")).not.toBeInTheDocument();
   });
 
   test("صورة التلميح تتكبّر", async () => {
-    mockScan({ ...base, content: { hint: "x", image: "https://cdn.test/h.png" } });
+    mockScan({
+      ...base,
+      content: { hint: "x", image: "https://cdn.test/h.png" },
+    });
     renderScan();
 
-    await userEvent.click(await screen.findByRole("button", { name: "تكبير صورة التلميح" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "تكبير صورة التلميح" }),
+    );
 
-    expect(await screen.findByRole("dialog", { name: "صورة التلميح" })).toBeInTheDocument();
-  });
-
-  test("آخر قطعة: «خلصتها!» وزر المتصدرين", async () => {
-    mockScan({ ...base, event_finished: true, current_score: 9, remaining_tags: 0 }, { players });
-    renderScan();
-
-    expect(await title("خلصتها!")).toBeInTheDocument();
-    expect(screen.getByText("9/9")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "شوف المتصدرين" }));
-    expect(await screen.findByRole("dialog", { name: "المتصدرون" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
   });
 
   test("الجولة انتهت: للعرض فقط", async () => {
@@ -134,8 +180,9 @@ describe("مسح ناجح", () => {
     renderScan();
 
     expect(await title("انتهت الجولة")).toBeInTheDocument();
-    expect(screen.getByText("للعرض فقط · ما تنحسب نقاط")).toBeInTheDocument();
-    expect(screen.getByText("هذه قطعة فخ. ما راح ينطبق أي تأثير.")).toBeInTheDocument();
+    expect(
+      screen.getByText("هذه قطعة فخ. ما راح ينطبق أي تأثير."),
+    ).toBeInTheDocument();
   });
 
   test("رد فاضي: «ما فيه شي»", async () => {
@@ -146,28 +193,109 @@ describe("مسح ناجح", () => {
   });
 });
 
-describe("الفخاخ", () => {
-  const trap = (content, extra) => ({ ...base, tag_type: "trap", content, ...extra });
+describe("المتصدرون", () => {
+  const topTen = Array.from({ length: 10 }, (_, index) => player(index + 1));
 
-  test("بووم: خسر نقطة", async () => {
+  test("الصغيرة: أول 2 وصفّي لو أنا برا الثلاثة، و«كبّر» يعرض 10", async () => {
+    mockScan(base, {
+      players: [...topTen, player(14, { user_hash: ME, name: "عبدالرحمن" })],
+    });
+    renderScan();
+
+    const sheet = await screen.findByRole("region", { name: "المتصدرون" });
+    await waitFor(() =>
+      expect(within(sheet).getAllByRole("listitem")).toHaveLength(3),
+    );
+
+    let rows = within(sheet).getAllByRole("listitem");
+    expect(rows[0]).toHaveTextContent("لاعب 1");
+    expect(rows[1]).toHaveTextContent("لاعب 2");
+    expect(rows[2]).toHaveTextContent("14");
+    expect(rows[2]).toHaveTextContent("أنت");
+    expect(rows[2]).toHaveAttribute("aria-current", "true");
+
+    await userEvent.click(within(sheet).getByRole("button", { name: "كبّر" }));
+
+    // الكبيرة: أول 9 وصفّي (10 صفوف)
+    await waitFor(() =>
+      expect(within(sheet).getAllByRole("listitem")).toHaveLength(10),
+    );
+    rows = within(sheet).getAllByRole("listitem");
+    expect(rows[8]).toHaveTextContent("لاعب 9");
+    expect(rows[9]).toHaveTextContent("أنت");
+    expect(
+      within(sheet).getByRole("button", { name: "صغّر" }),
+    ).toBeInTheDocument();
+  });
+
+  test("أنا من الثلاثة الأوائل: ما يتكرر صفّي", async () => {
+    const list = topTen.map((item) =>
+      item.rank === 2 ? { ...item, user_hash: ME } : item,
+    );
+    mockScan(base, { players: list });
+    renderScan();
+
+    const sheet = await screen.findByRole("region", { name: "المتصدرون" });
+    await waitFor(() =>
+      expect(within(sheet).getAllByRole("listitem")).toHaveLength(3),
+    );
+
+    const rows = within(sheet).getAllByRole("listitem");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      expect.stringContaining("لاعب 1"),
+      expect.stringContaining("أنت"),
+      expect.stringContaining("لاعب 3"),
+    ]);
+  });
+
+  test("ما فيه لاعبين: رسالة", async () => {
+    mockScan(base, { players: [] });
+    renderScan();
+
+    const sheet = await screen.findByRole("region", { name: "المتصدرون" });
+    expect(
+      await within(sheet).findByText("لا يوجد مشاركون بعد."),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("الفخاخ", () => {
+  const trap = (content, extra) => ({
+    ...base,
+    tag_type: "trap",
+    content,
+    ...extra,
+  });
+
+  test("بووم: كانت 5 صارت 4", async () => {
     mockScan(trap({ boom: 1 }, { current_score: 4 }));
     renderScan();
 
     expect(await title("بووم!")).toBeInTheDocument();
-    expect(screen.getByText("خسرت نقطة · صارت نقاطك 4")).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "تفاصيل الخصم" }),
+    ).toHaveTextContent("كانت 5 · صارت 4");
   });
 
   test("تجميد: عدّاد ثم «انفكّ التجميد!»", async () => {
-    mockScan(trap({ freeze: 1 }, { frozen_until: new Date(Date.now() + 1000).toISOString() }));
+    mockScan(
+      trap(
+        { freeze: 1 },
+        { frozen_until: new Date(Date.now() + 1000).toISOString() },
+      ),
+    );
     renderScan();
 
     expect(await title("تجمّدت!")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /كمّل اللعب بعد/ })).toBeDisabled();
+    expect(screen.getByRole("region", { name: "العدّاد" })).toBeInTheDocument();
 
-    await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("انفكّ التجميد!"), {
-      timeout: 2500,
-    });
-    expect(screen.getByRole("button", { name: "كمّل البحث" })).toBeEnabled();
+    await waitFor(
+      () =>
+        expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+          "انفكّ التجميد!",
+        ),
+      { timeout: 2500 },
+    );
   });
 
   test("فخ فاضي", async () => {
@@ -175,6 +303,7 @@ describe("الفخاخ", () => {
     renderScan();
 
     expect(await title("قطعة فخ")).toBeInTheDocument();
+    expect(screen.getByText("الفخ فاضي")).toBeInTheDocument();
   });
 
   describe("اختر الفخ", () => {
@@ -191,76 +320,176 @@ describe("الفخاخ", () => {
 
     test("تجميد بالمدة الافتراضية: يزرع ويعرض «زرعته!»", async () => {
       mockScan(trap({ choose: true }));
-      const bodies = mockSetTrap(() => HttpResponse.json({ content: { was_choose: true, freeze: 60 } }));
+      const bodies = mockSetTrap(() =>
+        HttpResponse.json({ content: { was_choose: true, freeze: 60 } }),
+      );
       renderScan();
 
       expect(await title("اختر الفخ!")).toBeInTheDocument();
-      await userEvent.click(screen.getByRole("button", { name: "ازرع فخ التجميد · 60 ث" }));
+      await userEvent.click(
+        screen.getByRole("button", { name: "ازرع فخ التجميد · 60 ث" }),
+      );
 
       expect(await title("زرعته!")).toBeInTheDocument();
-      expect(screen.getByText("فخ تجميد 60 ث على القطعة 03")).toBeInTheDocument();
+      expect(
+        screen.getByRole("region", { name: "أول واحد يمسحها بعدك بيتجمّد" }),
+      ).toBeInTheDocument();
       expect(bodies).toEqual([
-        { tag_hash: "tag3", injected_user_hash: ME, trap_type: "freeze", trap_value: 60 },
+        {
+          tag_hash: "tag3",
+          injected_user_hash: ME,
+          trap_type: "freeze",
+          trap_value: 60,
+        },
       ]);
+    });
+
+    test("تختار مدة ثانية (120 ث)", async () => {
+      mockScan(trap({ choose: true }));
+      const bodies = mockSetTrap(() =>
+        HttpResponse.json({ content: { was_choose: true, freeze: 120 } }),
+      );
+      renderScan();
+
+      await userEvent.click(
+        await screen.findByRole("radio", { name: "120 ث" }),
+      );
+      await userEvent.click(
+        screen.getByRole("button", { name: "ازرع فخ التجميد · 120 ث" }),
+      );
+
+      await title("زرعته!");
+      expect(bodies[0]).toMatchObject({ trap_type: "freeze", trap_value: 120 });
     });
 
     test("بووم قيمته 1", async () => {
       mockScan(trap({ choose: true }));
-      const bodies = mockSetTrap(() => HttpResponse.json({ content: { was_choose: true, boom: 1 } }));
+      const bodies = mockSetTrap(() =>
+        HttpResponse.json({ content: { was_choose: true, boom: 1 } }),
+      );
       renderScan();
 
       await userEvent.click(await screen.findByRole("radio", { name: /بووم/ }));
-      await userEvent.click(screen.getByRole("button", { name: "ازرع فخ بووم" }));
+      await userEvent.click(
+        screen.getByRole("button", { name: /ازرع فخ بووم/ }),
+      );
 
-      expect(await screen.findByText("فخ بووم على القطعة 03")).toBeInTheDocument();
+      expect(await title("زرعته!")).toBeInTheDocument();
+      expect(
+        screen.getByRole("region", { name: "أول واحد يمسحها بعدك يخسر نقطة" }),
+      ).toBeInTheDocument();
       expect(bodies[0]).toMatchObject({ trap_type: "boom", trap_value: 1 });
-    });
-
-    test("مدة غلط تقفل الزر", async () => {
-      mockScan(trap({ choose: true }));
-      renderScan();
-
-      const seconds = await screen.findByRole("spinbutton", { name: "مدة التجميد بالثواني" });
-      await userEvent.clear(seconds);
-
-      expect(screen.getByRole("button", { name: "ازرع فخ التجميد · — ث" })).toBeDisabled();
     });
 
     test("فشل الزرع: رسالة الخادم", async () => {
       mockScan(trap({ choose: true }));
-      mockSetTrap(() => HttpResponse.json({ detail: { message: "Trap already set" } }, { status: 400 }));
+      mockSetTrap(() =>
+        HttpResponse.json(
+          { detail: { message: "Trap already set" } },
+          { status: 400 },
+        ),
+      );
       renderScan();
 
-      await userEvent.click(await screen.findByRole("button", { name: /ازرع فخ التجميد/ }));
+      await userEvent.click(
+        await screen.findByRole("button", { name: /ازرع فخ التجميد/ }),
+      );
 
-      expect(await screen.findByRole("alert")).toHaveTextContent("Trap already set");
+      expect(await screen.findByRole("alert")).toHaveTextContent(
+        "Trap already set",
+      );
     });
   });
 });
 
 describe("المسح مرفوض", () => {
   test.each([
-    [{ code: "already_scanned", message: "x", content: { hint: "تحت الكرسي" }, current_score: 5 }, "حقتك من قبل", "هذا تلميح القطعة مرة ثانية — نقاطك ما تغيّرت."],
-    [{ code: "claimed_by_another_player", message: "Sorry, نورة claimed this tag before you!" }, "سبقك غيرك!", "سبقك لهذي القطعة"],
-    [{ code: "skipped_tag", message: "Skipped tag! You must scan tag 4 first." }, "مو بالترتيب!", "امسح القطعة 04 أول"],
-    [{ code: "unknown", message: "This event is not live." }, "استعد!", "ننتظر المنظّم يبدأ الجولة"],
-    [{ code: "unknown", message: "Security Violation: not your link" }, "مو رابطك!", "هذا الرابط مو لك"],
-    [{ code: "unknown", message: "You have already completed this event." }, "خلصتها!", "أنت خلصت هذي الجولة من قبل"],
-    [{ code: "unknown", message: "Server exploded" }, "ما ضبطت!", "Server exploded"],
+    [
+      {
+        code: "already_scanned",
+        message: "x",
+        content: { hint: "تحت الكرسي" },
+        current_score: 5,
+      },
+      "حقتك من قبل",
+      "هذا تلميح القطعة مرة ثانية — نقاطك ما تغيّرت.",
+    ],
+    [
+      {
+        code: "claimed_by_another_player",
+        message: "Sorry, نورة claimed this tag before you!",
+      },
+      "سبقك غيرك!",
+      "سبقك لهذي القطعة",
+    ],
+    [
+      {
+        code: "skipped_tag",
+        message: "Skipped tag! You must scan tag 4 first.",
+      },
+      "مو بالترتيب!",
+      "04",
+    ],
+    [
+      { message: "This event is not live.", mode: "open" },
+      "استعد!",
+      "ننتظر المنظم يبدأ الجولة",
+    ],
+    [
+      { message: "Security Violation: not your link" },
+      "مو رابطك!",
+      "امسح القطعة بجوالك عشان تفتحها",
+    ],
+    [
+      {
+        code: "completed",
+        message: "You have already completed this event!",
+        total_tags: 9,
+      },
+      "خلصت!",
+      "أنت خلصت هذي الجولة من قبل",
+    ],
+    [
+      { code: "tag_not_configured", message: "Tag not configured" },
+      "ما عرفناها!",
+      "تأكد إنها من قطع الجولة",
+    ],
+    [
+      { code: "unknown", message: "Server exploded" },
+      "ما عرفناها!",
+      "تأكد إنها من قطع الجولة",
+    ],
   ])("%j", async (detail, heading, text) => {
     mockScan(scanError(detail));
     renderScan();
 
     expect(await title(heading)).toBeInTheDocument();
-    expect(screen.getByText(text, { exact: false })).toBeInTheDocument();
+    expect(screen.getAllByText(text, { exact: false }).length).toBeGreaterThan(
+      0,
+    );
   });
 
   test("اسم اللاعب اللي سبقك يظهر", async () => {
-    mockScan(scanError({ code: "claimed_by_another_player", message: "Sorry, نورة claimed this tag before you!" }));
+    mockScan(
+      scanError({
+        code: "claimed_by_another_player",
+        message: "Sorry, نورة claimed this tag before you!",
+      }),
+    );
     renderScan();
 
     await title("سبقك غيرك!");
-    expect(screen.getByText("نورة").closest("strong, p, span")).toHaveTextContent("نورة سبقك لهذي القطعة");
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent(
+      "نورة سبقك لهذي القطعة",
+    );
+  });
+
+  test("خلصت الجولة: الكأس فيه المجموع", async () => {
+    mockScan(scanError({ code: "completed", message: "x", total_tags: 9 }));
+    renderScan();
+
+    await title("خلصت!");
+    expect(screen.getByText("9/9")).toBeInTheDocument();
   });
 
   test("detail نصي من الخادم", async () => {
@@ -271,18 +500,16 @@ describe("المسح مرفوض", () => {
   });
 
   test("متجمّد من فخ سابق", async () => {
-    mockScan(scanError({ code: "freeze", message: "Frozen", frozen_until: new Date(Date.now() + 60_000).toISOString(), current_score: 2 }));
+    mockScan(
+      scanError({
+        code: "freeze",
+        message: "Frozen",
+        frozen_until: new Date(Date.now() + 60_000).toISOString(),
+        current_score: 2,
+      }),
+    );
     renderScan();
 
     expect(await title("تجمّدت!")).toBeInTheDocument();
-  });
-
-  test("«كمّل البحث» يرجع للرئيسية", async () => {
-    mockScan(scanError({ code: "claimed_by_another_player", message: "x" }));
-    const { location } = renderScan();
-
-    await userEvent.click(await screen.findByRole("button", { name: "كمّل البحث" }));
-
-    expect(location.current.pathname).toBe("/home");
   });
 });

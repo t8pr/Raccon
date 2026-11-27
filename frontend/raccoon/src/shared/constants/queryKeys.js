@@ -24,6 +24,9 @@ export const queryKeys = {
   // جولات المستخدم داخل صفحة الربط
   claimEvents: (userId, packId) => ["claim-events", userId, packId],
 
+  // المتصدرون لجولة واحدة (يحدّثها البث المباشر)
+  leaderboard: (eventId, token) => ["leaderboard", eventId, token],
+
   // تجارب الأدمن (صفحة واحدة، أو كل الصفحات بلا معاملات)
   adminPacks: (page, perPage) =>
     page === undefined ? ["admin-packs"] : ["admin-packs", page, perPage],

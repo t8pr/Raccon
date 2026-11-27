@@ -1,10 +1,13 @@
 import ScanLayout from "../components/ScanLayout/ScanLayout";
-import InfoCard from "../components/InfoCard/InfoCard";
+import InfoCard, { ScanNote } from "../components/InfoCard/InfoCard";
 import ChooseTrap from "../components/ChooseTrap";
 import FreezeView from "../components/FreezeView";
-import { ContinueAction } from "../components/ScanActions";
-import { BombBadge, FreezeBadge, NumberBadge } from "../components/ScanBadges/ScanBadges";
-import { padTag } from "../utils/scanErrors";
+import {
+  BoomBadge,
+  DiceBadge,
+  NumberBadge,
+  TRAP_ORBIT,
+} from "../components/ScanBadges/ScanBadges";
 import { useTranslation } from "react-i18next";
 
 /*
@@ -13,42 +16,25 @@ import { useTranslation } from "react-i18next";
     choose                     اختر الفخ!  اللاعب يختار النوع والمدة
     boom                       بووم!      خسر نقطة
     freeze                     تجمّدت!    عدّاد
+  stats: { score, remaining, total } لنقاط التقدّم
 */
-export default function TrapScreen({
-  shell,
-  scanResult,
-  score,
-  remaining,
-  onHome,
-  choose,
-}) {
+export default function TrapScreen({ shell, scanResult, stats, choose }) {
   const { t } = useTranslation();
   const content = scanResult.content;
-  const tagNumber = scanResult.tag_sequence;
-  const stats = { score, remaining };
 
   if (scanResult.status === "trap_set" && content?.was_choose) {
-    const isBoom = Boolean(content.boom);
-
     return (
       <ScanLayout
         {...shell}
+        mode="open"
         {...stats}
         title={t("journey.trap.plantedTitle")}
-        badge={isBoom ? <BombBadge /> : <FreezeBadge />}
-        pill={
-          isBoom
-            ? t("journey.trap.plantedBoomPill", { number: padTag(tagNumber) })
-            : t("journey.trap.plantedFreezePill", {
-                seconds: content.freeze,
-                number: padTag(tagNumber),
-              })
-        }
-        actions={<ContinueAction onHome={onHome} />}
+        badge={<DiceBadge />}
+        orbit={TRAP_ORBIT}
       >
         <InfoCard
           title={
-            isBoom
+            content.boom
               ? t("journey.trap.plantedBoomCard")
               : t("journey.trap.plantedFreezeCard")
           }
@@ -63,10 +49,9 @@ export default function TrapScreen({
       <ChooseTrap
         key={choose.key}
         shell={shell}
+        stats={stats}
         tagHash={choose.tagHash}
         userHash={choose.userHash}
-        currentScore={score}
-        remainingTags={remaining}
         onActivated={choose.onActivated}
       />
     );
@@ -76,15 +61,19 @@ export default function TrapScreen({
     return (
       <ScanLayout
         {...shell}
+        mode="open"
         {...stats}
         title={t("journey.trap.boomTitle")}
-        badge={<BombBadge value={`−${content.boom}`} />}
-        pill={t("journey.trap.boomPill", { score })}
-        actions={<ContinueAction onHome={onHome} />}
+        badge={<BoomBadge value={`−${content.boom}`} />}
       >
         <InfoCard
+          variant="stat"
           label={t("journey.trap.boomLabel")}
-          title={t("journey.trap.boomCardTitle", { score })}
+          // النقاط ما تنزل تحت الصفر، فاللي قبل = اللي بعد + الخصم (تقريبًا لو وصل صفر)
+          title={t("journey.trap.boomCardTitle", {
+            before: stats.score + content.boom,
+            score: stats.score,
+          })}
           text={t("journey.trap.boomCardText")}
           aside={`−${content.boom}`}
         />
@@ -96,11 +85,9 @@ export default function TrapScreen({
     return (
       <FreezeView
         shell={shell}
-        currentScore={score}
-        remainingTags={remaining}
+        stats={stats}
         frozenUntil={scanResult.frozen_until}
         freezeSeconds={content.freeze}
-        onContinue={onHome}
       />
     );
   }
@@ -108,11 +95,12 @@ export default function TrapScreen({
   return (
     <ScanLayout
       {...shell}
+      mode="open"
       {...stats}
       title={t("journey.trap.emptyTitle")}
-      badge={<NumberBadge value={tagNumber} />}
-      pill={t("journey.trap.emptyPill")}
-      actions={<ContinueAction onHome={onHome} />}
-    />
+      badge={<NumberBadge value={scanResult.tag_sequence} />}
+    >
+      <ScanNote>{t("journey.trap.emptyPill")}</ScanNote>
+    </ScanLayout>
   );
 }

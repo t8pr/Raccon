@@ -725,6 +725,19 @@
   border-top: 1px solid var(--line);
 }
 
+/* «معاينة»: في الطرف الثاني من سطر الأزرار، قدام «حفظ» */
+.customization-view .customization-editor__preview {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  border: 1px solid var(--line-strong);
+  background: var(--accent-soft);
+  color: var(--accent);
+  text-decoration: none;
+}
+
 .customization-view .customization-toast {
   position: fixed;
   bottom: 24px;

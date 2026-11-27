@@ -13,13 +13,16 @@ export function toScanError(error) {
     return { code: "unknown", message: detail };
   }
 
-  return detail || { code: "unknown", message: i18n.t("journey.error.readFailed") };
+  return (
+    detail || { code: "unknown", message: i18n.t("journey.error.readFailed") }
+  );
 }
 
 /*
   نوع الخطأ لاختيار الشاشة:
     already_scanned · claimed_by_another_player · freeze · skipped_tag  (لها code من الخادم)
-    not_live · not_yours · completed  (نص فقط، نعرفها من الرسالة)
+    not_live · completed  (لها code من الخادم الجديد، ونعرفها من الرسالة كاحتياط)
+    not_yours  (نص فقط، نعرفها من الرسالة)
     unknown
 */
 export function getErrorKind(scanError) {

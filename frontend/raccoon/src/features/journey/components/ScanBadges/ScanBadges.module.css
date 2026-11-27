@@ -1,101 +1,86 @@
 /* محتويات الدائرة. المقاسات هنا بنسبة من قطر الدائرة (--sc-circle من ScanLayout)
    حتى تصغر مع الدائرة في الشاشات القصيرة. */
 
+/* خط الأرقام فيه فراغ فوق الرقم أكثر من تحته، فيبان نازل شوي.
+   نرفعه بنسبة من حجم الخط (em) عشان يبقى في المنتصف حتى لو صغرت الدائرة */
 .number {
-  padding-top: 0.1em;
-}
-
-.muted {
-  color: var(--on-panel-muted);
-}
-
-.mint {
-  color: var(--mint);
+  translate: 0 -0.035em;
 }
 
 .mark {
   display: block;
-  width: 65%;
-  height: auto;
+  width: 62%;
+  aspect-ratio: 260 / 200;
+  background: var(--ink);
+  -webkit-mask: var(--mark) center / contain no-repeat;
+  mask: var(--mark) center / contain no-repeat;
 }
 
-/* ---------- القنبلة ---------- */
-.bomb {
-  position: relative;
-  display: block;
-  width: 76%;
-  aspect-ratio: 1;
-  margin: -6% -5% 0 0;
-  color: var(--mint);
+.question {
+  font-size: 1.25em;
+  translate: 0 -0.025em;
 }
 
-.bombIcon {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.fuse {
-  stroke: var(--gold);
-}
-
-.bombValue {
-  position: absolute;
-  top: 58%;
-  left: 42%;
-  padding-top: 0.12em;
-  transform: translate(-50%, -50%);
-  font-family: var(--font-display);
-  font-size: 0.62em;
-  line-height: 1;
-  color: var(--ink);
-}
-
-/* ---------- التجميد ---------- */
+/* ---------- التجميد: رقم كبير وتحته «ثانية» ---------- */
 .freeze {
   display: grid;
   justify-items: center;
-  gap: 4px;
+  gap: 2px;
+  translate: 0 -0.065em;
 }
 
-.freeze img {
-  display: block;
-  width: calc(var(--sc-circle, 120px) * 0.45);
-  height: auto;
+.freeze b {
+  font-weight: 400;
+  line-height: 1;
 }
 
-.freezeSeconds {
+.freeze small {
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   line-height: 1.4;
-  color: var(--on-panel-muted);
 }
 
-.freezeSeconds b {
-  font-weight: 700;
-  color: var(--on-panel);
-}
-
-/* ---------- الكأس + عدد القطع ---------- */
-.cup {
-  display: block;
-  width: 52%;
-  height: auto;
-  color: var(--gold);
-}
-
-.count {
+/* ---------- خلصت: نجمة بنفسجية على طرف الدائرة ----------
+   clip-path يقص المربع على شكل نجمة 12 رأس */
+.burst {
   position: absolute;
-  top: -6px;
-  right: -30px;
-  padding: 5px 12px 3px;
-  border: 3px solid var(--canvas);
-  border-radius: var(--radius-pill);
-  background: var(--mint);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-size: 18px;
-  line-height: 1.2;
-  white-space: nowrap;
+  top: -14px;
+  inset-inline-end: -18px;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  clip-path: polygon(
+    50% 0%,
+    61% 11%,
+    75% 7%,
+    79% 21%,
+    93% 25%,
+    89% 39%,
+    100% 50%,
+    89% 61%,
+    93% 75%,
+    79% 79%,
+    75% 93%,
+    61% 89%,
+    50% 100%,
+    39% 89%,
+    25% 93%,
+    21% 79%,
+    7% 75%,
+    11% 61%,
+    0% 50%,
+    11% 39%,
+    7% 25%,
+    21% 21%,
+    25% 7%,
+    39% 11%
+  );
 }

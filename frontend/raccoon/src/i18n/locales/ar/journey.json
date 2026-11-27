@@ -14,19 +14,22 @@
     "skippedNote": "لازم تمسح القطعة {{number}} قبل هذي. في الوضع التسلسلي القطع تنفتح بالترتيب، ونقاطك ما تغيّرت.",
     "notLiveTitle": "استعد!",
     "notLivePill": "الجولة ما بدأت أو انتهت",
-    "notLiveCardTitle": "ننتظر المنظّم يبدأ الجولة",
-    "notLiveCardText": "صاحب اللعبة ما شغّلها أو وقّفها مؤقتًا. امسح القطعة مرة ثانية لما تشتغل.",
+    "notLiveCardTitle": "ننتظر المنظم يبدأ الجولة",
+    "notLiveCardText": "أول ما يبدأها، امسح القطعة مرة ثانية.",
     "notYoursTitle": "مو رابطك!",
     "notYoursPill": "هذا الرابط مو لك",
     "notYoursCardTitle": "امسح القطعة بجوالك عشان تفتحها",
     "notYoursCardText": "الروابط ما تنتقل بين اللاعبين، كل مسح ينحسب لصاحبه.",
-    "completedTitle": "خلصتها!",
+    "completedTitle": "خلصت!",
     "completedPill": "ما تقدر تمسح قطع جديدة",
     "completedStrong": "أنت خلصت هذي الجولة من قبل",
     "completedNote": "ما فيه قطع جديدة تمسحها في هذي الجولة.",
-    "unknownTitle": "ما ضبطت!",
+    "unknownTitle": "ما عرفناها!",
     "unknownPill": "تعذّر قراءة القطعة",
-    "unknownText": "جرّب تمسح القطعة مرة ثانية."
+    "unknownText": "جرّب تمسح القطعة مرة ثانية.",
+    "skippedText": "في التسلسلي القطع تنفتح بالترتيب، ونقاطك ما تغيّرت.",
+    "unknownCardTitle": "تأكد إنها من قطع الجولة",
+    "unknownCardText": "لو متأكد، كلم المنظم يتأكد إنها مضافة للجولة."
   },
   "keepPlaying": "كمّل اللعب",
   "roundEnded": "انتهت الجولة",
@@ -34,6 +37,7 @@
     "viewOnlyPill": "للعرض فقط · ما تنحسب نقاط",
     "viewOnlyTrap": "هذه قطعة فخ. ما راح ينطبق أي تأثير.",
     "finishedStrong": "ألف مبروووك! لقيت كل القطع",
+    "finishedOpenStrong": "ألف مبروووك! آخر قطعة كانت من نصيبك",
     "finishedNote": "الآن خلصت الجولة، شوف ترتيبك في المتصدرين.",
     "openPill": "القطعة {{number}} صارت لك",
     "seqPill": "القطعة {{score}} من {{total}}"
@@ -43,12 +47,12 @@
     "plantedBoomPill": "فخ بووم على القطعة {{number}}",
     "plantedFreezePill": "فخ تجميد {{seconds}} ث على القطعة {{number}}",
     "plantedBoomCard": "أول واحد يمسحها بعدك يخسر نقطة",
-    "plantedFreezeCard": "أول واحد يمسحها بعدك يتجمّد",
+    "plantedFreezeCard": "أول واحد يمسحها بعدك بيتجمّد",
     "plantedText": "كمّل، وخلّه يتفاجأ.",
     "boomTitle": "بووم!",
     "boomPill": "خسرت نقطة · صارت نقاطك {{score}}",
     "boomLabel": "تفاصيل الخصم",
-    "boomCardTitle": "نقاطك الآن {{score}}",
+    "boomCardTitle": "كانت {{before}} · صارت {{score}}",
     "boomCardText": "النقاط ما تنزل تحت الصفر",
     "emptyTitle": "قطعة فخ",
     "emptyPill": "الفخ فاضي"
@@ -86,7 +90,8 @@
     "label": "تلميح القطعة",
     "zoomLabel": "تكبير صورة التلميح",
     "zoom": "تكبير",
-    "closeImage": "إغلاق الصورة"
+    "closeImage": "إغلاق الصورة",
+    "empty": "هالقطعة ما لها تلميح، كمّل البحث!"
   },
   "board": {
     "loading": "جاري تحميل المتصدرين...",
@@ -99,7 +104,10 @@
     "remaining": "باقي",
     "note": "الترتيب يتحدّث مع كل مسحة.",
     "rankLabel": "المتصدرون — ترتيبك {{rank}}",
-    "loadFailed": "تعذر تحميل المتصدرين."
+    "loadFailed": "تعذر تحميل المتصدرين.",
+    "live": "مباشر",
+    "expand": "كبّر",
+    "collapse": "صغّر"
   },
   "seeBoard": "شوف المتصدرين",
   "backHome": "ارجع للرئيسية",
@@ -109,8 +117,10 @@
   "picker": {
     "freezeText": "يوقف اللاعب لين ينتهي الوقت",
     "boomText": "يخسر نقطة وحدة",
-    "label": "نوع الفخ"
+    "label": "نوع الفخ",
+    "seconds": "{{seconds}} ث"
   },
   "invalidLinkData": "رابط غير صالح أو بيانات مفقودة.",
-  "home": "رجوع للرئيسية"
+  "home": "رجوع للرئيسية",
+  "progressLabel": "خلصت {{done}} من {{total}} قطع"
 }

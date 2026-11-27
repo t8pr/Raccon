@@ -87,5 +87,33 @@
     "stagedLong": "معدّلة ولم تُحفظ",
     "editing": "قيد التعديل",
     "staged": "معدّلة"
+  },
+  "preview": {
+    "open": "معاينة",
+    "title": "معاينة صفحات السكان",
+    "back": "رجوع",
+    "modeLabel": "النمط",
+    "modes": {
+      "seq": "تسلسلي",
+      "open": "صيد مفتوح"
+    },
+    "screenLabel": "الشاشة",
+    "frameTitle": "شاشة المسح كما يشوفها اللاعب",
+    "sampleHint": "دوّر قريب من النافورة فيه قطعة تحت الكرسي الأخضر",
+    "sampleName": "نورة",
+    "screens": {
+      "found": "حصّلتها",
+      "already": "حقتك من قبل",
+      "skipped": "مو بالترتيب",
+      "claimed": "سبقك غيرك",
+      "notlive": "استعد",
+      "completed": "خلصت",
+      "notyours": "مو رابطك",
+      "choose": "اختر الفخ",
+      "planted": "زرعته",
+      "boom": "بووم",
+      "frozen": "تجمّدت",
+      "unfrozen": "انفك التجميد"
+    }
   }
 }

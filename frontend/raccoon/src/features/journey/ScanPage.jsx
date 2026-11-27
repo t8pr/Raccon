@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../../shared/auth/AuthContext";
 import { useAutoScan } from "./hooks/useAutoScan";
 import { useLeaderboard } from "./hooks/useLeaderboard";
@@ -22,63 +22,52 @@ import ScanResultScreen from "./screens/ScanResultScreen";
 export default function ScanPage() {
   const [searchParams] = useSearchParams();
   const { accessToken } = useAuth();
-  const navigate = useNavigate();
 
   const tagHash = searchParams.get("tag");
   const userHash = searchParams.get("sig");
 
   const scan = useAutoScan(tagHash, userHash);
   const eventId = scan.scanResult?.event_id;
-  const leaderboard = useLeaderboard(eventId, scan.scanResult);
-  const [boardOpen, setBoardOpen] = useState(false);
+  // المتصدرون مباشر؛ userHash (من الرابط) يحدد صفّي أنا
+  const leaderboard = useLeaderboard(eventId, userHash);
+  // محطة اللوحة: closed (الرأس بس) · peek (3 صفوف) · open (10 صفوف)
+  const [boardSnap, setBoardSnap] = useState("peek");
 
   // ---------- الخصائص المشتركة لكل الشاشات ----------
-  const myIndex = leaderboard.players.findIndex(
-    (player) => player.user_hash === userHash,
-  );
-
   const shell = {
     // المتصدرون متاحون فقط إذا عرفنا الجولة (المسح نجح)
     board: eventId
       ? {
-          players: leaderboard.players,
-          loading: leaderboard.loading,
-          error: leaderboard.error,
-          myHash: userHash,
-          rank: myIndex === -1 ? null : myIndex + 1,
+          ...leaderboard,
+          snap: boardSnap,
+          onSnapChange: setBoardSnap,
         }
       : null,
-    boardOpen,
-    onBoardOpenChange: setBoardOpen,
+    // لون الدائرة وخلفيتها: تسلسلي بنفسجي، صيد مفتوح أخضر.
+    // النمط يجي من رد المسح، أو من رد الخطأ (حقتك من قبل، مو بالترتيب، استعد...)
+    mode: scan.scanResult?.mode ?? scan.scanError?.mode,
   };
-
-  const goHome = () => navigate("/home");
-  const openBoard = () => setBoardOpen(true);
 
   if (scan.isLoading) {
     return <LoadingScreen shell={shell} />;
   }
 
   if (scan.error) {
-    return <InvalidLinkScreen shell={shell} message={scan.error} onHome={goHome} />;
+    return <InvalidLinkScreen shell={shell} message={scan.error} />;
   }
 
   if (scan.scanError) {
-    return (
-      <ScanErrorScreen shell={shell} scanError={scan.scanError} onHome={goHome} />
-    );
+    return <ScanErrorScreen shell={shell} scanError={scan.scanError} />;
   }
 
   if (!scan.scanResult) {
-    return <EmptyScreen shell={shell} onHome={goHome} />;
+    return <EmptyScreen shell={shell} />;
   }
 
   return (
     <ScanResultScreen
       shell={shell}
       scanResult={scan.scanResult}
-      onHome={goHome}
-      onBoard={openBoard}
       // لقطع «اختر الفخ»: بيانات الزرع، وما يحدث بعده
       choose={{
         key: `${tagHash}:${userHash}:${accessToken}`,

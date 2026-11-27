@@ -33,6 +33,10 @@ import ProfilePage from "../features/profile/ProfilePage";
 // Customization Page
 import CustomizationPage from "../features/customization/CustomizationPage";
 
+// Scan preview
+import ScanPreviewPage from "../features/customization/preview/ScanPreviewPage";
+import ScanPreviewFrame from "../features/customization/preview/ScanPreviewFrame";
+
 // ClaimPackage
 import ClaimPage from "../features/claim/ClaimPage";
 
@@ -116,6 +120,23 @@ function AppContent() {
             element={
               <ProtectedRoute>
                 <CustomizationPage />
+              </ProtectedRoute>
+            }
+          />
+          {/* معاينة صفحات السكان: الصفحة، والشاشة اللي داخل الجوال (iframe) */}
+          <Route
+            path="/customization/:eventId/preview"
+            element={
+              <ProtectedRoute>
+                <ScanPreviewPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customization/:eventId/preview/frame"
+            element={
+              <ProtectedRoute>
+                <ScanPreviewFrame />
               </ProtectedRoute>
             }
           />

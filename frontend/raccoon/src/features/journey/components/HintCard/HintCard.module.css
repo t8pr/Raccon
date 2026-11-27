@@ -28,22 +28,6 @@
   outline-offset: -2px;
 }
 
-.zoom {
-  position: absolute;
-  bottom: 8px;
-  inset-inline-end: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  background: var(--night);
-  color: var(--on-panel);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
 .body {
   padding: 12px 16px 14px;
 }
@@ -76,6 +60,31 @@
   margin-top: 6px;
   font-size: 18px;
   line-height: 1.8;
+}
+
+/* صورة بس: العنوان فوق، والصورة أطول */
+.labelTop {
+  padding: 12px 16px 10px;
+}
+
+.imageOnly .media img {
+  height: 200px;
+}
+
+/* ولا شي: إطار متقطع وجملة بالنص */
+.empty {
+  border-style: dashed;
+  border-width: 2px;
+  background: transparent;
+}
+
+.emptyText {
+  margin: 0;
+  padding: 22px 20px;
+  color: var(--ink-muted);
+  font-size: 16px;
+  line-height: 1.7;
+  text-align: center;
 }
 
 /* ---------- تكبير الصورة ---------- */
@@ -154,5 +163,9 @@
 @media (max-height: 740px) {
   .media img {
     height: 96px;
+  }
+
+  .imageOnly .media img {
+    height: 160px;
   }
 }

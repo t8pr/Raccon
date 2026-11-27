@@ -15,18 +15,21 @@
     "notLiveTitle": "Get ready!",
     "notLivePill": "The round hasn't started or has ended",
     "notLiveCardTitle": "Waiting for the organizer to start the round",
-    "notLiveCardText": "The game owner hasn't started it or has paused it. Scan the piece again once it's running.",
+    "notLiveCardText": "Once they start it, scan the piece again.",
     "notYoursTitle": "Not your link!",
     "notYoursPill": "This link isn't yours",
     "notYoursCardTitle": "Scan the piece with your phone to open it",
     "notYoursCardText": "Links don't transfer between players — each scan counts for whoever made it.",
-    "completedTitle": "You finished it!",
+    "completedTitle": "You finished!",
     "completedPill": "You can't scan new pieces",
     "completedStrong": "You already finished this round",
     "completedNote": "There are no new pieces to scan in this round.",
-    "unknownTitle": "That didn't work!",
+    "unknownTitle": "We don't know it!",
     "unknownPill": "Couldn't read the piece",
-    "unknownText": "Try scanning the piece again."
+    "unknownText": "Try scanning the piece again.",
+    "skippedText": "In sequential mode pieces unlock in order, and your score didn't change.",
+    "unknownCardTitle": "Make sure it's one of the round's pieces",
+    "unknownCardText": "If you're sure, ask the organizer to check it's added to the round."
   },
   "keepPlaying": "Keep playing",
   "roundEnded": "Round over",
@@ -34,6 +37,7 @@
     "viewOnlyPill": "View only · no points counted",
     "viewOnlyTrap": "This is a trap piece. No effect will apply.",
     "finishedStrong": "Congratulations! You found all the pieces",
+    "finishedOpenStrong": "Congratulations! The last piece was yours",
     "finishedNote": "The round is over — check your rank on the leaderboard.",
     "openPill": "Piece {{number}} is yours",
     "seqPill": "Piece {{score}} of {{total}}"
@@ -48,7 +52,7 @@
     "boomTitle": "Boom!",
     "boomPill": "You lost a point · your score is now {{score}}",
     "boomLabel": "Deduction details",
-    "boomCardTitle": "Your score is now {{score}}",
+    "boomCardTitle": "Was {{before}} · now {{score}}",
     "boomCardText": "Points never go below zero",
     "emptyTitle": "Trap piece",
     "emptyPill": "The trap is empty"
@@ -86,7 +90,8 @@
     "label": "Piece hint",
     "zoomLabel": "Enlarge hint image",
     "zoom": "Zoom",
-    "closeImage": "Close image"
+    "closeImage": "Close image",
+    "empty": "This piece has no hint, keep searching!"
   },
   "board": {
     "loading": "Loading the leaderboard...",
@@ -99,7 +104,10 @@
     "remaining": "Left",
     "note": "Rankings update with every scan.",
     "rankLabel": "Leaderboard — your rank {{rank}}",
-    "loadFailed": "Couldn't load the leaderboard."
+    "loadFailed": "Couldn't load the leaderboard.",
+    "live": "Live",
+    "expand": "Expand",
+    "collapse": "Collapse"
   },
   "seeBoard": "See the leaderboard",
   "backHome": "Back to home",
@@ -109,8 +117,10 @@
   "picker": {
     "freezeText": "Stops the player until the time runs out",
     "boomText": "They lose one point",
-    "label": "Trap type"
+    "label": "Trap type",
+    "seconds": "{{seconds}}s"
   },
   "invalidLinkData": "Invalid link or missing data.",
-  "home": "Back to home"
+  "home": "Back to home",
+  "progressLabel": "Found {{done}} of {{total}} pieces"
 }

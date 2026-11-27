@@ -1,5 +1,4 @@
-import DurationStepper from "../../../../shared/ui/DurationStepper/DurationStepper";
-import { BombIcon, SnowflakeIcon } from "../ScanBadges/ScanBadges";
+import { RadioGroup } from "radix-ui";
 import styles from "./TrapPicker.module.css";
 import { useTranslation } from "react-i18next";
 
@@ -8,17 +7,23 @@ const trapOptions = [
     value: "freeze",
     label: "customization.traps.freeze",
     description: "journey.picker.freezeText",
-    Icon: SnowflakeIcon,
   },
   {
     value: "boom",
     label: "customization.traps.boom",
     description: "journey.picker.boomText",
-    Icon: BombIcon,
   },
 ];
 
-// اختيار الفخ للاعب أثناء الجولة: النوع، ثم مدة التجميد بالعدّاد نفسه المستخدم عند المالك.
+// مدد التجميد الجاهزة (الحد الأقصى 180 من trapRules)
+const DURATIONS = [30, 60, 120, 180];
+
+/*
+  اختيار الفخ للاعب أثناء الجولة: النوع، ثم مدة التجميد.
+  RadioGroup من radix-ui: مجموعة اختيار واحد جاهزة، فيها role="radio"
+  والتنقل بالأسهم في الكيبورد بدون ما نكتبه بأنفسنا.
+  RadioGroup يرجّع القيمة نص، فنحوّل المدة لرقم بـ Number.
+*/
 export default function TrapPicker({
   type,
   onTypeChange,
@@ -26,40 +31,46 @@ export default function TrapPicker({
   onSecondsChange,
   disabled = false,
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  // radix يفترض اتجاه يسار←يمين؛ نعطيه اتجاه اللغة عشان الترتيب والأسهم
+  const dir = i18n.dir();
   return (
     <div className={styles.picker}>
-      <div className={styles.options} role="radiogroup" aria-label={t("journey.picker.label")}>
-        {trapOptions.map(({ value, label, description, Icon }) => (
-          <button
-            key={value}
-            type="button"
-            role="radio"
-            aria-checked={type === value}
-            className={styles.option}
-            disabled={disabled}
-            onClick={() => onTypeChange(value)}
-          >
-            <Icon className={styles.icon} />
+      <RadioGroup.Root
+        className={styles.options}
+        dir={dir}
+        value={type}
+        onValueChange={onTypeChange}
+        disabled={disabled}
+        aria-label={t("journey.picker.label")}
+      >
+        {trapOptions.map(({ value, label, description }) => (
+          <RadioGroup.Item key={value} value={value} className={styles.option}>
             <b>{t(label)}</b>
             <small>{t(description)}</small>
-          </button>
+          </RadioGroup.Item>
         ))}
-      </div>
+      </RadioGroup.Root>
 
       {type === "freeze" && (
-        <div className={styles.duration}>
-          <span id="trap-picker-duration" className={styles.durationLabel}>
-            {t("customization.traps.freezeDuration")}
-          </span>
-          <DurationStepper
-            size="lg"
-            value={seconds}
-            onChange={onSecondsChange}
-            disabled={disabled}
-            describedBy="trap-picker-duration"
-          />
-        </div>
+        <RadioGroup.Root
+          className={styles.durations}
+          dir={dir}
+          value={String(seconds)}
+          onValueChange={(value) => onSecondsChange(Number(value))}
+          disabled={disabled}
+          aria-label={t("customization.traps.freezeDuration")}
+        >
+          {DURATIONS.map((value) => (
+            <RadioGroup.Item
+              key={value}
+              value={String(value)}
+              className={styles.duration}
+            >
+              {t("journey.picker.seconds", { seconds: value })}
+            </RadioGroup.Item>
+          ))}
+        </RadioGroup.Root>
       )}
     </div>
   );

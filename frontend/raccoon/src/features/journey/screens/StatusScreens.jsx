@@ -1,11 +1,10 @@
 import ScanLayout from "../components/ScanLayout/ScanLayout";
 import InfoCard from "../components/InfoCard/InfoCard";
-import { HomeAction } from "../components/ScanActions";
 import { LockBadge, MarkBadge } from "../components/ScanBadges/ScanBadges";
 import { useTranslation } from "react-i18next";
 
 // شاشات ما قبل النتيجة: التحميل، الرابط الناقص، ولا بيانات.
-// shell: الخصائص المشتركة لـ ScanLayout (المتصدرون) من ScanPage.
+// shell: الخصائص المشتركة لـ ScanLayout من ScanPage.
 
 export function LoadingScreen({ shell }) {
   const { t } = useTranslation();
@@ -15,12 +14,11 @@ export function LoadingScreen({ shell }) {
       showStats={false}
       title={t("journey.status.loadingTitle")}
       badge={<MarkBadge />}
-      pill={t("journey.status.loadingPill")}
     />
   );
 }
 
-export function InvalidLinkScreen({ shell, message, onHome }) {
+export function InvalidLinkScreen({ shell, message }) {
   const { t } = useTranslation();
   return (
     <ScanLayout
@@ -28,15 +26,13 @@ export function InvalidLinkScreen({ shell, message, onHome }) {
       showStats={false}
       title={t("journey.status.invalidTitle")}
       badge={<LockBadge />}
-      pill={t("journey.status.invalidPill")}
-      actions={<HomeAction onHome={onHome} />}
     >
       <InfoCard title={message} text={t("journey.status.invalidText")} />
     </ScanLayout>
   );
 }
 
-export function EmptyScreen({ shell, onHome }) {
+export function EmptyScreen({ shell }) {
   const { t } = useTranslation();
   return (
     <ScanLayout
@@ -44,8 +40,11 @@ export function EmptyScreen({ shell, onHome }) {
       showStats={false}
       title={t("journey.status.emptyTitle")}
       badge={<MarkBadge />}
-      pill={t("journey.status.emptyPill")}
-      actions={<HomeAction onHome={onHome} />}
-    />
+    >
+      <InfoCard
+        title={t("journey.status.emptyPill")}
+        text={t("journey.status.invalidText")}
+      />
+    </ScanLayout>
   );
 }

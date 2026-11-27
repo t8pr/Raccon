@@ -5,7 +5,8 @@
 import { getToken } from "../auth/tokenStore";
 import i18n from "../../i18n";
 
-const API_URL = process.env.REACT_APP_API_URL?.replace(/\/+$/, "");
+// مُصدَّر لأن البث المباشر (SSE) يبني رابطه بنفسه
+export const API_URL = process.env.REACT_APP_API_URL?.replace(/\/+$/, "");
 
 /*
   options مثل fetch، مع إضافتين:
@@ -48,7 +49,11 @@ export async function apiRequest(
 
 // نفس apiRequest لكن يضيف توكن المستخدم الحالي.
 // token اختياري: يُمرَّر فقط قبل حفظ الجلسة (مثل جلب الحساب مباشرة بعد الدخول).
-export function authRequest(path, { token, headers, ...options } = {}, errorMessage) {
+export function authRequest(
+  path,
+  { token, headers, ...options } = {},
+  errorMessage,
+) {
   const accessToken = token ?? getToken();
 
   return apiRequest(

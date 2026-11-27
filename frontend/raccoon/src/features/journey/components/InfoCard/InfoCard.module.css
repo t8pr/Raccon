@@ -1,12 +1,11 @@
 .card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
-  padding: 16px 20px;
+  padding: 14px 18px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
@@ -15,18 +14,31 @@
   min-width: 0;
 }
 
+/* عادي: عنوان صغير بنفسجي */
 .title {
   margin: 0;
-  font-size: 17px;
+  color: var(--accent);
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.6;
   font-variant-numeric: tabular-nums;
 }
 
 .text {
-  margin: 0;
-  font-size: 14px;
+  margin: 2px 0 0;
+  font-size: 15px;
   line-height: 1.7;
+  color: var(--ink);
+}
+
+/* stat: عنوان عريض بلون النص، والسطر تحته رمادي أصغر */
+.stat .title {
+  color: var(--ink);
+  font-size: 16px;
+}
+
+.stat .text {
+  font-size: 13px;
   color: var(--ink-muted);
 }
 
@@ -34,14 +46,14 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   padding-top: 3px;
   border-radius: 50%;
-  background: var(--accent-soft);
-  color: var(--on-accent-soft);
+  background: var(--mint);
+  color: var(--ink);
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 
@@ -54,39 +66,4 @@
   text-align: center;
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
-}
-
-.noteLarge {
-  font-size: 16px;
-}
-
-.note strong {
-  display: block;
-  margin-bottom: 2px;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-/* ---------- شريط التقدّم ---------- */
-.progress {
-  height: 8px;
-  margin-block: 8px 10px;
-  border-radius: var(--radius-pill);
-  background: var(--accent-soft);
-  overflow: hidden;
-}
-
-.progress i {
-  display: block;
-  height: 100%;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  transition: width 1s linear;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .progress i {
-    transition: none;
-  }
 }

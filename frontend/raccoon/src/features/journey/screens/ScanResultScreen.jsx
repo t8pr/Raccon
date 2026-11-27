@@ -1,9 +1,7 @@
 import ScanLayout from "../components/ScanLayout/ScanLayout";
 import HintCard from "../components/HintCard/HintCard";
-import { ScanNote } from "../components/InfoCard/InfoCard";
-import { BoardAndHomeActions, ContinueAction } from "../components/ScanActions";
-import { CupBadge, NumberBadge } from "../components/ScanBadges/ScanBadges";
-import { padTag } from "../utils/scanErrors";
+import InfoCard, { ScanNote } from "../components/InfoCard/InfoCard";
+import { NumberBadge, TrophyBadge } from "../components/ScanBadges/ScanBadges";
 import TrapScreen from "./TrapScreen";
 import { useTranslation } from "react-i18next";
 
@@ -11,38 +9,33 @@ import { useTranslation } from "react-i18next";
   المسح نجح. الشاشة حسب النتيجة:
     view_only       الجولة انتهت، القطعة للعرض فقط
     tag_type=trap   شاشات الفخاخ (TrapScreen)
-    event_finished  خلصتها! جمع كل القطع
-    غير ذلك         حصلتها!
+    event_finished  آخر قطعة: خلصت! بكأس وتهنئة
+    غير ذلك         حصلتها! برقم القطعة وتلميحها
 */
-export default function ScanResultScreen({
-  shell,
-  scanResult,
-  onHome,
-  onBoard,
-  choose,
-}) {
+export default function ScanResultScreen({ shell, scanResult, choose }) {
   const { t } = useTranslation();
   const content = scanResult.content;
-  const score = scanResult.current_score ?? 0;
-  const remaining = scanResult.remaining_tags ?? 0;
+  const stats = {
+    score: scanResult.current_score ?? 0,
+    remaining: scanResult.remaining_tags ?? 0,
+    total: scanResult.total_tags,
+  };
   const tagNumber = scanResult.tag_sequence;
 
   if (scanResult.status === "view_only") {
     return (
       <ScanLayout
         {...shell}
-        statusChip={t("journey.roundEnded")}
+        {...stats}
         title={t("journey.roundEnded")}
-        tone="mint"
         badge={<NumberBadge value={tagNumber} />}
-        pill={t("journey.result.viewOnlyPill")}
-        score={score}
-        actions={<BoardAndHomeActions onBoard={onBoard} onHome={onHome} />}
       >
         <HintCard text={content?.hint} image={content?.image} />
-        {scanResult.tag_type === "trap" && (
-          <ScanNote>{t("journey.result.viewOnlyTrap")}</ScanNote>
-        )}
+        <ScanNote>
+          {scanResult.tag_type === "trap"
+            ? t("journey.result.viewOnlyTrap")
+            : t("journey.result.viewOnlyPill")}
+        </ScanNote>
       </ScanLayout>
     );
   }
@@ -52,31 +45,36 @@ export default function ScanResultScreen({
       <TrapScreen
         shell={shell}
         scanResult={scanResult}
-        score={score}
-        remaining={remaining}
-        onHome={onHome}
+        stats={stats}
         choose={choose}
       />
     );
   }
 
-  if (scanResult.event_finished) {
-    const total = score + remaining;
+  if (scanResult.event_finished || scanResult.code === "completed") {
+    // التسلسلي: لقى كل القطع (9/9). المفتوح: القطع موزّعة بين اللاعبين، فبدون عدد
+    const isSeq = scanResult.mode === "seq";
+    const total = scanResult.total_tags;
 
     return (
+      // الشريط مليان والمتصدرين ظاهرين: أهم شي بعد ما تخلص ترتيبك
       <ScanLayout
         {...shell}
-        statusChip={t("journey.roundEnded")}
+        {...stats}
         title={t("journey.error.completedTitle")}
-        badge={<CupBadge count={`${score}/${total}`} />}
-        pill={t("journey.error.completedPill")}
-        score={score}
-        remaining={remaining}
-        actions={<BoardAndHomeActions onBoard={onBoard} onHome={onHome} />}
+        titleSize={54.97}
+        badge={
+          <TrophyBadge count={isSeq && total ? `${total}/${total}` : null} />
+        }
       >
-        <ScanNote strong={t("journey.result.finishedStrong")}>
-          {t("journey.result.finishedNote")}
-        </ScanNote>
+        <InfoCard
+          title={t(
+            isSeq
+              ? "journey.result.finishedStrong"
+              : "journey.result.finishedOpenStrong",
+          )}
+          text={t("journey.result.finishedNote")}
+        />
       </ScanLayout>
     );
   }
@@ -84,16 +82,9 @@ export default function ScanResultScreen({
   return (
     <ScanLayout
       {...shell}
-      score={score}
-      remaining={remaining}
+      {...stats}
       title={t("auth.found.title")}
       badge={<NumberBadge value={tagNumber} />}
-      pill={
-        scanResult.mode === "open"
-          ? t("journey.result.openPill", { number: padTag(tagNumber) })
-          : t("journey.result.seqPill", { score, total: score + remaining })
-      }
-      actions={<ContinueAction onHome={onHome} />}
     >
       <HintCard text={content?.hint} image={content?.image} />
     </ScanLayout>

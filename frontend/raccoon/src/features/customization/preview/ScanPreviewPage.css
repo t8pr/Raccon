@@ -1,0 +1,146 @@
+/* صفحة معاينة صفحات السكان */
+.scan-preview {
+  min-height: 100vh;
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.scan-preview__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+/* ---------- صف 1: رجوع + العنوان ---------- */
+/* 3 أعمدة: رجوع | العنوان | فاضي بنفس العرض، فالعنوان يجي في نص الصفحة بالضبط */
+.scan-preview__head {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 0 16px;
+}
+
+.scan-preview__back {
+  display: inline-flex;
+  justify-self: start;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.scan-preview__back:focus-visible {
+  outline: 2px solid var(--focus-strong);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.scan-preview__head h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 5.5vw, 30px);
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/* ---------- صف 2: زرين النمط + أيقونة الشاشات ---------- */
+.scan-preview__controls {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 0 24px;
+}
+
+/* ---------- زرين النمط ---------- */
+.scan-preview__modes {
+  display: grid;
+  flex: 1;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.scan-preview__mode {
+  min-height: 38px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--ink-muted);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.scan-preview__mode:focus-visible {
+  outline: 2px solid var(--focus-strong);
+  outline-offset: 2px;
+}
+
+/* المختار بلون نمطه، مثل دائرة شاشة المسح */
+.scan-preview__mode--seq[aria-checked="true"] {
+  background: var(--mode-sequential);
+  color: var(--ink);
+}
+
+.scan-preview__mode--open[aria-checked="true"] {
+  background: var(--mint);
+  color: var(--ink);
+}
+
+/* ---------- أيقونة قائمة الشاشات: مربع بطول زرين النمط ---------- */
+.scan-preview__select {
+  justify-content: center;
+  width: 48px;
+  min-height: 0;
+  padding: 0;
+  border-color: var(--line);
+  border-radius: var(--radius-lg);
+}
+
+/* ---------- الجوال ---------- */
+.scan-preview__phone {
+  width: 375px;
+  max-width: 100%;
+  height: 812px;
+  padding: 12px;
+  border-radius: 52px;
+  background: var(--night);
+  box-shadow: 0 24px 48px rgb(27 20 66 / 22%);
+  /* نصغّر الجوال كله (الإطار + الشاشة) بنفس النسبة،
+     فالشاشة جوّا تبقى بمقاس جوال حقيقي وما يتغير ترتيبها */
+  zoom: 0.85;
+}
+
+.scan-preview__phone iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 40px;
+  background: var(--canvas);
+  /* للعرض بس */
+  pointer-events: none;
+}
+
+/* لو الصفحة نفسها مفتوحة من جوال: نقصّر الإطار شوي */
+@media (max-width: 420px) {
+  .scan-preview__phone {
+    height: 720px;
+  }
+}

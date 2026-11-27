@@ -87,5 +87,33 @@
     "stagedLong": "changed, not saved",
     "editing": "Editing",
     "staged": "Changed"
+  },
+  "preview": {
+    "open": "Preview",
+    "title": "Preview scan pages",
+    "back": "Back",
+    "modeLabel": "Mode",
+    "modes": {
+      "seq": "Sequential",
+      "open": "Open hunt"
+    },
+    "screenLabel": "Screen",
+    "frameTitle": "Scan screen as the player sees it",
+    "sampleHint": "Look near the fountain. There is a piece under the green bench.",
+    "sampleName": "Noura",
+    "screens": {
+      "found": "Found it",
+      "already": "Already yours",
+      "skipped": "Out of order",
+      "claimed": "Someone beat you",
+      "notlive": "Get ready",
+      "completed": "All done",
+      "notyours": "Not your link",
+      "choose": "Choose a trap",
+      "planted": "Trap planted",
+      "boom": "Boom",
+      "frozen": "Frozen",
+      "unfrozen": "Unfrozen"
+    }
   }
 }

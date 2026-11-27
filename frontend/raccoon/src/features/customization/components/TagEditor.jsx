@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { Smartphone } from "lucide-react";
 import Button from "../../../shared/ui/Button/Button";
 import Chip from "../../../shared/ui/Chip/Chip";
 import HintField from "./HintField";
@@ -7,6 +9,7 @@ import { useTranslation } from "react-i18next";
 
 /*
   محرّر القطعة المختارة: التلميح، الصورة، الفخ، وأزرار الحفظ.
+  وفي الطرف الثاني من الأزرار «معاينة»: يفتح صفحة معاينة صفحات السكان على هالقطعة (?tag=).
   عرض فقط: الحالة والحفظ في CustomizationPage.
 
   form          القيم المعروضة { hint, image, trap, freezeSeconds }
@@ -95,6 +98,14 @@ export default function TagEditor({
             {t("customization.confirm.cancelEditTitle")}
           </Button>
         )}
+
+        <Link
+          to={`/customization/${eventId}/preview?tag=${encodeURIComponent(tag.tag_id)}`}
+          className="ui-button ui-button--outline customization-editor__preview"
+        >
+          <Smartphone size={18} aria-hidden="true" />
+          {t("customization.preview.open")}
+        </Link>
       </div>
 
       {saveError && <p role="alert">{saveError}</p>}

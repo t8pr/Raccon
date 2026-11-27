@@ -2,14 +2,14 @@ import ScanLayout from "../components/ScanLayout/ScanLayout";
 import HintCard from "../components/HintCard/HintCard";
 import InfoCard, { ScanNote } from "../components/InfoCard/InfoCard";
 import FreezeView from "../components/FreezeView";
-import { ContinueAction, HomeAction } from "../components/ScanActions";
 import {
   CheckBadge,
-  CupBadge,
   FlagBadge,
   LockBadge,
   MarkBadge,
   NumberBadge,
+  QuestionBadge,
+  TrophyBadge,
 } from "../components/ScanBadges/ScanBadges";
 import {
   getClaimerName,
@@ -25,17 +25,18 @@ import { useTranslation } from "react-i18next";
     claimed_by_another_player  سبقك غيرك (صيد مفتوح)
     freeze                     اللاعب متجمّد حاليًا
     skipped_tag                مو بالترتيب (تسلسلي)
-    not_live                   الجولة ما بدأت
+    not_live                   استعد! الجولة ما بدأت
     not_yours                  رابط لاعب آخر
     completed                  خلّص الجولة من قبل
-    unknown                    أي خطأ آخر
+    unknown                    ما عرفناها (أي خطأ آخر)
 */
-export default function ScanErrorScreen({ shell, scanError, onHome }) {
+export default function ScanErrorScreen({ shell, scanError }) {
   const { t } = useTranslation();
-  // أخطاء اللعب ترجع النقاط والباقي، فنعرضهما إن وُجدا
+  // أخطاء اللعب ترجع النقاط والباقي، فنعرض نقاط التقدّم إن وُجدت
   const stats = {
     score: scanError.current_score,
     remaining: scanError.remaining_tags,
+    total: scanError.total_tags,
     showStats: scanError.current_score != null,
   };
 
@@ -46,12 +47,8 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
           {...shell}
           {...stats}
           title={t("journey.error.alreadyTitle")}
-          tone="mint"
+          titleSize={48.41}
           badge={<CheckBadge />}
-          pill={t("journey.error.alreadyPill")}
-          actions={
-            <ContinueAction onHome={onHome} label={t("journey.keepPlaying")} />
-          }
         >
           <HintCard
             text={scanError.content?.hint}
@@ -69,12 +66,11 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
           {...shell}
           {...stats}
           title={t("journey.error.claimedTitle")}
+          titleSize={52.51}
           badge={<FlagBadge />}
-          pill={t("journey.error.claimedPill")}
-          actions={<ContinueAction onHome={onHome} />}
         >
-          <ScanNote
-            strong={
+          <InfoCard
+            title={
               claimer ? (
                 <>
                   <bdi>{claimer}</bdi> {t("journey.error.claimedBy")}
@@ -83,9 +79,9 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
                 t("journey.error.claimedByOther")
               )
             }
-          >
-            {t("journey.error.claimedNote")}
-          </ScanNote>
+            label={t("journey.error.claimedTitle")}
+            text={t("journey.error.claimedNote")}
+          />
         </ScanLayout>
       );
     }
@@ -94,34 +90,27 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
       return (
         <FreezeView
           shell={shell}
-          currentScore={scanError.current_score}
-          remainingTags={scanError.remaining_tags}
+          stats={stats}
           frozenUntil={scanError.frozen_until}
-          onContinue={onHome}
         />
       );
 
     case "skipped_tag": {
-      const expected = getExpectedTag(scanError.message);
-      // الخادم لا يرجّع رقم القطعة الممسوحة دائمًا؛ نقدّره بالتي بعد المطلوبة
-      const scanned =
-        scanError.tag_sequence ?? (expected ? Number(expected) + 1 : null);
+      // الخادم يقول وش القطعة اللي لازم تنمسح أول: نعرضها في الدائرة
+      const expected = padTag(getExpectedTag(scanError.message) ?? "؟");
 
       return (
         <ScanLayout
           {...shell}
           {...stats}
           title={t("journey.error.skippedTitle")}
-          tone="mint"
-          badge={<NumberBadge value={scanned ?? "؟"} />}
-          pill={t("journey.error.skippedPill", { number: padTag(expected ?? "؟") })}
-          actions={
-            <ContinueAction onHome={onHome} label={t("journey.keepPlaying")} />
-          }
+          titleSize={52.51}
+          badge={<NumberBadge value={expected} />}
         >
-          <ScanNote>
-            {t("journey.error.skippedNote", { number: padTag(expected ?? "؟") })}
-          </ScanNote>
+          <InfoCard
+            title={t("journey.error.skippedPill", { number: expected })}
+            text={t("journey.error.skippedText")}
+          />
         </ScanLayout>
       );
     }
@@ -133,8 +122,6 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
           showStats={false}
           title={t("journey.error.notLiveTitle")}
           badge={<MarkBadge />}
-          pill={t("journey.error.notLivePill")}
-          actions={<HomeAction onHome={onHome} />}
         >
           <InfoCard
             title={t("journey.error.notLiveCardTitle")}
@@ -149,9 +136,8 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
           {...shell}
           showStats={false}
           title={t("journey.error.notYoursTitle")}
+          titleSize={65.64}
           badge={<LockBadge />}
-          pill={t("journey.error.notYoursPill")}
-          actions={<HomeAction onHome={onHome} />}
         >
           <InfoCard
             title={t("journey.error.notYoursCardTitle")}
@@ -160,21 +146,43 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
         </ScanLayout>
       );
 
-    case "completed":
+    case "completed": {
+      // الخادم يرسل محتوى القطعة لو فيها تلميح؛ نعرضه، وإلا بطاقة "خلصت"
+      const hasHint = Boolean(
+        scanError.content?.hint || scanError.content?.image,
+      );
+
       return (
         <ScanLayout
           {...shell}
           showStats={false}
           title={t("journey.error.completedTitle")}
-          badge={<CupBadge />}
-          pill={t("journey.error.completedPill")}
-          actions={<HomeAction onHome={onHome} />}
+          titleSize={54.97}
+          // العدد (12/12) يبان لو الخادم أرسل المجموع
+          badge={
+            <TrophyBadge
+              count={
+                scanError.total_tags
+                  ? `${scanError.total_tags}/${scanError.total_tags}`
+                  : null
+              }
+            />
+          }
         >
-          <ScanNote strong={t("journey.error.completedStrong")}>
-            {t("journey.error.completedNote")}
-          </ScanNote>
+          {hasHint ? (
+            <HintCard
+              text={scanError.content.hint}
+              image={scanError.content.image}
+            />
+          ) : (
+            <InfoCard
+              title={t("journey.error.completedStrong")}
+              text={t("journey.error.completedNote")}
+            />
+          )}
         </ScanLayout>
       );
+    }
 
     default:
       return (
@@ -182,13 +190,12 @@ export default function ScanErrorScreen({ shell, scanError, onHome }) {
           {...shell}
           showStats={false}
           title={t("journey.error.unknownTitle")}
-          badge={<LockBadge />}
-          pill={t("journey.error.unknownPill")}
-          actions={<HomeAction onHome={onHome} />}
+          titleSize={63.18}
+          badge={<QuestionBadge />}
         >
           <InfoCard
-            title={scanError.message || t("journey.error.readFailed")}
-            text={t("journey.error.unknownText")}
+            title={t("journey.error.unknownCardTitle")}
+            text={t("journey.error.unknownCardText")}
           />
         </ScanLayout>
       );

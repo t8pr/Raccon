@@ -4,6 +4,7 @@
   width: 100%;
 }
 
+/* ---------- نوع الفخ: بطاقتين ---------- */
 .options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -13,7 +14,6 @@
 .option {
   display: grid;
   justify-items: center;
-  align-content: start;
   gap: 2px;
   padding: 12px 10px;
   border: 1px solid var(--line);
@@ -25,56 +25,59 @@
   cursor: pointer;
 }
 
-.option[aria-checked="true"] {
+/* radix يضيف data-state="checked" على الخيار المختار */
+.option[data-state="checked"] {
   border-color: var(--accent);
   background: var(--accent-soft);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
 
-.option:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.option:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
 .option b {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
 }
 
 .option small {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--ink-muted);
 }
 
-/* الأيقونة على بطاقة فاتحة: القنبلة بلون داكن */
-.icon {
-  width: 30px;
-  height: 32px;
-  margin-bottom: 2px;
-  object-fit: contain;
-  color: var(--panel-raised);
+/* ---------- مدة التجميد: أزرار صغيرة ---------- */
+.durations {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .duration {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  padding: 10px 16px;
+  min-height: 44px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-pill);
   background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
-.durationLabel {
-  font-size: 15px;
-  font-weight: 700;
+.duration[data-state="checked"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ---------- مشترك ---------- */
+.option:disabled,
+.duration:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.option:focus-visible,
+.duration:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }

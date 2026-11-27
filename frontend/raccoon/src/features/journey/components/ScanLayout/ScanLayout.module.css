@@ -1,28 +1,51 @@
 /* ==========================================
    ScanLayout — الهيكل الموحّد لكل شاشات المسح
-   كل الحالات تشترك في نفس الصفوف: الشارات ← العنوان ← الدائرة ← الشريط،
+   كل الحالات تشترك في نفس الصفوف: العنوان ← الدائرة ← نقاط التقدّم،
    ثم يبدأ المحتوى المتغيّر (تلميح، بطاقة، خيارات) من نفس الخط.
 ========================================== */
 
 .screen {
   /* المقاسات الموحّدة: أي تعديل على مقاس أعلى الشاشة يكون هنا فقط */
-  --sc-chips-h: 36px; /* صف الشارات (محجوز حتى لو كان فارغًا) */
-  --sc-hero-gap: 24px; /* من الشارات إلى العنوان */
-  --sc-title-size: 34px;
-  --sc-title-h: 48px;
+  --sc-hero-gap: 10px; /* من أعلى المحتوى إلى العنوان */
+  --sc-title-scale: 0.85; /* نسبة تصغير العنوان (المقاس نفسه يجي من titleSize) */
   --sc-circle: 120px;
-  --sc-circle-gap: 28px; /* من العنوان إلى الدائرة */
+  --sc-circle-gap: 30px; /* من العنوان إلى الدائرة */
   --sc-circle-text: 48px;
-  --sc-pill-gap: 30px; /* من الدائرة إلى الشريط */
-  --sc-pill-h: 34px;
-  --sc-content-gap: 20px; /* من الشريط إلى المحتوى، وبين عناصر المحتوى */
+  --sc-dots-gap: 34px; /* من الدائرة إلى نقاط التقدّم */
+  --sc-content-gap: 28px; /* من الدائرة/النقاط إلى المحتوى */
 
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: 100dvh;
+  /* الصفحة على قد الشاشة بالضبط وما تتحرك (بدون سكرول).
+     dvh = طول الشاشة الفعلي في الجوال (بدون شريط المتصفح) */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  /* السحب على الصفحة ما يحرّكها ولا يسوي تحديث (pull to refresh) */
+  overscroll-behavior: none;
   background: var(--canvas);
   color: var(--ink);
+  /* الخلفية خلف الدائرة (z-index سالب) تبقى فوق لون الصفحة */
+  isolation: isolate;
+}
+
+/* ---------- ألوان الخلفية حسب النمط ---------- */
+/* صيد مفتوح: توهج أخضر، ونجوم بنفسجي وأخضر */
+.open {
+  --circle-bg: var(--mint);
+  --aura-glow: var(--mint);
+  --aura-ring: #bfe3d2;
+  --aura-sparkle-a: #a99be0;
+  --aura-sparkle-b: #a8dcc4;
+}
+
+/* تسلسلي: الدائرة والتوهج بنفسجي، والنجوم كلها خضراء */
+.seq {
+  --circle-bg: var(--mode-sequential);
+  --aura-glow: var(--mode-sequential);
+  --aura-ring: #bfe3d2;
+  --aura-sparkle-a: #a8dcc4;
+  --aura-sparkle-b: #a8dcc4;
 }
 
 /* الناف بار العام له هوامش للصفحات العريضة؛ هنا نضيّقه على عرض الجوال */
@@ -40,31 +63,12 @@
   flex: 1;
   flex-direction: column;
   align-items: center;
+  /* تاخذ الباقي من الشاشة بس، ولو المحتوى أطول يصغر هو (مو الصفحة تطول) */
+  min-height: 0;
   width: 100%;
   max-width: 480px;
   margin-inline: auto;
-  padding: 12px 16px 16px;
-}
-
-/* ---------- صف الشارات ---------- */
-.chips {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-shrink: 0;
-  width: 100%;
-  height: var(--sc-chips-h);
-}
-
-.chips bdi {
-  font-variant-numeric: tabular-nums;
-}
-
-/* إكليل الترتيب: تحت شارة «باقي» مباشرة */
-.rank {
-  position: absolute;
-  top: 60px;
-  inset-inline-end: 24px;
+  padding: 12px 16px calc(16px + var(--board-space, 0px));
 }
 
 /* ---------- العنوان + الدائرة ---------- */
@@ -73,18 +77,46 @@
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
+  /* عرض كامل: لو العنوان قصير (بووم!) ما يضيّق صف النقاط تحته */
+  width: 100%;
   margin-top: var(--sc-hero-gap);
 }
 
+/* العنوان ستيكر (القيم من التصميم):
+   1. color أبيض + حد داكن 4.92px برا الحرف (مثل فيقما).
+      CSS يرسم الحد نصه داخل الحرف ونصه برا، فنضاعفه (9.84) ونرسمه قبل
+      الحرف بـ paint-order، فيغطي الحرف الأبيض النص الداخلي ويبقى 4.92 برا
+   2. text-shadow  ظلال بنفسجية متراكمة بكسل بكسل = حرف ثلاثي الأبعاد
+   3. rotate       ميلان بسيط
+   المقاس = titleSize × نسبة الشاشة. لو النص أطول من العرض (الإنجليزي مثلًا)
+   ينكسر لسطرين متوازنين بدل ما يطلع برا الشاشة */
 .title {
-  height: var(--sc-title-h);
+  position: relative;
+  z-index: 1;
+  /* ارتفاع ثابت = سطر أكبر عنوان (68.88 × 110%)، والنص في منتصفه.
+     كذا العناوين الصغيرة ما ترفع الدائرة، وكل الصفحات على نفس الخط */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(68.88px * 1.1 * var(--sc-title-scale));
+  max-width: 100%;
   margin: 0;
   font-family: var(--font-display);
-  font-size: var(--sc-title-size);
+  font-size: calc(var(--sc-title-size, 68.88px) * var(--sc-title-scale));
   font-weight: 900;
-  line-height: var(--sc-title-h);
-  white-space: nowrap;
-  color: var(--ink);
+  line-height: 110%;
+  text-align: center;
+  text-wrap: balance;
+  color: var(--on-panel);
+  -webkit-text-stroke: 9.84px var(--night);
+  paint-order: stroke fill;
+  text-shadow:
+    -1px 1px 0 var(--accent),
+    -2px 2px 0 var(--accent),
+    -3px 3px 0 var(--accent),
+    -4px 4px 0 var(--accent),
+    -5px 5px 0 var(--accent);
+  transform: rotate(-4deg);
 }
 
 .circle {
@@ -94,43 +126,128 @@
   width: var(--sc-circle);
   height: var(--sc-circle);
   margin-top: var(--sc-circle-gap);
+  border: 6px solid #fff;
   border-radius: 50%;
-  /* حلقة واحدة رفيعة حول الدائرة */
-  box-shadow:
-    0 0 0 10px var(--canvas),
-    0 0 0 11.5px var(--line-strong);
+  background: var(--circle-bg);
+  color: var(--ink);
+  box-shadow: 0 14px 28px rgb(27 20 66 / 16%);
   font-family: var(--font-display);
   font-size: var(--sc-circle-text);
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-/* الألوان فقط تتغيّر بين الحالات، لا المقاس ولا الموضع */
-.dark {
-  background: var(--panel-raised);
-  color: var(--on-panel);
+/* ---------- الخلفية خلف الدائرة ----------
+   مقاسها الدائرة × 1.75، فتكبر وتصغر معها وتبقى بين الناف بار والمحتوى.
+   z-index: -1 = ورا الدائرة */
+.circle::before,
+.aura {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: -1;
+  width: calc(var(--sc-circle) * 1.75);
+  height: calc(var(--sc-circle) * 1.75);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
-.mint {
-  background: var(--mint);
+/* التوهج: لون صافي حول الدائرة يتلاشى للأطراف */
+.circle::before {
+  content: "";
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    var(--aura-glow) 55%,
+    transparent 95%
+  );
+}
+
+.auraRing {
+  fill: none;
+  stroke: var(--aura-ring);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 6;
+}
+
+.sparkleA {
+  fill: var(--aura-sparkle-a);
+}
+
+.sparkleB {
+  fill: var(--aura-sparkle-b);
+}
+
+/* ---------- أيقونات حول الدائرة (شاشات الفخ) ---------- */
+.orbit {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
   color: var(--ink);
 }
 
-/* ---------- الشريط تحت الدائرة ---------- */
-.pill {
-  flex-shrink: 0;
-  height: var(--sc-pill-h);
-  margin: var(--sc-pill-gap) 0 0;
-  padding: 0 18px;
-  border-radius: var(--radius-pill);
-  background: var(--panel-raised);
-  color: var(--on-panel);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: var(--sc-pill-h);
-  text-align: center;
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
+.orbit svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* الأولى فوق يسار، الثانية فوق يمين، الثالثة تحت (نفس التصميم في العربي والإنجليزي) */
+.orbit0 {
+  top: -8px;
+  left: -28px;
+}
+
+.orbit1 {
+  top: -8px;
+  right: -28px;
+}
+
+.orbit2 {
+  bottom: -28px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* شاشات الفخ: الأيقونة اللي تحت الدائرة تاخذ مكان، فننزّل النقاط شوي */
+.withOrbit {
+  --sc-dots-gap: 46px;
+}
+
+/* ---------- نقاط التقدّم ---------- */
+.dots {
+  /* كل النقاط في صف واحد: لو كثرت تصغر النقاط بدل ما تنزل سطر ثاني */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 7px; /* نفس ارتفاع النقطة حتى لو الصف فاضي */
+  /* عرض كامل: النقاط تبقى 7px، وما تصغر إلا لو ما كفّت المساحة */
+  width: 100%;
+  margin-top: var(--sc-dots-gap);
+  /* مثل التصميم: الممتلئة من اليسار */
+  direction: ltr;
+}
+
+.dot,
+.dotDone {
+  box-sizing: border-box; /* الإطار داخل الـ 7px، فالمفرغة والممتلئة نفس المقاس */
+  flex: 0 1 7px;
+  min-width: 3px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.dot {
+  border: 1.5px solid var(--line-strong);
+}
+
+.dotDone {
+  background: var(--ink);
 }
 
 /* ---------- المحتوى المتغيّر ---------- */
@@ -138,7 +255,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   width: 100%;
   margin-top: var(--sc-content-gap);
 }
@@ -147,14 +264,11 @@
   display: none;
 }
 
-/* ---------- الأزرار: زر واحد بعرض كامل، أو زران في عمودين ---------- */
+/* ---------- الزر (اختر الفخ) ---------- */
 .footer {
   position: sticky;
-  bottom: 0;
-  display: grid;
-  grid-auto-columns: minmax(0, 1fr);
-  grid-auto-flow: column;
-  gap: 10px;
+  /* فوق لوحة المتصدرين لو موجودة */
+  bottom: var(--board-space, 0px);
   width: 100%;
   max-width: 480px;
   margin-inline: auto;
@@ -165,31 +279,39 @@
 .footer :global(.ui-button) {
   width: 100%;
   min-height: 52px;
-  padding-inline: 10px;
   border-radius: var(--radius-md);
   white-space: nowrap;
 }
 
-/* الزر الثانوي في شاشات المسح بإطار أخضر */
 .footer :global(.ui-button--outline) {
-  border: 2px solid var(--primary);
-  color: var(--ink-muted);
+  border: 1.5px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 /* ---------- الشاشات القصيرة: نفس المتغيّرات بقيم أصغر ---------- */
 @media (max-height: 740px) {
   .screen {
-    --sc-hero-gap: 10px;
-    --sc-title-size: 30px;
-    --sc-title-h: 42px;
+    --sc-hero-gap: 4px;
+    --sc-title-scale: 0.7;
     --sc-circle: 100px;
-    --sc-circle-gap: 20px;
+    --sc-circle-gap: 24px;
     --sc-circle-text: 40px;
-    --sc-pill-gap: 24px;
-    --sc-content-gap: 14px;
+    --sc-dots-gap: 28px;
+    --sc-content-gap: 20px;
+  }
+
+  .withOrbit {
+    --sc-dots-gap: 38px;
   }
 
   .content {
-    gap: 12px;
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .title {
+    transform: none;
   }
 }
