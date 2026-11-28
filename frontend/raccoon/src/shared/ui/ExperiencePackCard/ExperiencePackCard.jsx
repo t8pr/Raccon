@@ -1,3 +1,4 @@
+import { Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import NfcCoil from "../NfcCoil/NfcCoil";
 import "./ExperiencePackCard.css";
@@ -75,7 +76,7 @@ function StoreCard({ mode = "sequential", pieces, price, loading = false, disabl
 
 // إدارة التجارب (Figma "Admin · experiences list"): نفس بطاقة المتجر، والشريط «تعديل».
 // ما فيه صفحة تعديل في الباك إند للحين، فبدون editTo يظهر الزر معطّل مع «قريبًا».
-function AdminCard({ title, mode = "sequential", pieces, status = "available", editTo }) {
+function AdminCard({ title, mode = "sequential", pieces, status = "available", editTo, onDelete, deleteLabel, deleteDisabled }) {
   const { t } = useTranslation();
   const modeLabel = getModeName(mode);
 
@@ -95,17 +96,30 @@ function AdminCard({ title, mode = "sequential", pieces, status = "available", e
         <p className="pack-card__overline">{t("common.piecesCount")}</p>
         <p className="pack-card__number">{pieces}</p>
       </div>
-      {editTo ? (
-        <Link to={editTo} className="pack-card__buy">
-          {status === "draft" ? t("common.continue") : t("common.edit")}
-          {title && <span className="pack-card__sr"> «{title}»</span>}
-        </Link>
-      ) : (
-        <button type="button" className="pack-card__buy" disabled title={t("common.editSoon")}>
-          {t("common.edit")}
-          <span className="pack-card__sr"> ({t("nav.soon")})</span>
-        </button>
-      )}
+      <div className="pack-card__actions">
+        {editTo ? (
+          <Link to={editTo} className="pack-card__buy">
+            {status === "draft" ? t("common.continue") : t("common.edit")}
+            {title && <span className="pack-card__sr"> «{title}»</span>}
+          </Link>
+        ) : (
+          <button type="button" className="pack-card__buy" disabled title={t("common.editSoon")}>
+            {t("common.edit")}
+            <span className="pack-card__sr"> ({t("nav.soon")})</span>
+          </button>
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            className="pack-card__delete"
+            aria-label={deleteLabel}
+            disabled={deleteDisabled}
+            onClick={onDelete}
+          >
+            <Trash2 size={18} aria-hidden="true" />
+          </button>
+        )}
+      </div>
     </article>
   );
 }

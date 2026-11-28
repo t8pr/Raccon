@@ -10,6 +10,8 @@ export default function ConfirmDialog({
   description,
   onConfirm,
   onCancel,
+  pending = false,
+  children,
 }) {
   const { t, i18n } = useTranslation();
   const cancelRef = useRef(null);
@@ -18,7 +20,7 @@ export default function ConfirmDialog({
     <Dialog.Root
       open={open}
       onOpenChange={(nextOpen) => {
-        if (!nextOpen) onCancel();
+        if (!nextOpen && !pending) onCancel();
       }}
     >
       <Dialog.Portal>
@@ -35,9 +37,10 @@ export default function ConfirmDialog({
           <Dialog.Description className={styles.description}>
             {description}
           </Dialog.Description>
+          {children}
           <div className={styles.actions}>
-            <Button onClick={onConfirm}>{t("common.yes")}</Button>
-            <Button ref={cancelRef} variant="outline" onClick={onCancel}>
+            <Button loading={pending} onClick={onConfirm}>{t("common.yes")}</Button>
+            <Button ref={cancelRef} variant="outline" disabled={pending} onClick={onCancel}>
               {t("common.cancel")}
             </Button>
           </div>

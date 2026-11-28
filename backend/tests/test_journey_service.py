@@ -473,3 +473,21 @@ def test_choose_trap_activation(
     assert result["content"] == event_tag.content
     journey_service.event_tags.add_event_tag.assert_called_once_with(event_tag)
     session.commit.assert_called_once()
+
+
+def test_progress_defaults_before_first_scan(journey_service, user, event):
+    journey_service.journey_progress_repo.get_user_journey.return_value = None
+    assert journey_service.get_progress(user, event.id) == {
+        "score": 0, "status": "not_started", "visited_sequences": [],
+    }
+    journey_service.journey_progress_repo.get_user_journey.assert_called_once_with(
+        event.id, user.user_hash
+    )
+
+
+def test_progress_reports_saved_score_and_visited_tags(journey_service, user, event, journey_progress):
+    journey_progress.score = 6
+    journey_progress.visited_sequences = [1, 2]
+    assert journey_service.get_progress(user, event.id) == {
+        "score": 6, "status": "active", "visited_sequences": [1, 2],
+    }

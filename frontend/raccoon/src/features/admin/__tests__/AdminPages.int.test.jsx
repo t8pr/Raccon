@@ -11,6 +11,7 @@ import { renderWithProviders } from "../../../test/renderWithProviders";
 import AdminRoute from "../../../shared/auth/AdminRoute";
 import AdminExperiencesPage from "../AdminExperiencesPage";
 import CreateExperiencePage from "../CreateExperiencePage";
+import UserManagementPage from "../UserManagementPage";
 
 beforeEach(() => {
   server.use(http.get(`${API}/users/me`, () => HttpResponse.json(adminUser)));
@@ -21,6 +22,7 @@ function renderAdmin(route = "/admin/experiences") {
     <Routes>
       <Route path="/admin/experiences" element={<AdminRoute><AdminExperiencesPage /></AdminRoute>} />
       <Route path="/admin/experiences/new" element={<AdminRoute><CreateExperiencePage /></AdminRoute>} />
+      <Route path="/admin/users" element={<AdminRoute><UserManagementPage /></AdminRoute>} />
       <Route path="/home" element={<p>الرئيسية</p>} />
     </Routes>,
     { route },
@@ -126,6 +128,103 @@ describe("إدارة التجارب", () => {
 
     expect(await screen.findByRole("alert")).toHaveTextContent(message);
     expect(screen.getByRole("button", { name: "حاول مرة ثانية" })).toBeInTheDocument();
+  });
+});
+
+describe("حذف الباقات", () => {
+  test("الإلغاء يبقي الباقة والتأكيد يحذف الباقة المحددة ويحدّث القائمة", async () => {
+    let packs = [pack(1, "seq", 10), pack(2, "open", 21)];
+    const deletedIds = [];
+    mockPacks(() => HttpResponse.json(pageOf(packs)));
+    server.use(http.delete(`${API}/admin/delete-pack/:id`, ({ params }) => {
+      deletedIds.push(params.id);
+      packs = packs.filter(({ id }) => String(id) !== params.id);
+      return HttpResponse.json({});
+    }));
+    renderAdmin();
+
+    const deleteButton = await screen.findByRole("button", { name: "حذف الباقة 2" });
+    await userEvent.click(deleteButton);
+    const dialog = screen.getByRole("dialog", { name: "حذف الباقة؟" });
+    expect(dialog).toHaveAccessibleDescription(/2/);
+    await userEvent.click(within(dialog).getByRole("button", { name: "إلغاء" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(deletedIds).toEqual([]);
+
+    await userEvent.click(deleteButton);
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "نعم" }));
+
+    expect(await screen.findByText("عرض 1–1 من 1 تجربة")).toBeInTheDocument();
+    expect(deletedIds).toEqual(["2"]);
+    expect(screen.queryByRole("button", { name: "حذف الباقة 2" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "حذف الباقة 1" })).toBeInTheDocument();
+  });
+});
+
+describe("إدارة المستخدمين", () => {
+  test("المستخدم العادي يرجع للرئيسية", async () => {
+    server.use(http.get(`${API}/users/me`, () => HttpResponse.json({ ...adminUser, role: "user" })));
+    renderAdmin("/admin/users");
+
+    expect(await screen.findByText("الرئيسية")).toBeInTheDocument();
+  });
+
+  test("تصفية المشرفين تشمل جميع الصفحات وتعيد العرض للصفحة الأولى", async () => {
+    const regularUsers = Array.from({ length: 10 }, (_, index) => ({
+      id: index + 1,
+      name: `عضو ${index + 1}`,
+      role: "user",
+    }));
+    const requestedPages = [];
+    server.use(http.get(`${API}/admin/users`, ({ request }) => {
+      const page = Number(new URL(request.url).searchParams.get("page"));
+      requestedPages.push(page);
+      const items = page === 1 ? regularUsers : [{ ...adminUser, id: 11, name: "مشرف الاختبار" }];
+      return HttpResponse.json(pageOf(items, { page, size: 10, total: 11 }));
+    }));
+    renderAdmin("/admin/users");
+
+    expect(await screen.findByRole("rowheader", { name: "عضو 1" })).toBeInTheDocument();
+    expect(screen.queryByRole("rowheader", { name: "مشرف الاختبار" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "صفحة 2" }));
+    expect(screen.getByRole("rowheader", { name: "مشرف الاختبار" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "المشرفون" }));
+    expect(screen.getByRole("rowheader", { name: "مشرف الاختبار" })).toBeInTheDocument();
+    expect(screen.queryByRole("rowheader", { name: "عضو 1" })).not.toBeInTheDocument();
+    expect(requestedPages).toEqual([1, 2]);
+  });
+
+  test("فشل الحذف يبقي نافذة التأكيد مفتوحة ويمكن إعادة المحاولة", async () => {
+    const user = { id: "user-1", name: "عضو الاختبار", role: "user" };
+    let users = [user];
+    const deletedIds = [];
+    server.use(
+      http.get(`${API}/admin/users`, () => HttpResponse.json(pageOf(users))),
+      http.delete(`${API}/admin/delete-user/:id`, ({ params }) => {
+        deletedIds.push(params.id);
+        if (deletedIds.length === 1) return HttpResponse.json({}, { status: 500 });
+        users = [];
+        return HttpResponse.json({});
+      }),
+    );
+    renderAdmin("/admin/users");
+
+    const deleteButton = await screen.findByRole("button", { name: "حذف عضو الاختبار" });
+    await userEvent.click(deleteButton);
+    let dialog = screen.getByRole("dialog", { name: "تأكيد حذف المستخدم" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "إلغاء" }));
+    expect(deletedIds).toEqual([]);
+
+    await userEvent.click(deleteButton);
+    dialog = screen.getByRole("dialog", { name: "تأكيد حذف المستخدم" });
+    await userEvent.click(within(dialog).getByRole("button", { name: "نعم" }));
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("تعذّر حذف المستخدم");
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "نعم" }));
+    expect(await screen.findByText("لا يوجد مستخدمون مطابقون في هذه الصفحة.")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(deletedIds).toEqual(["user-1", "user-1"]);
   });
 });
 

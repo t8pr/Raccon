@@ -34,14 +34,21 @@ describe("الروابط حسب الدور", () => {
     expect(linkNames()).toEqual(["الرئيسية", "التجارب", "المتجر"]);
   });
 
-  test("الأدمن، و«إدارة المستخدمين» معطّلة (قريبًا)", async () => {
+  test("الأدمن يرى رابط إدارة المستخدمين", async () => {
     server.use(http.get(`${API}/users/me`, () => HttpResponse.json(adminUser)));
     renderNavbar();
 
-    await screen.findByText("إدارة التجارب");
-    // الأدمن عنده كل صفحات المستخدم + صفحات الإدارة
-    expect(linkNames()).toEqual(["الرئيسية", "التجارب", "المتجر", "إدارة التجارب"]);
-    expect(screen.getByText("إدارة المستخدمين")).toHaveAttribute("aria-disabled", "true");
+    const usersLink = await screen.findByRole("link", { name: "إدارة المستخدمين" });
+
+    expect(linkNames()).toEqual([
+      "الرئيسية",
+      "التجارب",
+      "المتجر",
+      "إدارة التجارب",
+      "إدارة المستخدمين",
+    ]);
+    expect(usersLink).toHaveAttribute("href", "/admin/users");
+    expect(usersLink).not.toHaveAttribute("aria-disabled", "true");
   });
 
   test("الصفحة الحالية مميزة", async () => {

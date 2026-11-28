@@ -26,6 +26,7 @@ import PackagesPage from "../features/packages/PackagesPage";
 import AdminRoute from "../shared/auth/AdminRoute";
 import AdminExperiencesPage from "../features/admin/AdminExperiencesPage";
 import CreateExperiencePage from "../features/admin/CreateExperiencePage";
+import UserManagementPage from "../features/admin/UserManagementPage";
 
 // Profile Page
 import ProfilePage from "../features/profile/ProfilePage";
@@ -134,6 +135,15 @@ function AppContent() {
             element={
               <AdminRoute>
                 <CreateExperiencePage />
+              </AdminRoute>
+            }
+          />
+          {/* Admin › إدارة المستخدمين */}
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <UserManagementPage />
               </AdminRoute>
             }
           />

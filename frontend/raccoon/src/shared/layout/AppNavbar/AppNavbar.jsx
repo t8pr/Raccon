@@ -23,7 +23,7 @@ const navigationByRole = {
   admin: [
     ...userPages,
     { labelKey: "nav.adminExperiences", to: "/admin/experiences" },
-    { labelKey: "nav.adminUsers", to: "/admin/users", disabled: true },
+    { labelKey: "nav.adminUsers", to: "/admin/users" },
   ],
 };
 

@@ -396,6 +396,43 @@ a.pack-card__action:hover {
     transition: none;
   }
 }
+.pack-card__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pack-card__actions .pack-card__buy {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.pack-card__delete {
+  display: grid;
+  place-items: center;
+  inline-size: 46px;
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--mode-button-text) 28%, var(--card-bg));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--mode-button) 28%, var(--card-bg));
+  color: var(--mode-button-text);
+  cursor: pointer;
+}
+
+.pack-card__delete:hover:not(:disabled) {
+  background: var(--mode-button);
+  border-color: var(--mode-button);
+}
+
+.pack-card__delete:focus-visible {
+  outline: 2px solid var(--mode-button-text);
+  outline-offset: 2px;
+}
+
+.pack-card__delete:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 /* admin «تعديل» (no edit page yet): looks like Figma, but can't be clicked */
 .pack-card--admin .pack-card__buy:disabled {
   opacity: 1;

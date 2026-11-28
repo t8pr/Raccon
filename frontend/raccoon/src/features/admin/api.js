@@ -36,3 +36,35 @@ export function generatePacks({ mode, tagsCount, quantity }) {
     "api.createExperienceFailed",
   );
 }
+
+/*
+GET /admin/users
+*/
+export function getUsers({ page = 1, size = 10 }) {
+  const query = new URLSearchParams({ page, size });
+
+  return authRequest(
+    `/admin/users?${query}`,
+    { method: "GET"}
+  )
+}
+
+/*
+DELETE /admin/delete-user/{user_id}
+*/
+export function deleteUser({ user_id }) {
+  return authRequest(
+    `/admin/delete-user/${user_id}`,
+    { method: "DELETE"}
+  )
+}
+
+/*
+DELETE /admin/delete-pack/{pack_id}
+*/
+export function deletePack({ pack_id }) {
+  return authRequest(
+    `/admin/delete-pack/${pack_id}`,
+    { method: "DELETE"}
+  )
+}

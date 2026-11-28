@@ -73,3 +73,28 @@ def test_successful_claim_assigns_owner_and_creates_event(
     assert created_event.status == "draft"
     session.commit.assert_called_once()
     session.refresh.assert_called_once_with(pack)
+
+
+def test_preview_returns_pack_without_claiming_it(pack_service, session, pack):
+    assert pack_service.preview_pack(pack.master_auth_hash) is pack
+    assert pack.owner_id is None
+    session.commit.assert_not_called()
+
+
+@pytest.mark.parametrize("operation", ["preview_pack", "claim_pack"])
+def test_unknown_pack_returns_not_found(pack_service, session, user, operation):
+    pack_service.packs.get_by_master_auth.return_value = None
+    args = (user, "missing") if operation == "claim_pack" else ("missing",)
+    with pytest.raises(HTTPException) as exc:
+        getattr(pack_service, operation)(*args)
+    assert exc.value.status_code == 404
+    session.commit.assert_not_called()
+
+
+def test_repeated_claim_does_not_create_another_event(pack_service, session, user, pack):
+    pack_service.claim_pack(user, pack.master_auth_hash)
+    with pytest.raises(HTTPException) as exc:
+        pack_service.claim_pack(user, pack.master_auth_hash)
+    assert exc.value.status_code == 400
+    pack_service.events.add_event.assert_called_once()
+    session.commit.assert_called_once()

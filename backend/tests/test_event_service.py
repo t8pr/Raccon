@@ -189,3 +189,69 @@ def test_successful_edit_increments_count(
     event_service.event_tags.add_event_tag.assert_called_once()
     event_service.events.add_event.assert_called_once_with(event)
     session.commit.assert_called_once()
+
+
+def test_draft_cannot_be_paused(event_service, session, event, user):
+    with pytest.raises(HTTPException) as exc:
+        event_service.update_event(user, event.id, {"status": "paused"})
+    assert exc.value.status_code == 400
+    assert event.status == "draft"
+    session.commit.assert_not_called()
+
+
+@pytest.mark.parametrize("operation, args", [
+    ("update_event", ({"title": "Changed"},)),
+    ("reset_event", ()),
+    ("rebuild_event", ("CODE",)),
+])
+def test_non_owner_cannot_change_event(event_service, session, event, pack, user, operation, args):
+    pack.owner_id = uuid.uuid4()
+    with pytest.raises(HTTPException) as exc:
+        getattr(event_service, operation)(user, event.id, *args)
+    assert exc.value.status_code == 403
+    session.commit.assert_not_called()
+
+
+def test_rebuild_normalizes_and_consumes_code(event_service, session, event, user):
+    event.status = "paused"
+    event.edit_count = 2
+    code = Mock(is_used=False)
+    event_service.rebuild_code_repo = Mock()
+    event_service.rebuild_code_repo.get_by_code_for_update.return_value = code
+    event_service.event_tags.get_all_by_event_id.return_value = []
+
+    result = event_service.rebuild_event(user, event.id, "  code  ")
+
+    event_service.rebuild_code_repo.get_by_code_for_update.assert_called_once_with("CODE")
+    assert (result["event_status"], result["edit_count"]) == ("draft", 0)
+    assert code.is_used is True
+    assert (code.used_by_user_id, code.used_on_event_id) == (user.id, event.id)
+    session.commit.assert_called_once()
+
+
+@pytest.mark.parametrize("code", [None, Mock(is_used=True)])
+def test_rebuild_rejects_invalid_or_used_code(event_service, session, event, user, code):
+    event.status = "paused"
+    event_service.rebuild_code_repo = Mock()
+    event_service.rebuild_code_repo.get_by_code_for_update.return_value = code
+    with pytest.raises(HTTPException) as exc:
+        event_service.rebuild_event(user, event.id, "CODE")
+    assert exc.value.status_code == 400
+    assert event.status == "paused"
+    session.exec.assert_not_called()
+    session.commit.assert_not_called()
+
+
+def test_reset_clears_claims_and_rearms_player_selected_traps(event_service, session, user, event):
+    event.status = "live"
+    clue = EventTag(tag_type="clue", content={"hint": "Keep me", "claimed_by": "player"})
+    trap = EventTag(tag_type="trap", content={"freeze": 5, "was_choose": True})
+    event_service.event_tags.get_all_by_event_id.return_value = [clue, trap]
+
+    assert event_service.reset_event(user, event.id)["status"] == "success"
+
+    assert event.status == "paused"
+    assert clue.content == {"hint": "Keep me"}
+    assert trap.content == {"choose": True}
+    session.exec.assert_called_once()
+    session.commit.assert_called_once()

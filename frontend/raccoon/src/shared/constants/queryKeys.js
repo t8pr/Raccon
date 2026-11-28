@@ -27,4 +27,7 @@ export const queryKeys = {
   // تجارب الأدمن (صفحة واحدة، أو كل الصفحات بلا معاملات)
   adminPacks: (page, perPage) =>
     page === undefined ? ["admin-packs"] : ["admin-packs", page, perPage],
+
+  adminUsers: (page, perPage) =>
+    page === undefined ? ["admin-users"] : ["admin-users", page, perPage],
 };

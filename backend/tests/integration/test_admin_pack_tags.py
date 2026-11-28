@@ -1,15 +1,15 @@
 import uuid
-
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from fastapi_pagination import add_pagination
+from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, create_engine, select
-
 from api.admin.router import router
 from api.auth.dependencies import get_current_user
 from core.database import get_session
-from models import Pack, Tag, User
+from models import Event, Pack, Tag, User
 
 
 @pytest.fixture
@@ -19,11 +19,16 @@ def api():
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
-    for model in (User, Pack, Tag):
+    @event.listens_for(engine, "connect")
+    def enable_foreign_keys(connection, _):
+        connection.execute("PRAGMA foreign_keys=ON")
+
+    for model in (User, Pack, Tag, Event):
         model.__table__.create(engine)
 
     app = FastAPI()
     app.include_router(router)
+    add_pagination(app)
     admin = User(username="admin", role="admin")
 
     def session_override():
@@ -99,3 +104,110 @@ def test_non_admin_cannot_add_pack_tags(api):
     response = client.post(f"/admin/packs/{uuid.uuid4()}/tags", json={"tags_count": 1})
 
     assert response.status_code == 403
+
+
+def make_user(username, name, role="user", avatar_id=1):
+    return User(
+        username=username,
+        name=name,
+        email=f"{username}@example.com",
+        phone_number="0500000000",
+        password="test-password",
+        role=role,
+        avatar_id=avatar_id,
+    )
+
+
+def test_admin_lists_users_with_pagination_and_public_fields(api):
+    client, engine, _ = api
+    with Session(engine) as session:
+        session.add_all([
+            make_user("zoe", "Zoe"),
+            make_user("alice", "Alice", role="admin", avatar_id=3),
+            make_user("bob", "Bob"),
+        ])
+        session.commit()
+
+    first = client.get("/admin/users", params={"page": 1, "size": 2})
+    assert first.status_code == 200
+    result = first.json()
+    assert {key: result[key] for key in ("page", "size", "total", "pages")} == {
+        "page": 1, "size": 2, "total": 3, "pages": 2,
+    }
+    assert [user["username"] for user in result["items"]] == ["alice", "bob"]
+    alice = result["items"][0]
+    assert (alice["role"], alice["avatar_id"]) == ("admin", 3)
+    assert alice.keys() == {
+        "id", "user_hash", "name", "username", "email",
+        "phone_number", "avatar_id", "role", "created_at",
+    }
+
+    second = client.get("/admin/users", params={"page": 2, "size": 2})
+    assert second.status_code == 200
+    assert [user["username"] for user in second.json()["items"]] == ["zoe"]
+
+
+@pytest.mark.parametrize("params", [{"page": 0}, {"size": 0}, {"size": 101}])
+def test_admin_users_rejects_invalid_pagination(api, params):
+    client, _, _ = api
+    assert client.get("/admin/users", params=params).status_code == 422
+
+
+def test_admin_deletes_only_the_selected_user(api):
+    client, engine, _ = api
+    target = make_user("target", "Target")
+    survivor = make_user("survivor", "Survivor")
+    target_id, survivor_id = target.id, survivor.id
+    with Session(engine) as session:
+        session.add_all([target, survivor])
+        session.commit()
+
+    url = f"/admin/delete-user/{target_id}"
+    assert client.delete(url).status_code == 200
+    assert client.delete(url).status_code == 404
+    with Session(engine) as session:
+        assert session.get(User, target_id) is None
+        assert session.get(User, survivor_id) is not None
+
+
+def test_admin_deletes_selected_pack_and_cascades_to_its_tags_and_event(api):
+    client, engine, _ = api
+    target = Pack(mode="seq", tags_count=1, master_auth_hash="target")
+    survivor = Pack(mode="seq", tags_count=1, master_auth_hash="survivor")
+    target_id, survivor_id = target.id, survivor.id
+    with Session(engine) as session:
+        session.add_all([target, survivor])
+        session.flush()
+        for pack_id, name in [(target_id, "target"), (survivor_id, "survivor")]:
+            session.add(Tag(pack_id=pack_id, static_hash=name, sequence_num=1))
+            session.add(Event(pack_id=pack_id, title=name))
+        session.commit()
+
+    url = f"/admin/delete-pack/{target_id}"
+    assert client.delete(url).status_code == 200
+    assert client.delete(url).status_code == 404
+    with Session(engine) as session:
+        assert session.exec(select(Pack.id)).all() == [survivor_id]
+        assert session.exec(select(Tag.pack_id)).all() == [survivor_id]
+        assert session.exec(select(Event.pack_id)).all() == [survivor_id]
+
+
+@pytest.mark.parametrize("endpoint", ["delete-user", "delete-pack"])
+def test_admin_delete_rejects_malformed_id(api, endpoint):
+    client, _, _ = api
+    assert client.delete(f"/admin/{endpoint}/invalid").status_code == 422
+
+
+@pytest.mark.parametrize("authenticated", [False, True])
+def test_admin_endpoints_reject_unauthorized_calls(api, authenticated):
+    client, _, user = api
+    if authenticated:
+        user.role = "user"
+    else:
+        del client.app.dependency_overrides[get_current_user]
+
+    expected = 403 if authenticated else 401
+    assert client.get("/admin/users").status_code == expected
+    assert client.get("/admin/packs").status_code == expected
+    assert client.delete(f"/admin/delete-user/{uuid.uuid4()}").status_code == expected
+    assert client.delete(f"/admin/delete-pack/{uuid.uuid4()}").status_code == expected

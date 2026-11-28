@@ -43,5 +43,34 @@
     "leaveText": "Your changes won't be saved.",
     "keepEditing": "Keep editing",
     "leaveWithoutSaving": "Leave without saving"
+  },
+  "users": {
+    "title": "User and permission management",
+    "filter": "Filter by role",
+    "regularUsers": "Users",
+    "admins": "Admins",
+    "loading": "Loading users…",
+    "loadFailed": "Couldn’t load users.",
+    "empty": "No matching users on this page.",
+    "name": "Name",
+    "username": "Username",
+    "email": "Email",
+    "phone": "Mobile number",
+    "role": "Role",
+    "actions": "Actions",
+    "admin": "Admin",
+    "user": "User",
+    "deleteTitle": "Confirm user deletion",
+    "deleteDescription": "Do you want to delete “{{name}}”?",
+    "deleteFailed": "Couldn’t delete the user. Try again.",
+    "deleteLabel": "Delete {{name}}",
+    "count_one": "{{count}} user",
+    "count_other": "{{count}} users"
+  },
+  "deletePack": {
+    "title": "Delete pack?",
+    "description": "Deleting pack {{id}} permanently removes the pack and its associated tags and events.",
+    "failed": "Couldn’t delete the pack. Try again.",
+    "label": "Delete pack {{id}}"
   }
 }
